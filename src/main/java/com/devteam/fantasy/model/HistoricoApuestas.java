@@ -1,0 +1,87 @@
+package com.devteam.fantasy.model;
+
+import javax.persistence.*;
+
+@Entity
+public class HistoricoApuestas {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "sorteos_id")
+    private Sorteo sorteo;
+
+    @ManyToOne
+    @JoinColumn(name = "users_id")
+    private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "cambio_id")
+    Cambio cambio;
+
+    private int numero;
+
+    private double cantidad;
+
+    private Double comision;
+
+
+
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Sorteo getSorteo() {
+        return sorteo;
+    }
+
+    public void setSorteo(Sorteo sorteo) {
+        this.sorteo = sorteo;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public int getNumero() {
+        return numero;
+    }
+
+    public void setNumero(int numero) {
+        this.numero = numero;
+    }
+
+    public double getCantidad() {
+        return cantidad;
+    }
+
+    public void setCantidad(double cantidad) {
+        this.cantidad = cantidad;
+    }
+
+    public Cambio getCambio() {
+        return cambio;
+    }
+
+    public void setCambio(Cambio cambio) {
+        this.cambio = cambio;
+    }
+
+    public Double getComision() {
+        return comision;
+    }
+
+    public void setComision(Double comision) {
+        this.comision = comision;
+    }
+}
