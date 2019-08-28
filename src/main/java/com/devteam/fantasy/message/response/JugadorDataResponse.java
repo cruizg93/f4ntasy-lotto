@@ -24,6 +24,7 @@ public class JugadorDataResponse {
     private double premioMil;
 
     private double balance;
+    private boolean Editable;
 
     public Long getId() {
         return id;
@@ -151,5 +152,13 @@ public class JugadorDataResponse {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public boolean isEditable() {
+        return Editable;
+    }
+
+    public void setEditable(boolean editable) {
+        Editable = editable;
     }
 }

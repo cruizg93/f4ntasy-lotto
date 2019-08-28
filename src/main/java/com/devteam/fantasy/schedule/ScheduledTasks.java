@@ -74,14 +74,14 @@ public class ScheduledTasks {
         Util.updateJugadoBalance(jugadorRepository);
     }
 
-    @Scheduled(cron = "0 1 0 * * MON")
-    public void updateSorteoStatus() {
-        Util.updateSorteoStatus(sorteoRepository, statusRepository, sorteoDiariaRepository);
-    }
-    @Scheduled(cron = "0 5 0 ? * MON")
-    public void createSorteoChiquitica() {
-        Util.insertSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, sorteoTypeRepository, SorteoTypeName.CHICA, 1);
-    }
+//    @Scheduled(cron = "0 1 0 * * MON")
+//    public void updateSorteoStatus() {
+//        Util.updateSorteoStatus(sorteoRepository, statusRepository, sorteoDiariaRepository);
+//    }
+//    @Scheduled(cron = "0 5 0 ? * MON")
+//    public void createSorteoChiquitica() {
+//        Util.insertSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, sorteoTypeRepository, SorteoTypeName.CHICA, 1);
+//    }
 
     @Scheduled(cron = "0 55 10 * * ?")
     public void updateSorteoDiaria11() {

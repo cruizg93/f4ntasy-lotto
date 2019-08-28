@@ -139,6 +139,18 @@ public class AdminController {
 
         jugadorDataResponse.setUsername(jugador.getUsername());
         jugadorDataResponse.setName(jugador.getName());
+        jugadorDataResponse.setEditable(true);
+        if(!apuestaRepository.findAllByUser(userRepository.getById(id)).isEmpty())
+            jugadorDataResponse.setEditable(false);
+        else {
+            List<Asistente> asistentes=asistenteRepository.findAllByJugador(jugadorRepository.getById(id));
+            for (Asistente asistente: asistentes) {
+                if(!apuestaRepository.findAllByUser(userRepository.getById(asistente.getId())).isEmpty()){
+                    jugadorDataResponse.setEditable(false);
+                    break;
+                }
+            }
+        }
         return jugadorDataResponse;
     }
 
@@ -315,7 +327,7 @@ public class AdminController {
             jugadorRepository.save(jugador);
 
             List<PlayerCount> playerCounts = playerCountRepository.findAll();
-            if (playerCounts.size() > 0) {
+            if (!playerCounts.isEmpty()) {
                 PlayerCount playerCount = playerCounts.get(0);
                 Long count = playerCount.getCount() + 1L;
                 playerCount.setCount(count);
@@ -1071,6 +1083,21 @@ public class AdminController {
                 });
             }
             sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.BLOQUEADA));
+            apuestaList.forEach(apuesta->{
+                HistoricoApuestas historicoApuestas = new HistoricoApuestas();
+                historicoApuestas.setCantidad(apuesta.getCantidad());
+                historicoApuestas.setUser(apuesta.getUser());
+                historicoApuestas.setSorteo(sorteo);
+                historicoApuestas.setNumero(apuesta.getNumero());
+                historicoApuestas.setComision(apuesta.getComision());
+                historicoApuestas.setCambio(apuesta.getCambio());
+                historicoApuestaRepository.save(historicoApuestas);
+                apuestaRepository.delete(apuesta);
+            });
+            if(sorteo.getSorteoType().getSorteoTypeName().equals(SorteoTypeName.DIARIA))
+                Util.deleteAndCreateSorteoDiaria(estadoRepository,sorteoRepository,sorteoTypeRepository,SorteoTypeName.DIARIA, sorteoDiariaRepository, sorteoDiariaRepository.getSorteoDiariaById(id));
+            else
+                Util.deleteAndCreateSorteoDiaria(estadoRepository,sorteoRepository,sorteoTypeRepository,SorteoTypeName.CHICA, sorteoDiariaRepository, sorteoDiariaRepository.getSorteoDiariaById(id));
         }
         numeroGanadorRepository.save(numeroGanador);
         sorteoRepository.save(sorteo);
@@ -1336,15 +1363,16 @@ public class AdminController {
                 });
             } else {
                 List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
+
                 apuestas.forEach(apuesta -> {
                     double cambio=1;
 
                     Jugador jugador = null;
                     if(apuesta.getUser() instanceof Jugador){
                         jugador =  (Jugador) apuesta.getUser();
-                        if(moneda.equals("lempira") && ((Jugador) apuesta.getUser()).getMoneda().getMonedaName().equals(MonedaName.DOLAR)){
+                        if(moneda.equalsIgnoreCase("lempira") && ((Jugador) apuesta.getUser()).getMoneda().getMonedaName().equals(MonedaName.DOLAR)){
                             cambio = apuesta.getCambio().getCambio();
-                        }else if(moneda.equals("dolar") && ((Jugador) apuesta.getUser()).getMoneda().getMonedaName().equals(MonedaName.LEMPIRAS)){
+                        }else if(moneda.equalsIgnoreCase("dolar") && ((Jugador) apuesta.getUser()).getMoneda().getMonedaName().equals(MonedaName.LEMPIRAS)){
                             cambio = 1/apuesta.getCambio().getCambio();
                         }
                     }else if(apuesta.getUser() instanceof Asistente){
@@ -1359,10 +1387,10 @@ public class AdminController {
                     double costoMilDiaria = 1;
                     double costoPedazoChica = 1;
                     if(sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().equals(SorteoTypeName.DIARIA)){
-                        costoMilChica = jugador.getCostoChicaMiles() != 0 ? jugador.getCostoChicaMiles() : 1 ;
+                        costoMilDiaria = jugador.getCostoMil() != 0 ? jugador.getCostoMil() : 1 ;
 
                     }else{
-                        costoMilDiaria = jugador.getCostoMil() != 0 ? jugador.getCostoMil() : 1 ;
+                        costoMilChica = jugador.getCostoChicaMiles() != 0 ? jugador.getCostoChicaMiles() : 1 ;
                         costoPedazoChica = jugador.getCostoChicaPedazos() != 0 ? jugador.getCostoChicaPedazos() : 1 ;
                     }
                     total[0] += apuesta.getCantidad() *  cambio * costoMilChica * costoMilDiaria * costoPedazoChica;
@@ -1382,6 +1410,10 @@ public class AdminController {
             activasResponse.setType(sorteo.getSorteoType().getSorteoTypeName().toString());
             apuestasActivasResponses.add(activasResponse);
         });
+        if(apuestasActivasResponses.get(0).getType().equalsIgnoreCase("chica")){
+            apuestasActivasResponses.add(apuestasActivasResponses.get(0));
+            apuestasActivasResponses.remove(0);
+        }
         return apuestasActivasResponses;
     }
 
@@ -1468,7 +1500,7 @@ public class AdminController {
             if (jugador.getTipoApostador().getApostadorName().equals(ApostadorName.DIRECTO)) {
                 premio = jugador.getPremioDirecto() * apuesta.getCantidad() * cambio;
             } else {
-                premio = jugador.getPremioMil() * 1000 * apuesta.getCantidad() * cambio;
+                premio = jugador.getPremioMil() * apuesta.getCantidad() * cambio;
             }
             costoMilDiaria = jugador.getCostoMil() != 0 ? jugador.getCostoMil() : 1 ;
 
@@ -1576,7 +1608,7 @@ public class AdminController {
             }
             comision = total * comision / 100;
             sorteoResponses.add(new SorteoResponse(sorteoDiaria.getId(),
-                    Util.formatLocalDatetoString(localDate, i++), total, comision, total - comision, estado, moneda, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString()));
+                    Util.formatTimestamp2String(sorteoDiaria.getSorteoTime()), total, comision, total - comision, estado, moneda, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString()));
             total = 0;
         }
         return sorteoResponses;
@@ -1649,7 +1681,7 @@ public class AdminController {
                             }
                         });
                         if (!flag.get()) {
-                            pairNVList.add(new PairNV(apuesta.getNumero(), cantidad));
+                            pairNVList.add(new PairNV(apuesta.getNumero(), apuesta.getCantidad()));
                         }
                     }
                 }
