@@ -1,15 +1,35 @@
 package com.devteam.fantasy.util;
 
-import com.devteam.fantasy.model.*;
-import com.devteam.fantasy.repository.*;
+import com.devteam.fantasy.model.Apuesta;
+import com.devteam.fantasy.model.HistoricoApuestas;
+import com.devteam.fantasy.model.Jugador;
+import com.devteam.fantasy.model.Sorteo;
+import com.devteam.fantasy.model.SorteoDiaria;
+import com.devteam.fantasy.model.Status;
+import com.devteam.fantasy.model.User;
+import com.devteam.fantasy.repository.ApuestaRepository;
+import com.devteam.fantasy.repository.EstadoRepository;
+import com.devteam.fantasy.repository.HistoricoApuestaRepository;
+import com.devteam.fantasy.repository.JugadorRepository;
+import com.devteam.fantasy.repository.SorteoDiariaRepository;
+import com.devteam.fantasy.repository.SorteoRepository;
+import com.devteam.fantasy.repository.SorteoTypeRepository;
+import com.devteam.fantasy.repository.StatusRepository;
+import com.devteam.fantasy.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-
 import java.sql.Timestamp;
-import java.time.*;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -103,6 +123,41 @@ public class Util {
 
     }
 
+
+    public static void newSorteo(EstadoRepository estadoRepository,
+            SorteoRepository sorteoRepository,
+            SorteoDiariaRepository sorteoDiariaRepository,
+            SorteoTypeRepository sorteoTypeRepository,
+            SorteoTypeName sorteoTypeName,
+            int hour) {
+        Sorteo sorteo = new Sorteo();
+        sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.ABIERTA));
+
+        Timestamp timestamp;
+        if (sorteoTypeName.equals(SorteoTypeName.CHICA)){
+            //            Timestamp timestamp=Timestamp.va;
+
+            LocalDate localDate=ld.plusDays(6).with( next( SUNDAY ) );
+            timestamp = Timestamp.valueOf(LocalDateTime.of(localDate, LocalTime.MIDNIGHT));
+        }else{
+            LocalDate localDate=ld.plusDays(1);
+            timestamp = new Timestamp(
+                    ZonedDateTime.of(localDate.getYear(), localDate.getMonthValue(), localDate.getDayOfMonth(), hour, 0, 0, 0,
+                            ZoneId.of("America/Tegucigalpa")
+                    ).toInstant().toEpochMilli()
+            );
+        }
+        sorteo.setSorteoTime(timestamp);
+        sorteo.setSorteoType(sorteoTypeRepository.getBySorteoTypeName(sorteoTypeName));
+        sorteoRepository.save(sorteo);
+        SorteoDiaria sorteoDiaria1 = new SorteoDiaria();
+        sorteoDiaria1.setId(sorteo.getId());
+        sorteoDiaria1.setSorteo(sorteo);
+        sorteoDiaria1.setSorteoTime(timestamp);
+        sorteoDiariaRepository.save(sorteoDiaria1);
+
+    }
+
     public static void deleteSorteo(EstadoRepository estadoRepository,
                                     SorteoRepository sorteoRepository,
                                     SorteoDiariaRepository sorteoDiariaRepository,
@@ -174,6 +229,43 @@ public class Util {
         }
     }
 
+    private static void deleteChicaSorteo(SorteoDiariaRepository sorteoDiariaRepository) {
+        Iterable<SorteoDiaria> sorteoDiarias = sorteoDiariaRepository.findAll();
+
+        List<SorteoDiaria> listsSorteoDiaria = new ArrayList<>();
+        sorteoDiarias.iterator().forEachRemaining(listsSorteoDiaria::add);
+
+        Optional<SorteoDiaria> sorteoDiaria = listsSorteoDiaria.stream()
+                .filter(sorteo -> sorteo.getSorteo().getSorteoType().getSorteoTypeName().equals(SorteoTypeName.CHICA))
+                .findFirst();
+        sorteoDiaria.ifPresent(sorteoDiariaRepository::delete);
+    }
+
+
+
+    public static void deleteAndCreateSorteoDiaria(
+            EstadoRepository estadoRepository,
+            SorteoRepository sorteoRepository,
+            SorteoTypeRepository sorteoTypeRepository,
+            SorteoTypeName sorteoTypeName,
+            SorteoDiariaRepository sorteoDiariaRepository,
+            SorteoDiaria sorteoDiaria){
+        String time=sorteoDiaria.getSorteoTime().toString();
+        if(time.contains("11:00")){
+            deleteSpecificDiariaSorteo(sorteoDiariaRepository, 11);
+            newSorteo(estadoRepository,sorteoRepository,sorteoDiariaRepository,sorteoTypeRepository,sorteoTypeName, 11);
+        }else if(time.contains("15:00")){
+            deleteSpecificDiariaSorteo(sorteoDiariaRepository, 15);
+            newSorteo(estadoRepository,sorteoRepository,sorteoDiariaRepository,sorteoTypeRepository,SorteoTypeName.DIARIA, 15);
+        }else if(time.contains("21:00")){
+            deleteSpecificDiariaSorteo(sorteoDiariaRepository, 21);
+            newSorteo(estadoRepository,sorteoRepository,sorteoDiariaRepository,sorteoTypeRepository,SorteoTypeName.DIARIA, 21);
+        }else {
+            deleteChicaSorteo(sorteoDiariaRepository);
+            newSorteo(estadoRepository,sorteoRepository,sorteoDiariaRepository,sorteoTypeRepository,SorteoTypeName.CHICA, 0);
+        }
+    }
+
 
     public static void deleteSorteosDia(SorteoRepository sorteoRepository,
                                         SorteoDiariaRepository sorteoDiariaRepository,
@@ -210,12 +302,12 @@ public class Util {
         int year = localDate.getYear();
         int month = localDate.getMonthValue();
         int day = localDate.getDayOfMonth();
-        Timestamp timestamp = (new Timestamp(
+
+        return (new Timestamp(
                 ZonedDateTime.of(year, month, day, 0, 1, 0, 0,
                         ZoneId.of("America/Tegucigalpa")
                 ).toInstant().toEpochMilli()
         ));
-        return timestamp;
     }
 
     public static String formatLocalDatetoString(LocalDate localDate, int pos) {

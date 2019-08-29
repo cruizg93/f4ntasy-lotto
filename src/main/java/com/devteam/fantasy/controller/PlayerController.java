@@ -25,9 +25,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static com.devteam.fantasy.controller.AdminController.getApuestaActivaResponse;
 import static com.devteam.fantasy.controller.AdminController.getSorteoResponses;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -185,7 +185,7 @@ public class PlayerController {
             List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
             for (Apuesta apuesta :
                     apuestas) {
-                total += apuesta.getCantidad();;
+                total += apuesta.getCantidad();
             }
 
             Optional<Sorteo> sorteo = sorteoRepository.findById(sorteoDiaria.getId());
@@ -194,10 +194,9 @@ public class PlayerController {
                 estado = sorteo.get().getEstado().getEstado().toString();
             }
             moneda= asistente.getJugador().getMoneda().getMonedaName().toString();
-            LocalDate localDate = sorteoDiaria.getSorteoTime().toLocalDateTime().toLocalDate();
 
             sorteoResponses.add(new SorteoResponse(sorteoDiaria.getId(),
-                    Util.formatLocalDatetoString(localDate, i++), total, 0.0, 0.0, estado, moneda, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString()));
+                    Util.formatTimestamp2String(sorteoDiaria.getSorteoTime()), total, 0.0, 0.0, estado, moneda, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString()));
             total = 0;
         }
         return sorteoResponses;
@@ -472,7 +471,7 @@ public class PlayerController {
     @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
     public ApuestaActivaResponse getApuestasActivas(@Valid @RequestBody ObjectNode json,
                                                     @PathVariable Long id) {
-        return getApuestaActivaResponse(json, id, userRepository,
+        return getApuestaActivaResponsePlayer(json, id, userRepository,
                 sorteoDiariaRepository,
                 apuestaRepository,
                 asistenteRepository,
@@ -803,5 +802,108 @@ public class PlayerController {
                 topes.add(new NumeroPlayerEntryResponse(String.valueOf(i), 0, 0));
             }
         }
+    }
+
+
+    static ApuestaActivaResponse getApuestaActivaResponsePlayer(@RequestBody @Valid ObjectNode json,
+            @PathVariable Long id,
+            UserRepository userRepository,
+            SorteoDiariaRepository sorteoDiariaRepository,
+            ApuestaRepository apuestaRepository,
+            AsistenteRepository asistenteRepository,
+            SorteoRepository sorteoRepository) {
+        ObjectMapper mapper = new ObjectMapper();
+        String username = mapper.convertValue(json.get("username"), String.class);
+        User user = userRepository.getByUsername(username);
+        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
+        Sorteo sorteo=sorteoRepository.getSorteoById(id);
+        List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUserOrderByNumeroAsc(sorteoDiaria, user);
+        Jugador jugador = null;
+        if(user instanceof Jugador){
+            jugador = (Jugador) user;
+        }else{
+            jugador = ((Asistente) user).getJugador();
+        }
+        List<PairNV> pairNVList = new ArrayList<>();
+        double [] total={0.0};
+        // Apuestas asistente
+        for (Apuesta apuesta : apuestas) {
+            double cantidad = apuesta.getCantidad();
+            if (sorteo.getSorteoType().getSorteoTypeName().equals(SorteoTypeName.DIARIA)) {
+                if (jugador.getCostoMil() != 0) {
+                    cantidad *= jugador.getCostoMil();
+                }
+            } else {
+                if (jugador.getCostoChicaMiles() != 0) {
+                    cantidad *= jugador.getCostoChicaMiles();
+                } else if (jugador.getCostoChicaPedazos() != 0) {
+                    cantidad *= jugador.getCostoChicaPedazos();
+                }
+            }
+            total[0] += cantidad;
+            pairNVList.add(new PairNV(apuesta.getNumero(), apuesta.getCantidad()));
+        }
+        if (user instanceof Jugador) {
+            List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
+            asistentes.forEach(asistente -> {
+                List<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
+                if (!apuestaList.isEmpty()) {
+                    for (Apuesta apuesta : apuestaList) {
+                        double cantidad = apuesta.getCantidad();
+                        if(sorteo.getSorteoType().getSorteoTypeName().equals(SorteoTypeName.DIARIA)){
+                            if(asistente.getJugador().getCostoMil()!=0){
+                                cantidad *= asistente.getJugador().getCostoMil();
+                            }
+                        }else{
+                            if(asistente.getJugador().getCostoChicaMiles()!=0){
+                                cantidad *= asistente.getJugador().getCostoChicaMiles();
+                            }else if(asistente.getJugador().getCostoChicaPedazos()!=0){
+                                cantidad *= asistente.getJugador().getCostoChicaPedazos();
+                            }
+                        }
+
+                        total[0] += cantidad ;
+                        AtomicBoolean flag = new AtomicBoolean(false);
+                        double finalCantidad = cantidad;
+                        pairNVList.forEach(pairNV -> {
+                            if (pairNV.getNumero().equals(apuesta.getNumero())) {
+                                pairNV.setValor(pairNV.getValor() + apuesta.getCantidad());
+                                flag.set(true);
+                            }
+                        });
+                        if (!flag.get()) {
+                            pairNVList.add(new PairNV(apuesta.getNumero(), apuesta.getCantidad()));
+                        }
+                    }
+                }
+            });
+        }
+        double comision = 0.0;
+        //        if (user instanceof Jugador) {
+        //            Sorteo sorteo = sorteoRepository.getSorteoById(id);
+        if (sorteo.getSorteoType().getSorteoTypeName().equals(SorteoTypeName.CHICA)) {
+            // O una u otra nunca ambas
+            comision = jugador.getComisionChicaDirecto() + jugador.getComisionChicaPedazos();
+        } else {
+            comision = jugador.getComisionDirecto();
+        }
+        //        }else if(user instanceof Asistente){
+        //            if (sorteo.getSorteoType().getSorteoTypeName().equals(SorteoTypeName.CHICA)) {
+        //                // O una u otra nunca ambas
+        //                comision = jugador.getComisionDirecto() + jugador.getComisionChicaPedazos();
+        //            } else {
+        //                comision = jugador.getComisionDirecto();
+        //            }
+        //        }
+        Collections.sort(pairNVList);
+        comision = total[0] * comision / 100;
+        ApuestaActivaResponse apuestaActivaResponse = new ApuestaActivaResponse();
+        apuestaActivaResponse.setList(pairNVList);
+        apuestaActivaResponse.setTitle(Util.formatTimestamp2String(sorteoDiaria.getSorteoTime()));
+        apuestaActivaResponse.setTotal(total[0]);
+        apuestaActivaResponse.setComision(comision);
+        apuestaActivaResponse.setRiesgo(total[0] - comision);
+        apuestaActivaResponse.setType(sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString());
+        return apuestaActivaResponse;
     }
 }
