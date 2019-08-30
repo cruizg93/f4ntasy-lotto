@@ -393,7 +393,7 @@ public class Util {
     public static String formatDate2StringDate() {
         LocalDate localDate = getTodayTime();
         return String.format("%s, %d %s", weekNamesAbb[localDate.getDayOfWeek().getValue() - 1],
-                localDate.getDayOfMonth(), months[localDate.getMonthValue() - 1]);
+                localDate.getDayOfMonth(), monthsAbb[localDate.getMonthValue() - 1]);
     }
 
     public static String formatDate2StringTime() {
