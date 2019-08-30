@@ -196,7 +196,10 @@ public class PlayerController {
             moneda= asistente.getJugador().getMoneda().getMonedaName().toString();
 
             sorteoResponses.add(new SorteoResponse(sorteoDiaria.getId(),
-                    Util.formatTimestamp2String(sorteoDiaria.getSorteoTime()), total, 0.0, 0.0, estado, moneda, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString()));
+                    Util.formatTimestamp2String(sorteoDiaria.getSorteoTime()),
+                    Util.getDayFromTimestamp(sorteoDiaria.getSorteoTime()),
+                    Util.getHourFromTimestamp(sorteoDiaria.getSorteoTime()),
+                    total, 0.0, 0.0, estado, moneda, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString()));
             total = 0;
         }
         return sorteoResponses;

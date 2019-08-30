@@ -5,6 +5,10 @@ public class SorteoResponse {
     private Long id;
 
     private String nombre;
+    
+    private String hour;
+    
+    private String day;
 
     private Double total;
 
@@ -48,7 +52,7 @@ public class SorteoResponse {
         this.moneda = moneda;
     }
 
-    public SorteoResponse(Long id, String nombre, Double total, Double comision, Double riesgo, String estado, String moneda, String type) {
+    public SorteoResponse(Long id, String nombre, String day, String hour, Double total, Double comision, Double riesgo, String estado, String moneda, String type) {
         this.id = id;
         this.nombre = nombre;
         this.total = total;
@@ -57,6 +61,8 @@ public class SorteoResponse {
         this.estado = estado;
         this.moneda = moneda;
         this.type = type;
+        this.day = day;
+        this.hour = hour;
     }
 
     public Long getId() {
@@ -122,4 +128,21 @@ public class SorteoResponse {
     public void setType(String type) {
         this.type = type;
     }
+
+	public String getHour() {
+		return hour;
+	}
+
+	public void setHour(String hour) {
+		this.hour = hour;
+	}
+
+	public String getDay() {
+		return day;
+	}
+
+	public void setDay(String day) {
+		this.day = day;
+	}
+    
 }

@@ -1548,8 +1548,7 @@ public class AdminController {
         Iterable<SorteoDiaria> sorteos = sorteoDiariaRepository.findAll();
         for (SorteoDiaria sorteoDiaria : sorteos) {
             List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
-            for (Apuesta apuesta :
-                    apuestas) {
+            for (Apuesta apuesta : apuestas) {
                 double cantidad = apuesta.getCantidad();
                 if(sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().equals(SorteoTypeName.DIARIA)){
                     if(jugador.getCostoMil()!=0){
@@ -1608,7 +1607,10 @@ public class AdminController {
             }
             comision = total * comision / 100;
             sorteoResponses.add(new SorteoResponse(sorteoDiaria.getId(),
-                    Util.formatTimestamp2String(sorteoDiaria.getSorteoTime()), total, comision, total - comision, estado, moneda, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString()));
+                    Util.formatTimestamp2String(sorteoDiaria.getSorteoTime()),
+                    Util.getDayFromTimestamp(sorteoDiaria.getSorteoTime()),
+                    Util.getHourFromTimestamp(sorteoDiaria.getSorteoTime()),
+                    total, comision, total - comision, estado, moneda, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString()));
             total = 0;
         }
         return sorteoResponses;

@@ -465,4 +465,43 @@ public class Util {
                 monthsAbb[localDate.getMonthValue() - 1],
                 timeValue);
     }
+    
+    /**
+     * @Author Cristian Ruiz
+     * @Date 28/08/2019
+     * @param timestamp
+     * @return hour with am or pm
+     */
+    public static String getHourFromTimestamp(Timestamp timestamp) {
+        Integer time = Integer.valueOf(timestamp.toString().substring(11, 13));
+        String timeValue = "";
+        switch (time) {
+            case 15:
+                timeValue = "3 pm";
+                break;
+            case 21:
+                timeValue = "9 pm";
+                break;
+            case 11:
+                timeValue = "11 am";
+                break;
+            default:
+                break;
+        }
+        return timeValue;
+    }
+    
+    /**
+     * @Author Cristian Ruiz
+     * @Date 28/08/2019
+     * @param timestamp
+     * @return day from timestamp
+     */
+    public static String getDayFromTimestamp(Timestamp timestamp) {
+        LocalDate localDate = timestamp.toLocalDateTime().toLocalDate();
+        return String.format("%s, %s %s", weekNamesAbb[localDate.getDayOfWeek().getValue() - 1],
+        		localDate.getDayOfMonth(),
+        		monthsAbb[localDate.getMonthValue() - 1]
+                );
+    }
 }
