@@ -359,6 +359,10 @@ public class PlayerController {
 
         playerEntryResponse.setName(Util.formatTimestamp2StringApuestas(sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString(), sorteoDiaria.getSorteoTime()));
         playerEntryResponse.setList(topes);
+        playerEntryResponse.setType(sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString());
+        playerEntryResponse.setDay(Util.getDayFromTimestamp(sorteoDiaria.getSorteoTime()));
+        playerEntryResponse.setHour(Util.getHourFromTimestamp(sorteoDiaria.getSorteoTime()));
+        
         return playerEntryResponse;
     }
 
@@ -903,6 +907,8 @@ public class PlayerController {
         ApuestaActivaResponse apuestaActivaResponse = new ApuestaActivaResponse();
         apuestaActivaResponse.setList(pairNVList);
         apuestaActivaResponse.setTitle(Util.formatTimestamp2String(sorteoDiaria.getSorteoTime()));
+        apuestaActivaResponse.setDay(Util.getDayFromTimestamp(sorteoDiaria.getSorteoTime()));
+        apuestaActivaResponse.setHour(Util.getHourFromTimestamp(sorteoDiaria.getSorteoTime()));
         apuestaActivaResponse.setTotal(total[0]);
         apuestaActivaResponse.setComision(comision);
         apuestaActivaResponse.setRiesgo(total[0] - comision);
