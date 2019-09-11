@@ -26,6 +26,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -393,17 +395,13 @@ public class Util {
     public static String formatDate2StringDate() {
         LocalDate localDate = getTodayTime();
         return String.format("%s, %d %s", weekNamesAbb[localDate.getDayOfWeek().getValue() - 1],
-                localDate.getDayOfMonth(), months[localDate.getMonthValue() - 1]);
+                localDate.getDayOfMonth(), monthsAbb[localDate.getMonthValue() - 1]);
     }
 
     public static String formatDate2StringTime() {
         LocalTime localTime = LocalTime.now();
-        int minutes = localTime.getMinute();
-        int hour = localTime.getHour() > 12 ? localTime.getHour() - 12 : (localTime.getHour() == 0 ? 12 : localTime.getHour());
-        String meridian = "am";
-        if (localTime.getHour() > 12 || localTime.getHour() == 0)
-            meridian = "pm";
-        return String.format("%d : %s %s", hour, minutes < 10 ? "0" + minutes : minutes, meridian);
+    	DateTimeFormatter dtf = new DateTimeFormatterBuilder().appendPattern("hh : mm a").toFormatter();
+        return dtf.format(localTime);
     }
 
     public static String formatTimestamp2StringApuestas(String sorteoType, Timestamp timestamp) {
@@ -464,5 +462,44 @@ public class Util {
                 localDate.getDayOfMonth(),
                 monthsAbb[localDate.getMonthValue() - 1],
                 timeValue);
+    }
+    
+    /**
+     * @Author Cristian Ruiz
+     * @Date 28/08/2019
+     * @param timestamp
+     * @return hour with am or pm
+     */
+    public static String getHourFromTimestamp(Timestamp timestamp) {
+        Integer time = Integer.valueOf(timestamp.toString().substring(11, 13));
+        String timeValue = "";
+        switch (time) {
+            case 15:
+                timeValue = "3 pm";
+                break;
+            case 21:
+                timeValue = "9 pm";
+                break;
+            case 11:
+                timeValue = "11 am";
+                break;
+            default:
+                break;
+        }
+        return timeValue;
+    }
+    
+    /**
+     * @Author Cristian Ruiz
+     * @Date 28/08/2019
+     * @param timestamp
+     * @return day from timestamp
+     */
+    public static String getDayFromTimestamp(Timestamp timestamp) {
+        LocalDate localDate = timestamp.toLocalDateTime().toLocalDate();
+        return String.format("%s, %s %s", weekNamesAbb[localDate.getDayOfWeek().getValue() - 1],
+        		localDate.getDayOfMonth(),
+        		monthsAbb[localDate.getMonthValue() - 1]
+                );
     }
 }

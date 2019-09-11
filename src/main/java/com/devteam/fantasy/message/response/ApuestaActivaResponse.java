@@ -7,6 +7,10 @@ import java.util.List;
 public class ApuestaActivaResponse {
 
     private String title;
+    
+    private String hour;
+    
+    private String day;
 
     private List<PairNV> list;
 
@@ -65,4 +69,22 @@ public class ApuestaActivaResponse {
     public void setType(String type) {
         this.type = type;
     }
+
+	public String getHour() {
+		return hour;
+	}
+
+	public void setHour(String hour) {
+		this.hour = hour;
+	}
+
+	public String getDay() {
+		return day;
+	}
+
+	public void setDay(String day) {
+		this.day = day;
+	}
+    
+    
 }
