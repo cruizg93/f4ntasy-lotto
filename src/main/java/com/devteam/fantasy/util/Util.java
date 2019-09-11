@@ -26,6 +26,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -398,12 +400,8 @@ public class Util {
 
     public static String formatDate2StringTime() {
         LocalTime localTime = LocalTime.now();
-        int minutes = localTime.getMinute();
-        int hour = localTime.getHour() > 12 ? localTime.getHour() - 12 : (localTime.getHour() == 0 ? 12 : localTime.getHour());
-        String meridian = "am";
-        if (localTime.getHour() > 12 || localTime.getHour() == 0)
-            meridian = "pm";
-        return String.format("%d : %s %s", hour, minutes < 10 ? "0" + minutes : minutes, meridian);
+    	DateTimeFormatter dtf = new DateTimeFormatterBuilder().appendPattern("hh : mm a").toFormatter();
+        return dtf.format(localTime);
     }
 
     public static String formatTimestamp2StringApuestas(String sorteoType, Timestamp timestamp) {
