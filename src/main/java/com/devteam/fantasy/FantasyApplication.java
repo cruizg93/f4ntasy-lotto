@@ -45,6 +45,9 @@ public class FantasyApplication {
 
     @Autowired
     TipoApostadorRepository tipoApostadorRepository;
+    
+    @Autowired
+    ApuestaRepository apuestaRepository;
 
     @Autowired
     TipoChicaRepository tipoChicaRepository;
@@ -139,186 +142,305 @@ public class FantasyApplication {
             sorteoTypeRepository.save(new SorteoType(SorteoTypeName.DIARIA));
         }
 
-        if (!userRepository.existsByUsername("C01") &&
-                !userRepository.existsByUsername("C02")
-
-        ) {
-            User user = new User("C01", "C01", encoder.encode("123456789"));
-            Set<Role> roles = new HashSet<>();
-            Role masterRole = roleRepository.findByName(RoleName.ROLE_MASTER)
-                    .orElseThrow(() -> new RuntimeException("Fail! -> Cause: Master Role not find."));
-            roles.add(masterRole);
-            user.setRoles(roles);
-            userRepository.save(user);
-            User user1 = new User("C02", "C02", encoder.encode("123456789"));
-            Set<Role> roles1 = new HashSet<>();
-            Role adminRole = roleRepository.findByName(RoleName.ROLE_ADMIN)
-                    .orElseThrow(() -> new RuntimeException("Fail! -> Cause: User Role not find."));
-            roles1.add(masterRole);
-            roles1.add(adminRole);
-            user1.setRoles(roles1);
-            userRepository.save(user1);
+        if (!userRepository.existsByUsername("C01") && !userRepository.existsByUsername("C02") ) {
+        	createMaster("C01");
+        	createMaster("C02");
         }
 
-        if (!userRepository.existsByUsername("JP01$")
-                && !userRepository.existsByUsername("JP02$")
-                && !userRepository.existsByUsername("JP03L")
-                && !userRepository.existsByUsername("JP04L")
-                && !userRepository.existsByUsername("P001")
-                && !userRepository.existsByUsername("P001x1")
+        if (!userRepository.existsByUsername("P001")
+                && !userRepository.existsByUsername("P002")
+                && !userRepository.existsByUsername("P003")
+                && !userRepository.existsByUsername("P004")
+                && !userRepository.existsByUsername("P005")
+                && !userRepository.existsByUsername("P006")
         ) {
             Moneda dolar = monedaRepository.findByMonedaName(MonedaName.DOLAR);
             Moneda lempiras = monedaRepository.findByMonedaName(MonedaName.LEMPIRAS);
 
-            TipoApostador tipoApostador = tipoApostadorRepository.findByApostadorName(ApostadorName.DIRECTO);
-            TipoChica tipoChica = tipoChicaRepository.findByChicaName(ChicaName.DIRECTO);
+            TipoApostador apuestaDirecta = tipoApostadorRepository.findByApostadorName(ApostadorName.DIRECTO);
+            TipoApostador apuestaMiles = tipoApostadorRepository.findByApostadorName(ApostadorName.MILES);
+            TipoChica chicaDirecta = tipoChicaRepository.findByChicaName(ChicaName.DIRECTO);
+            TipoChica chicaMiles = tipoChicaRepository.findByChicaName(ChicaName.MILES);
+            TipoChica chicaPedazos = tipoChicaRepository.findByChicaName(ChicaName.PEDAZOS);
 
-            TipoApostador tipoApostador1 = tipoApostadorRepository.findByApostadorName(ApostadorName.MILES);
-            TipoChica tipoChica1 = tipoChicaRepository.findByChicaName(ChicaName.PEDAZOS);
-
-//        jugadorRepository.deleteAll();
-            Jugador jDolar1 = new Jugador("Jugador 1",
-                    "JP01$",
-                    encoder.encode("123456789"), dolar, tipoApostador, tipoChica);
-//        User user3 = new User("Jugador1", "JP01$", encoder.encode("123456789"));
-            Set<Role> roles2 = new HashSet<>();
-            Role userRole = roleRepository.findByName(RoleName.ROLE_USER)
-                    .orElseThrow(() -> new RuntimeException("Fail! -> Cause: Master Role not find."));
-            roles2.add(userRole);
-            jDolar1.setRoles(roles2);
-            jugadorRepository.save(jDolar1);
-
-
-            Jugador jDolar2 = new Jugador("Jugador 2",
-                    "JP02$",
-                    encoder.encode("123456789"), dolar, tipoApostador, tipoChica);
-            roles2.add(userRole);
-            jDolar1.setRoles(roles2);
-            jugadorRepository.save(jDolar2);
-
-            Jugador jLempiras = new Jugador("Jugador 3",
-                    "JP03L",
-                    encoder.encode("123456789"), lempiras, tipoApostador1, tipoChica1);
-            jLempiras.setRoles(roles2);
-            jugadorRepository.save(jLempiras);
-
-            Jugador jLempiras1 = new Jugador("Jugador 4",
-                    "JP04L",
-                    encoder.encode("123456789"), lempiras, tipoApostador1, tipoChica1);
-            jLempiras.setRoles(roles2);
-            jugadorRepository.save(jLempiras1);
-
-            Jugador jP1 = new Jugador("Jugador 5",
-                    "P001",
-                    encoder.encode("123456789"), lempiras, tipoApostador1, tipoChica1);
-            jP1.setCostoMil(12);
-            jP1.setPremioMil(10);
-            jP1.setComisionChicaPedazos(20);
-            jP1.setCostoChicaPedazos(0.3);
-            jP1.setPremioChicaPedazos(20);
-            jP1.setRoles(roles2);
-
-            PlayerCount playerCount = new PlayerCount();
-            playerCount.setCount(1L);
-            playerCountRepository.save(playerCount);
-
-            jugadorRepository.save(jP1);
-
-            Set<Role> roles3 = new HashSet<>();
-            Role asiRole = roleRepository.findByName(RoleName.ROLE_ASIS)
-                    .orElseThrow(() -> new RuntimeException("Fail! -> Cause: Master Role not find."));
-            roles3.add(asiRole);
-            Asistente asistente = new Asistente("Jugador 9",
-                    "P001x1",
-                    encoder.encode("123456789"));
-            asistente.setRoles(roles3);
-            asistenteRepository.save(asistente);
-            asistente.setJugador(jP1);
-            asistenteRepository.save(asistente);
-        }
-
-
-        if (cambioRepository.count() == 0) {
+            Jugador p1 = createJugadorP("Usuario 1","P001",lempiras, apuestaMiles,chicaMiles, new double[] {12,1000}, new double[]{11,900} );
+            Jugador p2 = createJugadorP("Usuario 2","P002",lempiras, apuestaMiles,chicaDirecta, new double[] {12,1000}, new double[]{20,66} );
+            Jugador p3 = createJugadorP("Usuario 3","P003",lempiras, apuestaMiles,chicaPedazos, new double[] {10,1000}, new double[]{22,0.30,20} );
+            Jugador p4 = createJugadorP("Usuario 4","P004",lempiras, apuestaDirecta,chicaMiles, new double[] {18,66}, new double[]{15,1250} );
+            Jugador p5 = createJugadorP("Usuario 5","P005",lempiras, apuestaDirecta,chicaDirecta, new double[] {20,66}, new double[]{22.5,60} );
+            Jugador p6 = createJugadorP("Usuario 6","P006",lempiras, apuestaDirecta,chicaPedazos, new double[] {21,65}, new double[]{20,0.30,68} );
+            
+            Asistente x1 = createJugadorX("Asistente 1", "P001x1", p1);
+            Asistente x2 = createJugadorX("Asistente 2", "P002x1", p2);
+            Asistente x3 = createJugadorX("Asistente 3", "P003x1", p3);
+            Asistente x4 = createJugadorX("Asistente 4", "P004x1", p4);
+            Asistente x5 = createJugadorX("Asistente 5", "P005x1", p5);
+       
             Cambio cambio = new Cambio();
-            cambio.setCambio(24.5);
-            cambio.setCambioTime(new Timestamp(
-                    ZonedDateTime.now().toInstant().toEpochMilli()
-            ));
-            cambioRepository.save(cambio);
-        }
-
-        Date date = new Date();
-        LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        int year = localDate.getYear();
-        int month = localDate.getMonthValue();
-        int day = localDate.getDayOfMonth();
-
-//        userRepository.save(user3);
-
-        Timestamp timestamp = (new Timestamp(
-                ZonedDateTime.of(year, month, day, 11, 0, 0, 0,
-                        ZoneId.of("America/Tegucigalpa")
-                ).toInstant().toEpochMilli()
-        ));
-
-        SorteoType diariaSorteoType = sorteoTypeRepository.getBySorteoTypeName(SorteoTypeName.DIARIA);
-        SorteoType chicaSorteoType = sorteoTypeRepository.getBySorteoTypeName(SorteoTypeName.CHICA);
-        if (!sorteoDiariaRepository.existsSorteoActivoBySorteoTime(timestamp)) {
-            newSorteo(estadoRepository, timestamp, diariaSorteoType);
-        }
-
-
-        timestamp = (new Timestamp(
-                ZonedDateTime.of(year, month, day, 15, 0, 0, 0,
-                        ZoneId.of("America/Tegucigalpa")
-                ).toInstant().toEpochMilli()
-        ));
-
-        if (!sorteoDiariaRepository.existsSorteoActivoBySorteoTime(timestamp)) {
-            newSorteo(estadoRepository, timestamp, diariaSorteoType);
-        }
-
-        timestamp = (new Timestamp(
-                ZonedDateTime.of(year, month, day, 21, 0, 0, 0,
-                        ZoneId.of("America/Tegucigalpa")
-                ).toInstant().toEpochMilli()
-        ));
-
-        if (!sorteoDiariaRepository.existsSorteoActivoBySorteoTime(timestamp)) {
-            newSorteo(estadoRepository, timestamp, diariaSorteoType);
-        }
-
-
-        LocalDate monday = localDate.with(previousOrSame(MONDAY));
-        LocalDate nextSunday =LocalDate.now().with( next( SUNDAY ) );
-//        timestamp = (new Timestamp(
-//                ZonedDateTime.of(monday.getYear(), monday.getMonthValue(), monday.getDayOfMonth(), 0, 1, 0, 0,
-//                        ZoneId.of("America/Tegucigalpa")
-//                ).toInstant().toEpochMilli()
-//        ));
-        timestamp = Timestamp.valueOf(LocalDateTime.of(nextSunday, LocalTime.MIDNIGHT));
-        if (!sorteoDiariaRepository.existsSorteoActivoBySorteoTime(timestamp)) {
-            newSorteo(estadoRepository, timestamp, chicaSorteoType);
-        }
-
-        List<SorteoDiaria> sorteoDiarias = sorteoDiariaRepository
-                .findAllBySorteoTimeLessThan(new Timestamp(System.currentTimeMillis()));
-
-        sorteoDiarias.forEach(sorteoDiaria -> {
-            Sorteo sorteo = sorteoRepository.getSorteoById(sorteoDiaria.getId());
-            if (sorteo.getSorteoType().getSorteoTypeName().equals(SorteoTypeName.DIARIA)) {
-                sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.CERRADA));
-                sorteoRepository.save(sorteo);
+            if (cambioRepository.count() == 0) {
+                cambio.setCambio(24.5);
+                cambio.setCambioTime(new Timestamp(
+                        ZonedDateTime.now().toInstant().toEpochMilli()
+                ));
+                cambio = cambioRepository.save(cambio);
             }
 
-        });
+            Date date = new Date();
+            LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            int year = localDate.getYear();
+            int month = localDate.getMonthValue();
+            int day = localDate.getDayOfMonth();
+
+
+            Timestamp timestamp = (new Timestamp(
+                    ZonedDateTime.of(year, month, day, 11, 0, 0, 0,
+                            ZoneId.of("America/Tegucigalpa")
+                    ).toInstant().toEpochMilli()
+            ));
+
+            SorteoType diariaSorteoType = sorteoTypeRepository.getBySorteoTypeName(SorteoTypeName.DIARIA);
+            SorteoType chicaSorteoType = sorteoTypeRepository.getBySorteoTypeName(SorteoTypeName.CHICA);
+            Sorteo sorteoDiaria11 = null;
+            Sorteo sorteoDiaria15 = null;
+            Sorteo sorteoDiaria21 = null;
+            Sorteo sorteoChica = null;
+            if (!sorteoDiariaRepository.existsSorteoActivoBySorteoTime(timestamp)) {
+            	sorteoDiaria11 = newSorteo(estadoRepository, timestamp, diariaSorteoType);
+            }
+
+
+            timestamp = (new Timestamp(
+                    ZonedDateTime.of(year, month, day, 15, 0, 0, 0,
+                            ZoneId.of("America/Tegucigalpa")
+                    ).toInstant().toEpochMilli()
+            ));
+
+            if (!sorteoDiariaRepository.existsSorteoActivoBySorteoTime(timestamp)) {
+            	sorteoDiaria15 = newSorteo(estadoRepository, timestamp, diariaSorteoType);
+            }
+
+            timestamp = (new Timestamp(
+                    ZonedDateTime.of(year, month, day, 21, 0, 0, 0,
+                            ZoneId.of("America/Tegucigalpa")
+                    ).toInstant().toEpochMilli()
+            ));
+
+            if (!sorteoDiariaRepository.existsSorteoActivoBySorteoTime(timestamp)) {
+            	sorteoDiaria21 = newSorteo(estadoRepository, timestamp, diariaSorteoType);
+            }
+
+
+            LocalDate monday = localDate.with(previousOrSame(MONDAY));
+            LocalDate nextSunday =LocalDate.now().with( next( SUNDAY ) );
+
+            timestamp = Timestamp.valueOf(LocalDateTime.of(nextSunday, LocalTime.MIDNIGHT));
+            if (!sorteoDiariaRepository.existsSorteoActivoBySorteoTime(timestamp)) {
+            	sorteoChica = newSorteo(estadoRepository, timestamp, chicaSorteoType);
+            }
+            
+            
+            /**
+             * Jugador 1 
+             */
+            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 0, 25);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 3, 30);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 10, 20);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 11, 46);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 15, 28);
+            insertApuestaDiaria(sorteoDiaria11.getId(), x1, cambio, 5, 30);
+            insertApuestaDiaria(sorteoDiaria11.getId(), x1, cambio, 8, 50);
+            insertApuestaDiaria(sorteoDiaria11.getId(), x1, cambio, 10, 18);
+            
+            insertApuestaChica(sorteoChica.getId(),p1, cambio,0,45);
+            insertApuestaChica(sorteoChica.getId(),p1, cambio,3,35);
+            insertApuestaChica(sorteoChica.getId(),p1, cambio,10,26);
+            insertApuestaChica(sorteoChica.getId(),p1, cambio,11,20);
+            insertApuestaChica(sorteoChica.getId(),p1, cambio,15,30);
+            insertApuestaChica(sorteoChica.getId(),x1, cambio,5,40);
+            insertApuestaChica(sorteoChica.getId(),x1, cambio,8,36);
+            insertApuestaChica(sorteoChica.getId(),x1, cambio,10,55);
+            insertApuestaChica(sorteoChica.getId(),x1, cambio,18,1);
+            
+            /**
+             * Jugador 2
+             */
+            insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 0, 15);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 3, 18);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 10, 45);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 11, 48);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 17, 10);
+            insertApuestaDiaria(sorteoDiaria11.getId(), x2, cambio, 5, 50);
+            insertApuestaDiaria(sorteoDiaria11.getId(), x2, cambio, 8, 40);
+            insertApuestaDiaria(sorteoDiaria11.getId(), x2, cambio, 10, 15);
+            
+            insertApuestaChica(sorteoChica.getId(),p2, cambio,0,26);
+            insertApuestaChica(sorteoChica.getId(),p2, cambio,3,58);
+            insertApuestaChica(sorteoChica.getId(),p2, cambio,10,45);
+            insertApuestaChica(sorteoChica.getId(),p2, cambio,11,44);
+            insertApuestaChica(sorteoChica.getId(),p2, cambio,15,88);
+            insertApuestaChica(sorteoChica.getId(),x2, cambio,5,42);
+            insertApuestaChica(sorteoChica.getId(),x2, cambio,8,105);
+            insertApuestaChica(sorteoChica.getId(),x2, cambio,10,48);
+            insertApuestaChica(sorteoChica.getId(),x2, cambio,19,70);
+            
+            /**
+             * Jugador 3
+             */
+            insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 0, 80);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 3, 40);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 10, 59);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 11, 63);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 19, 45);
+            insertApuestaDiaria(sorteoDiaria11.getId(), x3, cambio, 5, 44);
+            insertApuestaDiaria(sorteoDiaria11.getId(), x3, cambio, 8, 40);
+            insertApuestaDiaria(sorteoDiaria11.getId(), x3, cambio, 10, 23);
+            
+            insertApuestaChica(sorteoChica.getId(),p3, cambio,0,160);
+            insertApuestaChica(sorteoChica.getId(),p3, cambio,3,180);
+            insertApuestaChica(sorteoChica.getId(),p3, cambio,10,240);
+            insertApuestaChica(sorteoChica.getId(),p3, cambio,11,340);
+            insertApuestaChica(sorteoChica.getId(),p3, cambio,15,170);
+            insertApuestaChica(sorteoChica.getId(),x3, cambio,5,180);
+            insertApuestaChica(sorteoChica.getId(),x3, cambio,8,160);
+            insertApuestaChica(sorteoChica.getId(),x3, cambio,10,190);
+            insertApuestaChica(sorteoChica.getId(),x3, cambio,14,190);
+            
+            /**
+             * Jugador 4
+             */
+            insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 0, 1200);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 3, 1000);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 10, 800);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 11, 450);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 17, 20);
+            insertApuestaDiaria(sorteoDiaria11.getId(), x4, cambio, 5, 1000);
+            insertApuestaDiaria(sorteoDiaria11.getId(), x4, cambio, 8, 1450);
+            insertApuestaDiaria(sorteoDiaria11.getId(), x4, cambio, 10, 1800);
+            
+            insertApuestaChica(sorteoChica.getId(),p4, cambio,0,20);
+            insertApuestaChica(sorteoChica.getId(),p4, cambio,3,20);
+            insertApuestaChica(sorteoChica.getId(),p4, cambio,10,20);
+            insertApuestaChica(sorteoChica.getId(),p4, cambio,11,20);
+            insertApuestaChica(sorteoChica.getId(),p4, cambio,15,20);
+            insertApuestaChica(sorteoChica.getId(),x4, cambio,5,20);
+            insertApuestaChica(sorteoChica.getId(),x4, cambio,8,20);
+            insertApuestaChica(sorteoChica.getId(),x4, cambio,10,20);
+            insertApuestaChica(sorteoChica.getId(),x4, cambio,12,20);
+            
+            /**
+             * Jugador 5
+             */
+            insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 0, 120);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 3, 100);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 10, 145);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 11, 160);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 17, 5);
+            insertApuestaDiaria(sorteoDiaria11.getId(), x5, cambio, 5, 120);
+            insertApuestaDiaria(sorteoDiaria11.getId(), x5, cambio, 8, 90);
+            insertApuestaDiaria(sorteoDiaria11.getId(), x5, cambio, 10, 49);
+            
+            insertApuestaChica(sorteoChica.getId(),p5, cambio,0,156);
+            insertApuestaChica(sorteoChica.getId(),p5, cambio,3,147);
+            insertApuestaChica(sorteoChica.getId(),p5, cambio,10,110);
+            insertApuestaChica(sorteoChica.getId(),p5, cambio,11,210);
+            insertApuestaChica(sorteoChica.getId(),p5, cambio,15,41);
+            insertApuestaChica(sorteoChica.getId(),x5, cambio,5,100);
+            insertApuestaChica(sorteoChica.getId(),x5, cambio,8,250);
+            insertApuestaChica(sorteoChica.getId(),x5, cambio,10,200);
+            insertApuestaChica(sorteoChica.getId(),x5, cambio,18,40);
+
+            /**
+             * Jugador 6
+             */
+            insertApuestaDiaria(sorteoDiaria11.getId(), p6, cambio, 0, 210);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p6, cambio, 3, 250);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p6, cambio, 10, 180);
+            insertApuestaDiaria(sorteoDiaria11.getId(), p6, cambio, 11, 350);
+            
+            insertApuestaChica(sorteoChica.getId(),p6, cambio,0,50);
+            insertApuestaChica(sorteoChica.getId(),p6, cambio,3,120);
+            insertApuestaChica(sorteoChica.getId(),p6, cambio,10,240);
+            insertApuestaChica(sorteoChica.getId(),p6, cambio,11,45);
+            insertApuestaChica(sorteoChica.getId(),p6, cambio,15,160);
+            insertApuestaChica(sorteoChica.getId(),p6, cambio,18,10);
+
+
+            List<SorteoDiaria> sorteoDiarias = sorteoDiariaRepository
+                    .findAllBySorteoTimeLessThan(new Timestamp(System.currentTimeMillis()));
+
+            sorteoDiarias.forEach(sorteoDiaria -> {
+                Sorteo sorteo = sorteoRepository.getSorteoById(sorteoDiaria.getId());
+                if (sorteo.getSorteoType().getSorteoTypeName().equals(SorteoTypeName.DIARIA)) {
+                    sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.CERRADA));
+                    sorteoRepository.save(sorteo);
+                }
+
+            });
+
+        }
         return null;
     }
+    
+    private void createMaster(String username) {
+    	User user = new User(username, username, encoder.encode("123456789"));
+        Set<Role> roles = new HashSet<>();
+        Role masterRole = roleRepository.findByName(RoleName.ROLE_MASTER)
+                	.orElseThrow(() -> new RuntimeException("Fail! -> Cause: Master Role not find."));
+        roles.add(masterRole);
+        user.setRoles(roles);
+        userRepository.save(user);
+    }
+    
+    private Jugador createJugadorP(String name, String username, Moneda dolar,TipoApostador tipoApostador, TipoChica tipoChica,double valoresDiarios[], double valoresChica[]) {
+    	Jugador jugador = new Jugador(name,username,encoder.encode("123456789"), dolar, tipoApostador, tipoChica);
+        Set<Role> roles = new HashSet<>();
+        Role userRole = roleRepository.findByName(RoleName.ROLE_USER)
+        							.orElseThrow(() -> new RuntimeException("Fail! -> Cause: Master Role not find."));
+        roles.add(userRole);
+        jugador.setRoles(roles);
+        
+        if (tipoApostador.getApostadorName().equals(ApostadorName.MILES)) {
+        	jugador.setCostoMil(valoresDiarios[0]);
+            jugador.setPremioMil(valoresDiarios[1]);
+        }else if (tipoApostador.getApostadorName().equals(ApostadorName.DIRECTO)) {
+        	jugador.setComisionDirecto(valoresDiarios[0]);
+        	jugador.setPremioDirecto(valoresDiarios[1]);
+        }
+        
+        if(tipoChica.getChicaName().equals(ChicaName.MILES)) {
+            jugador.setCostoChicaMiles(valoresChica[0]);
+            jugador.setPremioChicaMiles(valoresChica[1]);
+        }else if(tipoChica.getChicaName().equals(ChicaName.DIRECTO)) {
+        	jugador.setComisionChicaDirecto(valoresChica[0]);
+        	jugador.setPremioChicaDirecto(valoresChica[1]);
+        }else if(tipoChica.getChicaName().equals(ChicaName.PEDAZOS)) {
+        	jugador.setComisionChicaPedazos(valoresChica[0]);
+        	jugador.setCostoChicaPedazos(valoresChica[1]);
+        	jugador.setPremioChicaPedazos(valoresChica[2]);
+        }
+        
+        return jugadorRepository.save(jugador);
+    }
+    
+    private Asistente createJugadorX(String name, String username, Jugador jugadorP) {
+    	Set<Role> roles = new HashSet<>();
+        Role role = roleRepository.findByName(RoleName.ROLE_ASIS)
+                .orElseThrow(() -> new RuntimeException("Fail! -> Cause: Master Role not find."));
+        
+        roles.add(role);
+        Asistente asistente = new Asistente(name, username, encoder.encode("123456789"));
+        asistente.setRoles(roles);
+        asistenteRepository.save(asistente);
+        
+        asistente.setJugador(jugadorP);
+        return asistenteRepository.save(asistente);
+    }
 
-    private void newSorteo(EstadoRepository estadoRepository, Timestamp timestamp, SorteoType sorteoType) {
-        if (!sorteoRepository.existsSorteoBySorteoTime(timestamp)) {
-            Sorteo sorteo1 = new Sorteo();
-            sorteo1.setEstado(estadoRepository.getEstadoByEstado(EstadoName.ABIERTA));
+    private Sorteo newSorteo(EstadoRepository estadoRepository, Timestamp timestamp, SorteoType sorteoType) {
+    	Sorteo sorteo1 = null;
+    	if (!sorteoRepository.existsSorteoBySorteoTime(timestamp)) {
+    		sorteo1 = new Sorteo();
+    		sorteo1.setEstado(estadoRepository.getEstadoByEstado(EstadoName.ABIERTA));
             sorteo1.setSorteoTime(timestamp);
             sorteo1.setStatus(statusRepository.getByStatus(StatusName.CURRENT));
             sorteo1.setSorteoType(sorteoType);
@@ -329,8 +451,58 @@ public class FantasyApplication {
             sorteoDiaria1.setSorteoTime(timestamp);
             sorteoDiariaRepository.save(sorteoDiaria1);
         }
+    	return sorteo1;
     }
 
+    private void insertApuestaDiaria(Long sorteoid,User user, Cambio cambio, int numero, int cantidad) {
+        double comision = 0d;
+    	
+        Jugador jugador = null;
+	    if (user instanceof Jugador) {
+	    	jugador = (Jugador) user;
+	    } else if (user instanceof Asistente) {
+	    	jugador = ((Asistente) user).getJugador();
+	    }
+	    
+	    comision = jugador.getComisionDirecto()==0?1:jugador.getComisionDirecto();
+        
+    	Apuesta apuesta = new Apuesta();
+        Optional<SorteoDiaria> sorteoDiaria = sorteoDiariaRepository.findById(sorteoid);
+        sorteoDiaria.ifPresent(apuesta::setSorteoDiaria);
+        apuesta.setNumero(numero);
+        apuesta.setCantidad(Double.valueOf(cantidad));
+        apuesta.setComision(cantidad *comision / 100);
+        apuesta.setCambio(cambio);
+        apuesta.setUser(user);
+        apuestaRepository.save(apuesta);
+    }
+    
+    private void insertApuestaChica(Long sorteoid,User user, Cambio cambio, int numero, int cantidad) {
+        double comision = 0d;
+        double costoPedazo = 0d;
+    	
+        Jugador jugador = null;
+	    if (user instanceof Jugador) {
+	    	jugador = (Jugador) user;
+	    } else if (user instanceof Asistente) {
+	    	jugador = ((Asistente) user).getJugador();
+	    }
+	    
+	    comision = jugador.getComisionChicaPedazos() + jugador.getComisionChicaDirecto();
+	    costoPedazo = jugador.getCostoChicaPedazos()==0?1:jugador.getCostoChicaPedazos();
+	    
+    	Apuesta apuesta = new Apuesta();
+        Optional<SorteoDiaria> sorteoDiaria = sorteoDiariaRepository.findById(sorteoid);
+        sorteoDiaria.ifPresent(apuesta::setSorteoDiaria);
+        apuesta.setNumero(numero);
+        apuesta.setCantidad(Double.valueOf(cantidad));
+        apuesta.setComision(cantidad * costoPedazo * comision / 100);
+        apuesta.setCambio(cambio);
+        apuesta.setUser(user);
+        apuestaRepository.save(apuesta);
+    }
+    
+    
     @Bean
     InitializingBean sendDatabase() {
         return () -> {
