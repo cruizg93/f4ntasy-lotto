@@ -241,7 +241,7 @@ public class FantasyApplication {
             
             /**
              * Jugador 1 
-             */
+             *
             insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 0, 25);
             insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 3, 30);
             insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 10, 20);
@@ -261,9 +261,9 @@ public class FantasyApplication {
             insertApuestaChica(sorteoChica.getId(),x1, cambio,10,55);
             insertApuestaChica(sorteoChica.getId(),x1, cambio,18,1);
             
-            /**
+            **
              * Jugador 2
-             */
+             *
             insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 0, 15);
             insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 3, 18);
             insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 10, 45);
@@ -283,9 +283,9 @@ public class FantasyApplication {
             insertApuestaChica(sorteoChica.getId(),x2, cambio,10,48);
             insertApuestaChica(sorteoChica.getId(),x2, cambio,19,70);
             
-            /**
+            **
              * Jugador 3
-             */
+             *
             insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 0, 80);
             insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 3, 40);
             insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 10, 59);
@@ -305,9 +305,9 @@ public class FantasyApplication {
             insertApuestaChica(sorteoChica.getId(),x3, cambio,10,190);
             insertApuestaChica(sorteoChica.getId(),x3, cambio,14,190);
             
-            /**
+            **
              * Jugador 4
-             */
+             *
             insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 0, 1200);
             insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 3, 1000);
             insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 10, 800);
@@ -327,9 +327,9 @@ public class FantasyApplication {
             insertApuestaChica(sorteoChica.getId(),x4, cambio,10,20);
             insertApuestaChica(sorteoChica.getId(),x4, cambio,12,20);
             
-            /**
+            **
              * Jugador 5
-             */
+             *
             insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 0, 120);
             insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 3, 100);
             insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 10, 145);
@@ -349,9 +349,10 @@ public class FantasyApplication {
             insertApuestaChica(sorteoChica.getId(),x5, cambio,10,200);
             insertApuestaChica(sorteoChica.getId(),x5, cambio,18,40);
 
-            /**
+            **
              * Jugador 6
-             */
+             *
+            
             insertApuestaDiaria(sorteoDiaria11.getId(), p6, cambio, 0, 210);
             insertApuestaDiaria(sorteoDiaria11.getId(), p6, cambio, 3, 250);
             insertApuestaDiaria(sorteoDiaria11.getId(), p6, cambio, 10, 180);
@@ -362,7 +363,7 @@ public class FantasyApplication {
             insertApuestaChica(sorteoChica.getId(),p6, cambio,10,240);
             insertApuestaChica(sorteoChica.getId(),p6, cambio,11,45);
             insertApuestaChica(sorteoChica.getId(),p6, cambio,15,160);
-            insertApuestaChica(sorteoChica.getId(),p6, cambio,18,10);
+            insertApuestaChica(sorteoChica.getId(),p6, cambio,18,10);*/
 
 
             List<SorteoDiaria> sorteoDiarias = sorteoDiariaRepository
