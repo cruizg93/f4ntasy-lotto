@@ -233,7 +233,7 @@ public class FantasyApplication {
             LocalDate monday = localDate.with(previousOrSame(MONDAY));
             LocalDate nextSunday =LocalDate.now().with( next( SUNDAY ) );
 
-            timestamp = Timestamp.valueOf(LocalDateTime.of(nextSunday, LocalTime.MIDNIGHT));
+            timestamp = Timestamp.valueOf(LocalDateTime.of(nextSunday, LocalTime.NOON));
             if (!sorteoDiariaRepository.existsSorteoActivoBySorteoTime(timestamp)) {
             	sorteoChica = newSorteo(estadoRepository, timestamp, chicaSorteoType);
             }

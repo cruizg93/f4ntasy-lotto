@@ -106,7 +106,7 @@ public class Util {
         if (sorteoTypeName.equals(SorteoTypeName.CHICA)){
 //            Timestamp timestamp=Timestamp.va;
             LocalDate localDate=LocalDate.now().with( next( SUNDAY ) );
-            timestamp = Timestamp.valueOf(LocalDateTime.of(localDate, LocalTime.MIDNIGHT));
+            timestamp = Timestamp.valueOf(LocalDateTime.of(localDate, LocalTime.NOON));
         }else{
             timestamp = new Timestamp(
                     ZonedDateTime.of(ld.getYear(), ld.getMonthValue(), ld.getDayOfMonth(), hour, 0, 0, 0,
