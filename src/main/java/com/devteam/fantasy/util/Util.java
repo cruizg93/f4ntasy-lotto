@@ -1,6 +1,7 @@
 package com.devteam.fantasy.util;
 
 import com.devteam.fantasy.model.Apuesta;
+import com.devteam.fantasy.model.Asistente;
 import com.devteam.fantasy.model.HistoricoApuestas;
 import com.devteam.fantasy.model.Jugador;
 import com.devteam.fantasy.model.Sorteo;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -40,6 +42,8 @@ import static java.time.DayOfWeek.SUNDAY;
 import static java.time.temporal.TemporalAdjusters.next;
 import static java.time.temporal.TemporalAdjusters.nextOrSame;
 import static java.time.temporal.TemporalAdjusters.previousOrSame;
+
+import java.math.BigDecimal;
 
 public class Util {
 
@@ -299,7 +303,7 @@ public class Util {
         sorteoDiariaList.forEach(sorteoDiaria -> {
             Sorteo sorteo = sorteoRepository.getSorteoById(sorteoDiaria.getId());
             if (sorteo.getEstado().getEstado().equals(EstadoName.BLOQUEADA)) {
-                List<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
+                Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
                 apuestaList.forEach(apuesta -> {
                     HistoricoApuestas historicoApuestas = new HistoricoApuestas();
                     historicoApuestas.setCantidad(apuesta.getCantidad());
@@ -523,4 +527,56 @@ public class Util {
         		monthsAbb[localDate.getMonthValue() - 1]
                 );
     }
+    
+    public static Jugador getJugadorFromApuesta(Apuesta apuesta) {
+    	return getJugadorFromUser(apuesta.getUser());
+    }
+    
+    public static Jugador getJugadorFromUser(User user) {
+    	if(user instanceof Jugador){
+    		return (Jugador) user;
+        }else if(user instanceof Asistente){
+            return ((Asistente) user).getJugador();
+        }
+    	return null;
+    }
+    
+    public static BigDecimal getApuestaCambio(String currency, Apuesta apuesta ) {
+    	BigDecimal cambio= BigDecimal.ONE;
+
+        Jugador jugador = Util.getJugadorFromApuesta(apuesta);
+        if(currency.equalsIgnoreCase("lempira") && jugador.getMoneda().getMonedaName().equals(MonedaName.DOLAR)){
+            cambio = new BigDecimal(apuesta.getCambio().getCambio());
+        }else if(currency.equalsIgnoreCase("dolar") && jugador.getMoneda().getMonedaName().equals(MonedaName.LEMPIRAS)){
+            cambio = new BigDecimal(1/apuesta.getCambio().getCambio());
+        }
+        return cambio;
+    }
+    
+    public static boolean isSorteoTypeDiaria(Sorteo sorteo) {
+    	return sorteo.getSorteoType().getSorteoTypeName().equals(SorteoTypeName.DIARIA);
+    }
+    
+    public static boolean isSorteoTypeChica(Sorteo sorteo) {
+    	return sorteo.getSorteoType().getSorteoTypeName().equals(SorteoTypeName.CHICA);
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

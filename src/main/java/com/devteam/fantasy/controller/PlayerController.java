@@ -181,7 +181,7 @@ public class PlayerController {
         String username = mapper.convertValue(jsonNodes.get("username"), String.class);
         User user = userRepository.getByUsername(username);
     	
-    	List<SorteoDiaria> sorteos = sorteoService.getPlayerSorteosList(user);
+    	List<SorteoDiaria> sorteos = sorteoService.getActiveSorteosList(user);
     	List<SorteoResponse> sorteosResponses = sorteoService.getSorteosResponses(sorteos, user);
     	
     	return sorteosResponses;

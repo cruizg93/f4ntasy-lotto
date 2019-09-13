@@ -53,5 +53,11 @@ public class SorteoDiaria {
         this.apuestas = apuestas;
     }
 
+	@Override
+	public String toString() {
+		return "SorteoDiaria [id=" + id + ", sorteo=" + sorteo + ", sorteoTime=" + sorteoTime + ", apuestas=" + apuestas
+				+ "]";
+	}
 
+    
 }

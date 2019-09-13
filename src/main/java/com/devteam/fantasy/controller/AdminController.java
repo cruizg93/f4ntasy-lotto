@@ -6,6 +6,8 @@ import com.devteam.fantasy.message.response.*;
 import com.devteam.fantasy.model.*;
 import com.devteam.fantasy.repository.*;
 import com.devteam.fantasy.security.jwt.JwtProvider;
+import com.devteam.fantasy.service.AdminService;
+import com.devteam.fantasy.service.SorteoService;
 import com.devteam.fantasy.util.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -97,6 +99,14 @@ public class AdminController {
     @Autowired
     private SorteoTypeRepository sorteoTypeRepository;
 
+    @Autowired
+    private SorteoService sorteoService;
+    
+    @Autowired
+    private AdminService adminService;
+    
+    
+    
     @GetMapping("/jugadores")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public List<JugadorSingleResponse> findAllJugadores() {
@@ -182,7 +192,7 @@ public class AdminController {
                 ).toInstant().toEpochMilli()
         ));
         if (sorteoDiaria != null) {
-            List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
+            Set<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
             apuestas.forEach(apuesta -> apuestaRepository.delete(apuesta));
             sorteoDiariaRepository.delete(sorteoDiaria);
         }
@@ -199,7 +209,7 @@ public class AdminController {
         SorteoDiaria sorteoDiaria = getThisWeekChica();
 
         if (sorteoDiaria != null) {
-            List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
+            Set<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
             apuestas.forEach(apuesta -> apuestaRepository.delete(apuesta));
             List<Resultado> resultados = resultadoRepository.findAllBySorteo(sorteoDiaria.getSorteo());
             resultados.forEach(resultado -> resultadoRepository.delete(resultado));
@@ -721,7 +731,7 @@ public class AdminController {
             Sorteo sorteo = sorteoRepository.getSorteoById(sorteoDiaria.getId());
             if (sorteo.getEstado().getEstado().equals(EstadoName.ABIERTA)||
                     sorteo.getEstado().getEstado().equals(EstadoName.CERRADA)) {
-                List<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
+                Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
 
                 apuestaList.forEach(apuesta -> {
                     User user= apuesta.getUser();
@@ -1332,15 +1342,13 @@ public class AdminController {
         return jugadorSorteosResponse;
     }
 
+    //Reemplazado por SorteoController.getApuestasActivas [/sorteos/activos/{moneda}
+    @Deprecated
     @GetMapping("/apuestas/activas/{moneda}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public List<ApuestasActivasResponse> getApuestasActivas(@PathVariable String moneda) {
         List<ApuestasActivasResponse> apuestasActivasResponses = new ArrayList<>();
-        Iterable<SorteoDiaria> sorteoDiariasDB = sorteoDiariaRepository.findAll();
-        
-        List<SorteoDiaria> sorteoDiarias = new ArrayList<SorteoDiaria>();
-        sorteoDiariasDB.forEach(sorteoDiarias::add);
-        sorteoDiarias.sort((sorteo1, sorteo2) -> sorteo1.getSorteoTime().compareTo(sorteo2.getSorteoTime()));
+        List<SorteoDiaria> sorteoDiarias = sorteoService.getActiveSorteosList();
         
         sorteoDiarias.forEach(sorteoDiaria -> {
             ApuestasActivasResponse activasResponse = new ApuestasActivasResponse();
@@ -1367,7 +1375,7 @@ public class AdminController {
                     premio[0] += resultado.getPremio() * cambio;
                 });
             } else {
-                List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
+                Set<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
 
                 apuestas.forEach(apuesta -> {
                     double cambio=1;
@@ -1422,6 +1430,8 @@ public class AdminController {
         return apuestasActivasResponses;
     }
 
+    //Reemplazado por SorteoController.getDetallesApuestasActivasById [/sorteos/activos/{id}
+    @Deprecated
     @PostMapping("/apuestas/activas/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ApuestaActivaResumenResponse getDetallesApuestasActivasById(@PathVariable Long id,
@@ -1432,7 +1442,7 @@ public class AdminController {
         List<TuplaRiesgo> tuplaRiesgos = new ArrayList<>();
         SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
         Sorteo sorteo = sorteoRepository.getSorteoById(id);
-        List<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
+        Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
         double[] cantidad = new double[100];
         double[] riesgo = new double[100];
         final double[] total = {0.0};
