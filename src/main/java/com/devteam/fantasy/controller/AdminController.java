@@ -1153,7 +1153,7 @@ public class AdminController {
         apuestasDetails.add(detallesResponse);
         List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
         asistentes.forEach(asistente -> {
-            List<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
+            Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
             if (apuestaList.size() > 0) {
                 ApuestaActivaDetallesResponse detallesResponse1 = new ApuestaActivaDetallesResponse();
                 List<PairNV> pairNVList1 = new ArrayList<>();
@@ -1225,7 +1225,7 @@ public class AdminController {
         apuestasDetails.add(detallesResponse);
         List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
         asistentes.forEach(asistente -> {
-            List<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
+            Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
             if (apuestaList.size() > 0) {
                 ApuestaActivaDetallesResponse detallesResponse1 = new ApuestaActivaDetallesResponse();
                 List<PairNV> pairNVList1 = new ArrayList<>();
@@ -1254,7 +1254,7 @@ public class AdminController {
             double[] total = {0.0};
             double[] comision = {0.0};
             sorteoDiarias.forEach(sorteoDiaria -> {
-                List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, jugador);
+                Set<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, jugador);
                 apuestas.forEach(apuesta -> {
                     double cantidad = apuesta.getCantidad();
                     if(sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().equals(SorteoTypeName.DIARIA)){
@@ -1336,7 +1336,12 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public List<ApuestasActivasResponse> getApuestasActivas(@PathVariable String moneda) {
         List<ApuestasActivasResponse> apuestasActivasResponses = new ArrayList<>();
-        Iterable<SorteoDiaria> sorteoDiarias = sorteoDiariaRepository.findAll();
+        Iterable<SorteoDiaria> sorteoDiariasDB = sorteoDiariaRepository.findAll();
+        
+        List<SorteoDiaria> sorteoDiarias = new ArrayList<SorteoDiaria>();
+        sorteoDiariasDB.forEach(sorteoDiarias::add);
+        sorteoDiarias.sort((sorteo1, sorteo2) -> sorteo1.getSorteoTime().compareTo(sorteo2.getSorteoTime()));
+        
         sorteoDiarias.forEach(sorteoDiaria -> {
             ApuestasActivasResponse activasResponse = new ApuestasActivasResponse();
             Sorteo sorteo = sorteoRepository.getSorteoById(sorteoDiaria.getId());
@@ -1545,9 +1550,13 @@ public class AdminController {
         double total = 0;
         int i = 0;
         String moneda="LEMPIRA";
-        Iterable<SorteoDiaria> sorteos = sorteoDiariaRepository.findAll();
+        Iterable<SorteoDiaria> sorteosDB = sorteoDiariaRepository.findAll();
+        List<SorteoDiaria> sorteos = new ArrayList<SorteoDiaria>();
+        sorteosDB.forEach(sorteos::add);
+        sorteos.sort((sorteo1, sorteo2) -> sorteo1.getSorteoTime().compareTo(sorteo2.getSorteoTime()));
+        
         for (SorteoDiaria sorteoDiaria : sorteos) {
-            List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
+            Set<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
             for (Apuesta apuesta : apuestas) {
                 double cantidad = apuesta.getCantidad();
                 if(sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().equals(SorteoTypeName.DIARIA)){
@@ -1657,7 +1666,7 @@ public class AdminController {
         if (user instanceof Jugador) {
             List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
             asistentes.forEach(asistente -> {
-                List<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
+                Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
                 if (apuestaList.size() > 0) {
                     for (Apuesta apuesta : apuestaList) {
                         double cantidad = apuesta.getCantidad();

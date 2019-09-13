@@ -138,7 +138,7 @@ public class Util {
         Timestamp timestamp;
         if (sorteoTypeName.equals(SorteoTypeName.CHICA)){
             //            Timestamp timestamp=Timestamp.va;
-        	LocalDateTime horaSorteoNuevo = horaSorteoCerrado.toLocalDateTime().plusDays(6);
+        	LocalDateTime horaSorteoNuevo = horaSorteoCerrado.toLocalDateTime().plusDays(7);
             timestamp = Timestamp.valueOf(horaSorteoNuevo);
         }else{
         	LocalDateTime horaSorteoNuevo = horaSorteoCerrado.toLocalDateTime().plusDays(1);
