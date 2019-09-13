@@ -18,7 +18,7 @@ public interface ApuestaRepository extends JpaRepository<Apuesta, Long> {
     Optional<Apuesta> findByNumeroAndSorteoDiaria(Integer numero, SorteoDiaria sorteoDiaria);
     Set<Apuesta> findAllBySorteoDiariaAndUser(SorteoDiaria sorteoDiaria, User user);
     List<Apuesta> findAllBySorteoDiariaAndUserOrderByNumeroAsc(SorteoDiaria sorteoDiaria, User user);
-    List<Apuesta> findAllBySorteoDiaria(SorteoDiaria sorteoDiaria);
+    Set<Apuesta> findAllBySorteoDiaria(SorteoDiaria sorteoDiaria);
     List<Apuesta> findAllBySorteoDiariaOrderByUserDesc(SorteoDiaria sorteoDiaria);
     Apuesta getApuestaByNumeroAndSorteoDiariaAndUser(Integer numero,SorteoDiaria sorteoDiaria, User user);
 }
