@@ -42,4 +42,11 @@ public class Cambio {
     public void setCambioTime(Timestamp cambioTime) {
         this.cambioTime = cambioTime;
     }
+
+	@Override
+	public String toString() {
+		return "Cambio [cambio=" + cambio + ", cambioTime=" + cambioTime + "]";
+	}
+    
+    
 }

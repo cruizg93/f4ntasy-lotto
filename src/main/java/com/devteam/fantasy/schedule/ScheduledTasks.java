@@ -63,15 +63,19 @@ public class ScheduledTasks {
      * */
     @Scheduled(cron = "0 1 0 * * ?")
     public void createSorteoDiaria() {
-        Util.deleteSorteosDia(sorteoRepository, sorteoDiariaRepository, apuestaRepository, historicoApuestaRepository);
-        Util.insertSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, sorteoTypeRepository, SorteoTypeName.DIARIA, 11);
-        Util.insertSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, sorteoTypeRepository, SorteoTypeName.DIARIA, 15);
-        Util.insertSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, sorteoTypeRepository, SorteoTypeName.DIARIA, 21);
+    	log.debug("createSorteoDiaria: START");
+//        Util.deleteSorteosDia(sorteoRepository, sorteoDiariaRepository, apuestaRepository, historicoApuestaRepository);
+//        Util.insertSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, sorteoTypeRepository, SorteoTypeName.DIARIA, 11);
+//        Util.insertSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, sorteoTypeRepository, SorteoTypeName.DIARIA, 15);
+//        Util.insertSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, sorteoTypeRepository, SorteoTypeName.DIARIA, 21);
+        log.debug("createSorteoDiaria: END");
     }
 
     @Scheduled(cron = "0 1 0 * * MON")
     public void updateJugadorBalance() {
+    	log.debug("updateJugadorBalance: START");
         Util.updateJugadoBalance(jugadorRepository);
+        log.debug("updateJugadorBalance: END");
     }
 
 //    @Scheduled(cron = "0 1 0 * * MON")
@@ -85,24 +89,32 @@ public class ScheduledTasks {
 
     @Scheduled(cron = "0 55 10 * * ?")
     public void updateSorteoDiaria11() {
+    	log.debug("updateSorteoDiaria11: START");
         Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 11);
+        log.debug("updateSorteoDiaria11: END");
     }
 
     @Scheduled(cron = "0 55 14 * * ?")
     public void updateSorteoDiaria15() {
+    	log.debug("updateSorteoDiaria15: START");
         Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 15);
+        log.debug("updateSorteoDiaria15: END");
 
     }
 
     @Scheduled(cron = "0 55 20 * * ?")
     public void updateSorteoDiaria21() {
+    	log.debug("updateSorteoDiaria21: START");
         Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 21);
+        log.debug("updateSorteoDiaria21: END");
 
     }
 
     @Scheduled(cron = "0 55 23 ? * SUN")
     public void updateSorteoChiquitica() {
+    	log.debug("updateSorteoChiquitica: START");
         Util.updateChicaSorteo(estadoRepository, sorteoRepository, sorteoTypeRepository);
+        log.debug("updateSorteoChiquitica: END");
     }
 
 }

@@ -39,4 +39,11 @@ public class SorteoType {
     public void setSorteoTypeName(SorteoTypeName sorteoTypeName) {
         this.sorteoTypeName = sorteoTypeName;
     }
+
+	@Override
+	public String toString() {
+		return "SorteoType [sorteoTypeName=" + sorteoTypeName + "]";
+	}
+    
+    
 }

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface ApuestaRepository extends JpaRepository<Apuesta, Long> {
     Optional<Apuesta> findByNumero(Integer numero);
@@ -15,7 +16,7 @@ public interface ApuestaRepository extends JpaRepository<Apuesta, Long> {
     List<Apuesta> findAllByUser(User user);
     Apuesta getByNumeroAndAndId(Integer numero, Long id);
     Optional<Apuesta> findByNumeroAndSorteoDiaria(Integer numero, SorteoDiaria sorteoDiaria);
-    List<Apuesta> findAllBySorteoDiariaAndUser(SorteoDiaria sorteoDiaria, User user);
+    Set<Apuesta> findAllBySorteoDiariaAndUser(SorteoDiaria sorteoDiaria, User user);
     List<Apuesta> findAllBySorteoDiariaAndUserOrderByNumeroAsc(SorteoDiaria sorteoDiaria, User user);
     List<Apuesta> findAllBySorteoDiaria(SorteoDiaria sorteoDiaria);
     List<Apuesta> findAllBySorteoDiariaOrderByUserDesc(SorteoDiaria sorteoDiaria);

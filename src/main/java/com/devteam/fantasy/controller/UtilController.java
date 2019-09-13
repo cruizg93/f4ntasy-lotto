@@ -5,8 +5,8 @@ import com.devteam.fantasy.message.request.LoginForm;
 import com.devteam.fantasy.message.response.TimeResponse;
 import com.devteam.fantasy.model.User;
 import com.devteam.fantasy.repository.UserRepository;
+import com.devteam.fantasy.schedule.ScheduledTasks;
 import com.devteam.fantasy.util.Util;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +25,9 @@ public class UtilController {
 
     @Autowired
     PasswordEncoder encoder;
+    
+    @Autowired
+    ScheduledTasks scheduler;
 
     @GetMapping("/time")
     public TimeResponse getTime(){
@@ -50,4 +53,16 @@ public class UtilController {
         return Util.getUserFromJsonNode(userRepository, json).isNoFirstConnection();
     }
 
+    @GetMapping("/task/11")
+    public void excuteTask11() {
+    	scheduler.updateSorteoDiaria11();
+    }
+    @GetMapping("/task/15")
+    public void excuteTask15() {
+    	scheduler.updateSorteoDiaria15();
+    }
+    @GetMapping("/task/21")
+    public void excuteTask21() {
+    	scheduler.updateSorteoDiaria21();
+    }
 }

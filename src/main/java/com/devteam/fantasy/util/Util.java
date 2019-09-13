@@ -131,23 +131,18 @@ public class Util {
             SorteoDiariaRepository sorteoDiariaRepository,
             SorteoTypeRepository sorteoTypeRepository,
             SorteoTypeName sorteoTypeName,
-            int hour) {
+            Timestamp horaSorteoCerrado) {
         Sorteo sorteo = new Sorteo();
         sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.ABIERTA));
 
         Timestamp timestamp;
         if (sorteoTypeName.equals(SorteoTypeName.CHICA)){
             //            Timestamp timestamp=Timestamp.va;
-
-            LocalDate localDate=ld.plusDays(6).with( next( SUNDAY ) );
-            timestamp = Timestamp.valueOf(LocalDateTime.of(localDate, LocalTime.MIDNIGHT));
+        	LocalDateTime horaSorteoNuevo = horaSorteoCerrado.toLocalDateTime().plusDays(6);
+            timestamp = Timestamp.valueOf(horaSorteoNuevo);
         }else{
-            LocalDate localDate=ld.plusDays(1);
-            timestamp = new Timestamp(
-                    ZonedDateTime.of(localDate.getYear(), localDate.getMonthValue(), localDate.getDayOfMonth(), hour, 0, 0, 0,
-                            ZoneId.of("America/Tegucigalpa")
-                    ).toInstant().toEpochMilli()
-            );
+        	LocalDateTime horaSorteoNuevo = horaSorteoCerrado.toLocalDateTime().plusDays(1);
+        	timestamp = Timestamp.valueOf(horaSorteoNuevo);
         }
         sorteo.setSorteoTime(timestamp);
         sorteo.setSorteoType(sorteoTypeRepository.getBySorteoTypeName(sorteoTypeName));
@@ -159,6 +154,24 @@ public class Util {
         sorteoDiariaRepository.save(sorteoDiaria1);
 
     }
+    
+    private static void newSorteo(EstadoRepository estadoRepository, SorteoRepository sorteoRepository,
+			SorteoDiariaRepository sorteoDiariaRepository, SorteoTypeRepository sorteoTypeRepository,
+			SorteoTypeName sorteoTypeName, int hour) {
+
+    	Timestamp horaSorteoNuevo= new Timestamp(
+                ZonedDateTime.of(ld.getYear(), ld.getMonthValue(), ld.getDayOfMonth(), hour, 0, 0, 0,
+                        ZoneId.of("America/Tegucigalpa")
+                ).toInstant().toEpochMilli()
+        );
+    	
+    	newSorteo(estadoRepository,
+                sorteoRepository,
+                sorteoDiariaRepository,
+                sorteoTypeRepository,
+                sorteoTypeName,
+                horaSorteoNuevo);
+	}
 
     public static void deleteSorteo(EstadoRepository estadoRepository,
                                     SorteoRepository sorteoRepository,
@@ -230,7 +243,13 @@ public class Util {
             sorteoDiariaRepository.delete(sorteoDiaria);
         }
     }
-
+    
+    private static void deleteSpecificDiariaSorteo(SorteoDiariaRepository sorteoDiariaRepository, SorteoDiaria sorteoDiaria) {
+        if (sorteoDiaria != null) {
+            sorteoDiariaRepository.delete(sorteoDiaria);
+        }
+    }
+    
     private static void deleteChicaSorteo(SorteoDiariaRepository sorteoDiariaRepository) {
         Iterable<SorteoDiaria> sorteoDiarias = sorteoDiariaRepository.findAll();
 
@@ -254,22 +273,24 @@ public class Util {
             SorteoDiaria sorteoDiaria){
         String time=sorteoDiaria.getSorteoTime().toString();
         if(time.contains("11:00")){
-            deleteSpecificDiariaSorteo(sorteoDiariaRepository, 11);
-            newSorteo(estadoRepository,sorteoRepository,sorteoDiariaRepository,sorteoTypeRepository,sorteoTypeName, 11);
+//            deleteSpecificDiariaSorteo(sorteoDiariaRepository, 11);
+            deleteSpecificDiariaSorteo(sorteoDiariaRepository,sorteoDiaria);
+            newSorteo(estadoRepository,sorteoRepository,sorteoDiariaRepository,sorteoTypeRepository,sorteoTypeName, sorteoDiaria.getSorteoTime());
         }else if(time.contains("15:00")){
-            deleteSpecificDiariaSorteo(sorteoDiariaRepository, 15);
-            newSorteo(estadoRepository,sorteoRepository,sorteoDiariaRepository,sorteoTypeRepository,SorteoTypeName.DIARIA, 15);
+//            deleteSpecificDiariaSorteo(sorteoDiariaRepository, 15);
+        	deleteSpecificDiariaSorteo(sorteoDiariaRepository,sorteoDiaria);
+            newSorteo(estadoRepository,sorteoRepository,sorteoDiariaRepository,sorteoTypeRepository,SorteoTypeName.DIARIA, sorteoDiaria.getSorteoTime());
         }else if(time.contains("21:00")){
-            deleteSpecificDiariaSorteo(sorteoDiariaRepository, 21);
-            newSorteo(estadoRepository,sorteoRepository,sorteoDiariaRepository,sorteoTypeRepository,SorteoTypeName.DIARIA, 21);
+//            deleteSpecificDiariaSorteo(sorteoDiariaRepository, 21);
+        	deleteSpecificDiariaSorteo(sorteoDiariaRepository,sorteoDiaria);
+            newSorteo(estadoRepository,sorteoRepository,sorteoDiariaRepository,sorteoTypeRepository,SorteoTypeName.DIARIA, sorteoDiaria.getSorteoTime());
         }else {
             deleteChicaSorteo(sorteoDiariaRepository);
-            newSorteo(estadoRepository,sorteoRepository,sorteoDiariaRepository,sorteoTypeRepository,SorteoTypeName.CHICA, 0);
+            newSorteo(estadoRepository,sorteoRepository,sorteoDiariaRepository,sorteoTypeRepository,SorteoTypeName.CHICA, sorteoDiaria.getSorteoTime());
         }
     }
 
-
-    public static void deleteSorteosDia(SorteoRepository sorteoRepository,
+	public static void deleteSorteosDia(SorteoRepository sorteoRepository,
                                         SorteoDiariaRepository sorteoDiariaRepository,
                                         ApuestaRepository apuestaRepository,
                                         HistoricoApuestaRepository historicoApuestaRepository

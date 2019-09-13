@@ -6,6 +6,10 @@ import org.hibernate.annotations.NaturalId;
 
 import javax.persistence.*;
 
+/**
+ * @author ComputerGAP
+ *
+ */
 @Entity
 @Table(name = "status")
 public class Status {
@@ -41,4 +45,11 @@ public class Status {
     public void setStatus(StatusName status) {
         this.status = status;
     }
+
+	@Override
+	public String toString() {
+		return "Status [status=" + status + "]";
+	}
+    
+    
 }

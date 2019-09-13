@@ -1,6 +1,9 @@
 package com.devteam.fantasy.model;
 
 import javax.persistence.*;
+
+import com.devteam.fantasy.util.SorteoTypeName;
+
 import java.sql.Timestamp;
 
 
@@ -66,5 +69,9 @@ public class Sorteo {
 
     public void setSorteoType(SorteoType sorteoType) {
         this.sorteoType = sorteoType;
+    }
+    
+    public boolean isDiaria() {
+    	return SorteoTypeName.DIARIA.equals(sorteoType.getSorteoTypeName());
     }
 }

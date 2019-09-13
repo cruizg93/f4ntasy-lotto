@@ -2,6 +2,8 @@ package com.devteam.fantasy.repository;
 
 import com.devteam.fantasy.model.Sorteo;
 import com.devteam.fantasy.model.SorteoDiaria;
+import com.devteam.fantasy.util.EstadoName;
+
 import org.springframework.data.repository.CrudRepository;
 
 import java.sql.Timestamp;
@@ -15,4 +17,5 @@ public interface SorteoDiariaRepository extends CrudRepository<SorteoDiaria, Lon
     Optional<SorteoDiaria> findById(Long id);
     SorteoDiaria getSorteoDiariaById(Long id);
     List<SorteoDiaria> findAllBySorteoTimeLessThan(Timestamp timestamp);
+    List<SorteoDiaria> findAllBySorteoEstadoEstadoNot(EstadoName estadoName);
 }

@@ -42,4 +42,11 @@ public class Estado {
     public void setEstado(EstadoName estado) {
         this.estado = estado;
     }
+
+	@Override
+	public String toString() {
+		return "Estado [estado=" + estado + "]";
+	}
+    
+    
 }

@@ -87,4 +87,12 @@ public class Apuesta {
     public void setCambio(Cambio cambio) {
         this.cambio = cambio;
     }
+
+	@Override
+	public String toString() {
+		return "Apuesta [id=" + id +", cambio=" + cambio
+				+ ", numero=" + numero + ", cantidad=" + cantidad + ", comision=" + comision + "]";
+	}
+    
+    
 }
