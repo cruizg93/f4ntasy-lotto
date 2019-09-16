@@ -4,23 +4,30 @@ import java.util.List;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.devteam.fantasy.exception.InvalidSorteoStateException;
 import com.devteam.fantasy.message.response.ApuestaActivaResumenResponse;
 import com.devteam.fantasy.message.response.ApuestasActivasResponse;
 import com.devteam.fantasy.message.response.JugadorSorteosResponse;
 import com.devteam.fantasy.message.response.SorteoResponse;
+import com.devteam.fantasy.model.Sorteo;
 import com.devteam.fantasy.model.SorteoDiaria;
 import com.devteam.fantasy.model.User;
 import com.devteam.fantasy.service.AdminService;
 import com.devteam.fantasy.service.SorteoService;
 import com.devteam.fantasy.service.UserService;
+import com.devteam.fantasy.util.EstadoName;
 import com.devteam.fantasy.util.Util;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -47,7 +54,7 @@ public class SorteoController {
 	
 	@GetMapping("/activosResumen/judadores/{id}/{currency}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
-    public ApuestaActivaResumenResponse getSorteosActivosResumteByIdAndCurrency(@PathVariable Long id, @PathVariable String currency, @Valid @RequestBody ObjectNode json) {
+    public ApuestaActivaResumenResponse getSorteosActivosResumteByIdAndCurrency(@PathVariable Long id, @PathVariable String currency) {
     	return sorteoService.getActiveSorteoDetail(id, currency);
 	}
 	
@@ -72,6 +79,38 @@ public class SorteoController {
         jugadorSorteosResponse.setSorteos(sorteoService.getSorteosResponses(sorteosDiarios, user));
         return jugadorSorteosResponse;
 	}
+	
+	@PutMapping("/bloquear/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    public ResponseEntity<?> bloquearApuesta(@PathVariable Long id) {
+		try {
+			sorteoService.bloquearApuesta(id);
+		} catch (InvalidSorteoStateException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+		}
+		
+        return ResponseEntity.ok("Sorteo locked");
+    }
+    
+    @PutMapping("/desbloquear/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    public ResponseEntity<?> desbloquearApuesta(@PathVariable Long id) {
+    	try {
+			sorteoService.desBloquearApuesta(id);
+		} catch (InvalidSorteoStateException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+		}
+		
+        return ResponseEntity.ok("Sorteo unlocked");
+    }
+    
+    @Profile({"uat","dev"})
+    @PutMapping("/forceCloseStatus/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    public ResponseEntity<?> cerrarApuesta(@PathVariable Long id) {
+		sorteoService.forceCloseStatus(id);
+        return ResponseEntity.ok("Sorteo closed");
+    }
 	
 }
 

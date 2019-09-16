@@ -8,8 +8,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.devteam.fantasy.exception.InvalidSorteoStateException;
 import com.devteam.fantasy.math.SorteoTotales;
 import com.devteam.fantasy.message.response.ApuestaActivaResumenResponse;
 import com.devteam.fantasy.message.response.ApuestasActivasResponse;
@@ -35,6 +37,8 @@ import com.devteam.fantasy.repository.SorteoRepository;
 import com.devteam.fantasy.repository.UserRepository;
 import com.devteam.fantasy.util.ApostadorName;
 import com.devteam.fantasy.util.ChicaName;
+import com.devteam.fantasy.util.EstadoName;
+import com.devteam.fantasy.util.HistoryEventType;
 import com.devteam.fantasy.util.MonedaName;
 import com.devteam.fantasy.util.SorteoTypeName;
 import com.devteam.fantasy.util.TuplaRiesgo;
@@ -85,6 +89,9 @@ public class SorteoServiceImpl implements SorteoService{
 	
 	@Autowired
 	SorteoTotales sorteoTotales;
+	
+	@Autowired
+	HistoryService historyService;
 	
 	/**
 	 * Type [Diaria] [Sorteos] must be sort by time, 
@@ -313,6 +320,38 @@ public class SorteoServiceImpl implements SorteoService{
 	public void setNumeroGanador(Long id, int numeroGanador) {
 		// TODO Auto-generated method stub
 		
+	}
+	@Override
+	public Sorteo bloquearApuesta(Long id) throws InvalidSorteoStateException{
+		Sorteo sorteo = sorteoRepository.getSorteoById(id);
+		if(sorteo.getEstado().getEstado().equals(EstadoName.ABIERTA)) {
+			sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.BLOQUEADA));
+	        sorteoRepository.save(sorteo);
+	        historyService.createEvent(HistoryEventType.BLOQUEDA, "Sorteo Bloqueado");
+		}else {
+			throw new InvalidSorteoStateException(sorteo);
+		}
+        return sorteo;
+	}
+	@Override
+	public Sorteo desBloquearApuesta(Long id) throws InvalidSorteoStateException {
+		Sorteo sorteo = sorteoRepository.getSorteoById(id);
+		if(sorteo.getEstado().getEstado().equals(EstadoName.BLOQUEADA)) {
+			sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.ABIERTA));
+	        sorteoRepository.save(sorteo);
+	        historyService.createEvent(HistoryEventType.BLOQUEDA, "Sorteo Desbloqueado");
+		}else {
+			throw new InvalidSorteoStateException(sorteo);
+		}
+        return sorteo;
+	}
+	@Override
+	public Sorteo forceCloseStatus(Long id) {
+		Sorteo sorteo = sorteoRepository.getSorteoById(id);
+		sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.CERRADA));
+        sorteoRepository.save(sorteo);
+        historyService.createEvent(HistoryEventType.BLOQUEDA, "Close status forced.");
+        return sorteo;
 	}
 }
 

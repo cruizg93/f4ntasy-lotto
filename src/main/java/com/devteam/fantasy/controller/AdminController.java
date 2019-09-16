@@ -1336,7 +1336,7 @@ public class AdminController {
         return balanceResponse;
     }
 
-  //Reemplazado por SorteoService.findTodaySorteobyUsername [/activasResumen/judadores/{username}]
+    //Reemplazado por SorteoService.findTodaySorteobyUsername [/activasResumen/judadores/{username}]
     @Deprecated
     @PostMapping("/jugador/apuestas/hoy/list")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
@@ -1497,6 +1497,8 @@ public class AdminController {
         return new ApuestaActivaResumenResponse(tuplaRiesgo, tuplaRiesgos, comision[0], totalValue);
     }
 
+    //Replaced by SorteoController.bloquearSorteo [/sorteo/bloquear/{id}]
+    @Deprecated
     @PutMapping("/apuesta/bloquear/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ResponseEntity<?> bloquearApuesta(@PathVariable Long id, @Valid @RequestBody ObjectNode json) {
