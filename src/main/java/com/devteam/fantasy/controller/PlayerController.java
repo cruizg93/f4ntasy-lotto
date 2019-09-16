@@ -6,6 +6,7 @@ import com.devteam.fantasy.message.request.UpdateNumberForm;
 import com.devteam.fantasy.message.response.*;
 import com.devteam.fantasy.model.*;
 import com.devteam.fantasy.repository.*;
+import com.devteam.fantasy.service.SorteoService;
 import com.devteam.fantasy.service.SorteoServiceImpl;
 import com.devteam.fantasy.util.EstadoName;
 import com.devteam.fantasy.util.PairNV;
@@ -76,7 +77,7 @@ public class PlayerController {
     NumeroGanadorRepository numeroGanadorRepository;
 
     @Autowired
-    SorteoServiceImpl sorteoService;
+    SorteoService sorteoService;
     
     
     @PostMapping("/password/update")
@@ -174,6 +175,8 @@ public class PlayerController {
         return sorteoResponses;
     }
 
+    //SorteoController.getDetallesApuestasActivasById => [/activos/judadores/{id}]
+    @Deprecated
     @PostMapping("/apuestas/hoy/list")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
     public List<SorteoResponse> findTodaySorteobyUsername(@Valid @RequestBody ObjectNode jsonNodes) {
@@ -938,4 +941,5 @@ public class PlayerController {
         apuestaActivaResponse.setType(sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString());
         return apuestaActivaResponse;
     }
+    
 }

@@ -1,25 +1,22 @@
 package com.devteam.fantasy.service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.OptionalInt;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.StreamSupport;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.devteam.fantasy.math.SorteoTotales;
 import com.devteam.fantasy.message.response.ApuestaActivaResumenResponse;
+import com.devteam.fantasy.message.response.ApuestasActivasResponse;
+import com.devteam.fantasy.message.response.JugadorSorteosResponse;
 import com.devteam.fantasy.message.response.SorteoResponse;
 import com.devteam.fantasy.model.Apuesta;
 import com.devteam.fantasy.model.Asistente;
-import com.devteam.fantasy.model.Estado;
 import com.devteam.fantasy.model.Jugador;
 import com.devteam.fantasy.model.Sorteo;
 import com.devteam.fantasy.model.SorteoDiaria;
@@ -38,15 +35,18 @@ import com.devteam.fantasy.repository.SorteoRepository;
 import com.devteam.fantasy.repository.UserRepository;
 import com.devteam.fantasy.util.ApostadorName;
 import com.devteam.fantasy.util.ChicaName;
-import com.devteam.fantasy.util.EstadoName;
 import com.devteam.fantasy.util.MonedaName;
 import com.devteam.fantasy.util.SorteoTypeName;
 import com.devteam.fantasy.util.TuplaRiesgo;
 import com.devteam.fantasy.util.Util;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class SorteoServiceImpl implements SorteoService{
 
+	@Autowired
+	UserService userService;
+	
 	@Autowired
 	UserRepository userRepository;
 	
@@ -82,6 +82,9 @@ public class SorteoServiceImpl implements SorteoService{
 	
 	@Autowired
 	NumeroGanadorRepository numeroGanadorRepository;
+	
+	@Autowired
+	SorteoTotales sorteoTotales;
 	
 	/**
 	 * Type [Diaria] [Sorteos] must be sort by time, 
@@ -168,90 +171,29 @@ public class SorteoServiceImpl implements SorteoService{
 		return sorteos;
 	}
 	
+	/**
+	 * Make sure to only pass the "sorteos" for the passed user,
+	 * this meaning the list of sorteos should not include the asistente sorteos.
+	 * ex. sorteos = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
+	 */
 	public List<SorteoResponse> getSorteosResponses(List<SorteoDiaria> sorteos, User user) {
         List<SorteoResponse> sorteoResponses = new ArrayList<>();
-        Jugador jugador = null;
-        MonedaName moneda = null;
-        if(user instanceof Jugador){
-            jugador = (Jugador) user;
-            moneda= ((Jugador) user).getMoneda().getMonedaName();
-        }else{
-            jugador = ((Asistente) user).getJugador();
-            moneda= ((Asistente) user).getJugador().getMoneda().getMonedaName();
-        }
+        Jugador jugador = Util.getJugadorFromUser(user);
+        MonedaName moneda = jugador.getMoneda().getMonedaName();
         
         for (SorteoDiaria sorteoDiaria : sorteos) {
-        	BigDecimal total = new BigDecimal(0);
-        	BigDecimal comision = new BigDecimal(0);
-        	BigDecimal riesgo = new BigDecimal(0);
-        	
+        	sorteoTotales.processSorteo(jugador, sorteoDiaria);
+            
         	String estado = sorteoDiaria.getSorteo().getEstado().getEstado().toString();
-        	
-        	for (Apuesta apuesta : sorteoDiaria.getApuestas()) {
-            	BigDecimal cantidad = new BigDecimal(apuesta.getCantidad());
-            	
-                if(sorteoDiaria.getSorteo().isDiaria()){
-                    if(jugador.getCostoMil()!=0){
-                    	cantidad= cantidad.multiply(BigDecimal.valueOf(jugador.getCostoMil()));
-                    }
-                }else{
-                    if(jugador.getCostoChicaMiles()!=0){
-                    	cantidad= cantidad.multiply(BigDecimal.valueOf(jugador.getCostoChicaMiles()));
-                    }else if(jugador.getCostoChicaPedazos()!=0){
-                    	cantidad= cantidad.multiply(BigDecimal.valueOf(jugador.getCostoChicaPedazos()));
-                    }
-                }
-                total = total.add(cantidad);
-            }  
-            
-            if(sorteoDiaria.getApuestas().size()>0) {
-            	if(sorteoDiaria.getSorteo().isDiaria()){
-                    comision = BigDecimal.valueOf(jugador.getComisionDirecto());
-                }else{
-                    comision = BigDecimal.valueOf(jugador.getComisionChicaDirecto() + jugador.getComisionChicaPedazos());
-                }
-            	comision = comision.multiply(total).divide(BigDecimal.valueOf(100));
-            	riesgo = total.subtract(comision);
-            }
-            
             sorteoResponses.add(new SorteoResponse(sorteoDiaria.getId(),
                     Util.formatTimestamp2String(sorteoDiaria.getSorteoTime()),
                     Util.getDayFromTimestamp(sorteoDiaria.getSorteoTime()),
                     Util.getHourFromTimestamp(sorteoDiaria.getSorteoTime()),
-                    total.doubleValue(), comision.doubleValue(), riesgo.doubleValue(), 
+                    sorteoTotales.getVentas(), sorteoTotales.getComisiones(), sorteoTotales.getTotal(), 
                     estado, moneda.toString(), sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString()));
         }
         
-        
-        
-        
         return sorteoResponses;
-	}
-	
-	public BigDecimal getAsistentesTotalBySorteo(Jugador jugador,SorteoDiaria sorteoDiaria) {
-		BigDecimal total = new BigDecimal(0);
-		List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
-		
-		BigDecimal cantidad = BigDecimal.valueOf(asistentes.stream().map(asistente ->
-					        apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente))
-					        .filter(apuestaList -> apuestaList.size() > 0)
-					        .flatMap(Collection::stream)
-					        .mapToDouble(Apuesta::getCantidad)
-					        .sum());;
-					        
-        if(sorteoDiaria.getSorteo().isDiaria()) {
-            if(jugador.getCostoMil()!=0){
-            	cantidad.multiply(BigDecimal.valueOf(jugador.getCostoMil()));
-            }
-        }else{
-            if(jugador.getCostoChicaMiles()!=0){
-            	cantidad.multiply(BigDecimal.valueOf(jugador.getCostoChicaMiles()));
-            }else if(jugador.getCostoChicaPedazos()!=0){
-            	cantidad.multiply(BigDecimal.valueOf(jugador.getCostoChicaPedazos()));
-            }
-        }
-        total.add(cantidad);
-		return total;
 	}
 	
 	private void calcularCantRiesgo(Sorteo sorteo, double[] cantidad, double[] riesgo, Apuesta apuesta, int numero,
@@ -313,7 +255,60 @@ public class SorteoServiceImpl implements SorteoService{
 		}
 		total[0] += premio.doubleValue();
 	}
+	
+	@Override
+	public List<ApuestasActivasResponse> getSorteosListWithMoneda(String currency) {
+		List<SorteoDiaria> sorteoDiarias = getActiveSorteosList();
+		List<ApuestasActivasResponse> apuestasActivasResponses = new ArrayList<>();
+		
+		sorteoDiarias.forEach(sorteoDiaria -> {
+			apuestasActivasResponses.add(getApuestasActivasResponse(sorteoDiaria, currency));
+		});
+		return apuestasActivasResponses;
+	}
+	
+	private ApuestasActivasResponse getApuestasActivasResponse( SorteoDiaria sorteoDiaria, String currency) {
+		
+		BigDecimal total = BigDecimal.ZERO;
+		BigDecimal comision = BigDecimal.ZERO;
+		BigDecimal premio = BigDecimal.ZERO;
+		BigDecimal neta = BigDecimal.ZERO;
+		
+		MonedaName moneda = currency.equalsIgnoreCase(MonedaName.LEMPIRA.toString())?MonedaName.LEMPIRA:MonedaName.DOLAR;
 
+        sorteoTotales.processSorteo(null, sorteoDiaria,moneda, true);
+        total = total.add(sorteoTotales.getVentasBD());
+        comision = comision.add(sorteoTotales.getComisionesBD());
+        
+        neta = total.subtract(comision);
+        ApuestasActivasResponse activaResponse = new ApuestasActivasResponse();
+        activaResponse.setTotal(total.doubleValue());
+        activaResponse.setComision(comision.doubleValue());
+        activaResponse.setNeta(neta.doubleValue());
+        activaResponse.setPremio(premio.doubleValue());
+        activaResponse.setBalance(neta.subtract(premio).doubleValue());
+        activaResponse.setId(sorteoDiaria.getSorteo().getId());
+        activaResponse.setTitle(Util.formatTimestamp2String(sorteoDiaria.getSorteo().getSorteoTime()));
+        activaResponse.setEstado(sorteoDiaria.getSorteo().getEstado().getEstado().toString());
+        activaResponse.setType(sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString());
+		return activaResponse;
+	}
+
+	public JugadorSorteosResponse getJugadorList() {
+		JugadorSorteosResponse jugadorSorteosResponse = new JugadorSorteosResponse();
+        User user = userService.getLoggedInUser();
+        Jugador jugador = Util.getJugadorFromUser(user);
+        jugadorSorteosResponse.setName(user.getName());
+        jugadorSorteosResponse.setMoneda(jugador.getMoneda().getMonedaName().toString());
+        
+        Iterable<SorteoDiaria> sorteosDB = sorteoDiariaRepository.findAll();
+        List<SorteoDiaria> sorteos = sortDiariaList(sorteosDB);       
+        jugadorSorteosResponse.setSorteos(getSorteosResponses(sorteos, user));
+        		
+        return jugadorSorteosResponse;
+		
+	}
+	
 	@Override
 	public void setNumeroGanador(Long id, int numeroGanador) {
 		// TODO Auto-generated method stub

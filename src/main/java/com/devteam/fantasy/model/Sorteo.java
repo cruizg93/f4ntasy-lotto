@@ -71,10 +71,6 @@ public class Sorteo {
         this.sorteoType = sorteoType;
     }
     
-    public boolean isDiaria() {
-    	return SorteoTypeName.DIARIA.equals(sorteoType.getSorteoTypeName());
-    }
-
 	@Override
 	public String toString() {
 		return "Sorteo [id=" + id + ", sorteoTime=" + sorteoTime + ", estado=" + estado + ", status=" + status

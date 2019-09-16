@@ -1,5 +1,6 @@
 package com.devteam.fantasy;
 
+import com.devteam.fantasy.math.SorteoTotales;
 import com.devteam.fantasy.model.*;
 import com.devteam.fantasy.repository.*;
 import com.devteam.fantasy.util.*;
@@ -33,6 +34,9 @@ public class FantasyApplication {
 
     @Autowired
     private SorteoDiariaRepository sorteoDiariaRepository;
+    
+    @Autowired
+    private SorteoTotales sorteoTotales;
 
     @Autowired
     private UserRepository userRepository;
@@ -83,6 +87,22 @@ public class FantasyApplication {
         SpringApplication.run(FantasyApplication.class, args);
     }
 
+    /**
+     * @param repo
+     * @param estadoRepository
+     * @param monedaRepository
+     * @param tipoApostadorRepository
+     * @param tipoChicaRepository
+     * @return
+     */
+    /**
+     * @param repo
+     * @param estadoRepository
+     * @param monedaRepository
+     * @param tipoApostadorRepository
+     * @param tipoChicaRepository
+     * @return
+     */
     @Bean
     public CommandLineRunner demoData(RoleRepository repo, EstadoRepository estadoRepository,
                                       MonedaRepository monedaRepository,
@@ -109,9 +129,9 @@ public class FantasyApplication {
         }
 
         if (!monedaRepository.existsByMonedaName(MonedaName.DOLAR) &&
-                !monedaRepository.existsByMonedaName(MonedaName.LEMPIRAS)) {
+                !monedaRepository.existsByMonedaName(MonedaName.LEMPIRA)) {
             monedaRepository.save(new Moneda(MonedaName.DOLAR));
-            monedaRepository.save(new Moneda(MonedaName.LEMPIRAS));
+            monedaRepository.save(new Moneda(MonedaName.LEMPIRA));
         }
 
         if (!tipoApostadorRepository.existsByApostadorName(ApostadorName.DIRECTO) &&
@@ -155,7 +175,7 @@ public class FantasyApplication {
                 && !userRepository.existsByUsername("P006")
         ) {
             Moneda dolar = monedaRepository.findByMonedaName(MonedaName.DOLAR);
-            Moneda lempiras = monedaRepository.findByMonedaName(MonedaName.LEMPIRAS);
+            Moneda lempiras = monedaRepository.findByMonedaName(MonedaName.LEMPIRA);
 
             TipoApostador apuestaDirecta = tipoApostadorRepository.findByApostadorName(ApostadorName.DIRECTO);
             TipoApostador apuestaMiles = tipoApostadorRepository.findByApostadorName(ApostadorName.MILES);
@@ -189,7 +209,7 @@ public class FantasyApplication {
             LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             int year = localDate.getYear();
             int month = localDate.getMonthValue();
-            int day = localDate.getDayOfMonth();
+            int day = localDate.getDayOfMonth()+1;
 
 
             Timestamp timestamp = (new Timestamp(
@@ -238,10 +258,10 @@ public class FantasyApplication {
             	sorteoChica = newSorteo(estadoRepository, timestamp, chicaSorteoType);
             }
             
-            
+            sorteoTotales.setMonedaName(MonedaName.LEMPIRA);
             /**
              * Jugador 1 
-             *
+             */
             insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 0, 25);
             insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 3, 30);
             insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 10, 20);
@@ -260,10 +280,10 @@ public class FantasyApplication {
             insertApuestaChica(sorteoChica.getId(),x1, cambio,8,36);
             insertApuestaChica(sorteoChica.getId(),x1, cambio,10,55);
             insertApuestaChica(sorteoChica.getId(),x1, cambio,18,1);
-            
-            **
+//            
+            /**
              * Jugador 2
-             *
+             */
             insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 0, 15);
             insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 3, 18);
             insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 10, 45);
@@ -282,10 +302,10 @@ public class FantasyApplication {
             insertApuestaChica(sorteoChica.getId(),x2, cambio,8,105);
             insertApuestaChica(sorteoChica.getId(),x2, cambio,10,48);
             insertApuestaChica(sorteoChica.getId(),x2, cambio,19,70);
-            
-            **
+//            
+            /**
              * Jugador 3
-             *
+             */
             insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 0, 80);
             insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 3, 40);
             insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 10, 59);
@@ -294,7 +314,7 @@ public class FantasyApplication {
             insertApuestaDiaria(sorteoDiaria11.getId(), x3, cambio, 5, 44);
             insertApuestaDiaria(sorteoDiaria11.getId(), x3, cambio, 8, 40);
             insertApuestaDiaria(sorteoDiaria11.getId(), x3, cambio, 10, 23);
-            
+//           
             insertApuestaChica(sorteoChica.getId(),p3, cambio,0,160);
             insertApuestaChica(sorteoChica.getId(),p3, cambio,3,180);
             insertApuestaChica(sorteoChica.getId(),p3, cambio,10,240);
@@ -304,10 +324,10 @@ public class FantasyApplication {
             insertApuestaChica(sorteoChica.getId(),x3, cambio,8,160);
             insertApuestaChica(sorteoChica.getId(),x3, cambio,10,190);
             insertApuestaChica(sorteoChica.getId(),x3, cambio,14,190);
-            
-            **
+//            
+            /**
              * Jugador 4
-             *
+             */
             insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 0, 1200);
             insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 3, 1000);
             insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 10, 800);
@@ -327,9 +347,9 @@ public class FantasyApplication {
             insertApuestaChica(sorteoChica.getId(),x4, cambio,10,20);
             insertApuestaChica(sorteoChica.getId(),x4, cambio,12,20);
             
-            **
+            /**
              * Jugador 5
-             *
+             */
             insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 0, 120);
             insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 3, 100);
             insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 10, 145);
@@ -349,9 +369,9 @@ public class FantasyApplication {
             insertApuestaChica(sorteoChica.getId(),x5, cambio,10,200);
             insertApuestaChica(sorteoChica.getId(),x5, cambio,18,40);
 
-            **
+            /**
              * Jugador 6
-             *
+             */
             
             insertApuestaDiaria(sorteoDiaria11.getId(), p6, cambio, 0, 210);
             insertApuestaDiaria(sorteoDiaria11.getId(), p6, cambio, 3, 250);
@@ -363,7 +383,7 @@ public class FantasyApplication {
             insertApuestaChica(sorteoChica.getId(),p6, cambio,10,240);
             insertApuestaChica(sorteoChica.getId(),p6, cambio,11,45);
             insertApuestaChica(sorteoChica.getId(),p6, cambio,15,160);
-            insertApuestaChica(sorteoChica.getId(),p6, cambio,18,10);*/
+            insertApuestaChica(sorteoChica.getId(),p6, cambio,18,10);
 
 
             List<SorteoDiaria> sorteoDiarias = sorteoDiariaRepository
@@ -464,17 +484,21 @@ public class FantasyApplication {
 	    } else if (user instanceof Asistente) {
 	    	jugador = ((Asistente) user).getJugador();
 	    }
-	    
-	    comision = jugador.getComisionDirecto()==0?1:jugador.getComisionDirecto();
+	    comision = sorteoTotales.getComisionRate(jugador, SorteoTypeName.DIARIA).doubleValue(); 
         
+	    
+	    
     	Apuesta apuesta = new Apuesta();
         Optional<SorteoDiaria> sorteoDiaria = sorteoDiariaRepository.findById(sorteoid);
         sorteoDiaria.ifPresent(apuesta::setSorteoDiaria);
         apuesta.setNumero(numero);
         apuesta.setCantidad(Double.valueOf(cantidad));
-        apuesta.setComision(cantidad *comision / 100);
+        
         apuesta.setCambio(cambio);
         apuesta.setUser(user);
+        
+        double costo = sorteoTotales.getCantidadMultiplier(jugador, apuesta, SorteoTypeName.DIARIA).doubleValue();
+        apuesta.setComision((comision/100)*(costo*cantidad));
         apuestaRepository.save(apuesta);
     }
     
@@ -489,7 +513,7 @@ public class FantasyApplication {
 	    	jugador = ((Asistente) user).getJugador();
 	    }
 	    
-	    comision = jugador.getComisionChicaPedazos() + jugador.getComisionChicaDirecto();
+	    comision = sorteoTotales.getComisionRate(jugador, SorteoTypeName.CHICA).doubleValue(); 
 	    costoPedazo = jugador.getCostoChicaPedazos()==0?1:jugador.getCostoChicaPedazos();
 	    
     	Apuesta apuesta = new Apuesta();
@@ -497,9 +521,11 @@ public class FantasyApplication {
         sorteoDiaria.ifPresent(apuesta::setSorteoDiaria);
         apuesta.setNumero(numero);
         apuesta.setCantidad(Double.valueOf(cantidad));
-        apuesta.setComision(cantidad * costoPedazo * comision / 100);
         apuesta.setCambio(cambio);
         apuesta.setUser(user);
+        
+        double costo = sorteoTotales.getCantidadMultiplier(jugador, apuesta, SorteoTypeName.CHICA).doubleValue();
+        apuesta.setComision((comision/100)*(costo*cantidad));
         apuestaRepository.save(apuesta);
     }
     

@@ -116,7 +116,7 @@ public class AdminController {
                 .map(jugador -> {
                     JugadorSingleResponse obj = new JugadorSingleResponse();
                     obj.setId(jugador.getId());
-                    String moneda = jugador.getMoneda().getMonedaName().equals(MonedaName.LEMPIRAS) ? " L " : " $ ";
+                    String moneda = jugador.getMoneda().getMonedaName().equals(MonedaName.LEMPIRA) ? " L " : " $ ";
                     obj.setUsername(jugador.getUsername()+ " - " + moneda +" "+jugador.getName() );
                     return obj;
                 }).collect(Collectors.toList()));
@@ -276,7 +276,7 @@ public class AdminController {
             }
             Moneda moneda = monedaRepository.findByMonedaName(MonedaName.DOLAR);
             if (createPlayerForm.getMtype().equals("l")) {
-                moneda = monedaRepository.findByMonedaName(MonedaName.LEMPIRAS);
+                moneda = monedaRepository.findByMonedaName(MonedaName.LEMPIRA);
             }
             TipoApostador tipoApostador = tipoApostadorRepository
                     .findByApostadorName(ApostadorName.DIRECTO);
@@ -376,7 +376,7 @@ public class AdminController {
 
         Moneda moneda = monedaRepository.findByMonedaName(MonedaName.DOLAR);
         if (createPlayerForm.getMtype().equals("l")) {
-            moneda = monedaRepository.findByMonedaName(MonedaName.LEMPIRAS);
+            moneda = monedaRepository.findByMonedaName(MonedaName.LEMPIRA);
         }
         TipoApostador tipoApostador = tipoApostadorRepository
                 .findByApostadorName(ApostadorName.DIRECTO);
@@ -620,7 +620,7 @@ public class AdminController {
             if (jugador.getMoneda().equals(monedaRepository.findByMonedaName(MonedaName.DOLAR))
                     && type.equals("lempira")) {
                 cambio = resultado.getCambio().getCambio();
-            } else if (jugador.getMoneda().equals(monedaRepository.findByMonedaName(MonedaName.LEMPIRAS))
+            } else if (jugador.getMoneda().equals(monedaRepository.findByMonedaName(MonedaName.LEMPIRA))
                     && type.equals("dolar")) {
                 cambio = 1 / resultado.getCambio().getCambio();
             }
@@ -637,7 +637,7 @@ public class AdminController {
                     if (jugador.getMoneda().equals(monedaRepository.findByMonedaName(MonedaName.DOLAR))
                             && type.equals("lempira")) {
                         cambio = resultados.get(j).getCambio().getCambio();
-                    } else if (jugador.getMoneda().equals(monedaRepository.findByMonedaName(MonedaName.LEMPIRAS))
+                    } else if (jugador.getMoneda().equals(monedaRepository.findByMonedaName(MonedaName.LEMPIRA))
                             && type.equals("dolar")) {
                         cambio = 1 / resultados.get(j).getCambio().getCambio();
                     }
@@ -751,7 +751,7 @@ public class AdminController {
                     if (jugador.getMoneda().equals(monedaRepository.findByMonedaName(MonedaName.DOLAR))
                             && type.equals("lempira")) {
                         cambio = apuesta.getCambio().getCambio();
-                    } else if (jugador.getMoneda().equals(monedaRepository.findByMonedaName(MonedaName.LEMPIRAS))
+                    } else if (jugador.getMoneda().equals(monedaRepository.findByMonedaName(MonedaName.LEMPIRA))
                             && type.equals("dolar")) {
                         cambio = 1 / apuesta.getCambio().getCambio();
                     }
@@ -1254,6 +1254,8 @@ public class AdminController {
     }
 
 
+    // this.getAllJugadores => [/jugadores/list]
+    @Deprecated
     @GetMapping("/jugador/list")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public List<JugadorResponse> getAllJugador() {
@@ -1307,6 +1309,12 @@ public class AdminController {
         });
         return jugadorResponses;
     }
+    
+    @GetMapping("/jugadores/list")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    public List<JugadorResponse> getAllJugadores() {
+        return adminService.getAllJugadores();
+    }
 
 
     @PostMapping("/jugador/balance/{id}")
@@ -1328,6 +1336,8 @@ public class AdminController {
         return balanceResponse;
     }
 
+  //Reemplazado por SorteoService.findTodaySorteobyUsername [/activasResumen/judadores/{username}]
+    @Deprecated
     @PostMapping("/jugador/apuestas/hoy/list")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public JugadorSorteosResponse findTodaySorteobyUsername(@Valid @RequestBody ObjectNode jsonNodes) {
@@ -1367,7 +1377,7 @@ public class AdminController {
                     double cambio=1;
                     if(moneda.equals("lempira") && ((Jugador) resultado.getUser()).getMoneda().getMonedaName().equals(MonedaName.DOLAR)){
                         cambio = resultado.getCambio().getCambio();
-                    }else if(moneda.equals("dolar") && ((Jugador) resultado.getUser()).getMoneda().getMonedaName().equals(MonedaName.LEMPIRAS)){
+                    }else if(moneda.equals("dolar") && ((Jugador) resultado.getUser()).getMoneda().getMonedaName().equals(MonedaName.LEMPIRA)){
                         cambio = 1/resultado.getCambio().getCambio();
                     }
                     total[0] += resultado.getCantApuesta() * cambio;
@@ -1385,14 +1395,14 @@ public class AdminController {
                         jugador =  (Jugador) apuesta.getUser();
                         if(moneda.equalsIgnoreCase("lempira") && ((Jugador) apuesta.getUser()).getMoneda().getMonedaName().equals(MonedaName.DOLAR)){
                             cambio = apuesta.getCambio().getCambio();
-                        }else if(moneda.equalsIgnoreCase("dolar") && ((Jugador) apuesta.getUser()).getMoneda().getMonedaName().equals(MonedaName.LEMPIRAS)){
+                        }else if(moneda.equalsIgnoreCase("dolar") && ((Jugador) apuesta.getUser()).getMoneda().getMonedaName().equals(MonedaName.LEMPIRA)){
                             cambio = 1/apuesta.getCambio().getCambio();
                         }
                     }else if(apuesta.getUser() instanceof Asistente){
                         jugador =  ((Asistente) apuesta.getUser()).getJugador();
                         if(moneda.equals("lempira") && ((Asistente) apuesta.getUser()).getJugador().getMoneda().getMonedaName().equals(MonedaName.DOLAR)){
                             cambio = apuesta.getCambio().getCambio();
-                        }else if(moneda.equals("dolar") && ((Asistente) apuesta.getUser()).getJugador().getMoneda().getMonedaName().equals(MonedaName.LEMPIRAS)){
+                        }else if(moneda.equals("dolar") && ((Asistente) apuesta.getUser()).getJugador().getMoneda().getMonedaName().equals(MonedaName.LEMPIRA)){
                             cambio = 1/apuesta.getCambio().getCambio();
                         }
                     }
@@ -1506,7 +1516,7 @@ public class AdminController {
         if (jugador.getMoneda().equals(monedaRepository.findByMonedaName(MonedaName.DOLAR))
                 && type.equals("lempira")) {
             cambio = apuesta.getCambio().getCambio();
-        } else if (jugador.getMoneda().equals(monedaRepository.findByMonedaName(MonedaName.LEMPIRAS))
+        } else if (jugador.getMoneda().equals(monedaRepository.findByMonedaName(MonedaName.LEMPIRA))
                 && type.equals("dolar")) {
             cambio = 1 / apuesta.getCambio().getCambio();
         }
@@ -1569,6 +1579,7 @@ public class AdminController {
             Set<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
             for (Apuesta apuesta : apuestas) {
                 double cantidad = apuesta.getCantidad();
+               
                 if(sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().equals(SorteoTypeName.DIARIA)){
                     if(jugador.getCostoMil()!=0){
                         cantidad *= jugador.getCostoMil();
@@ -1779,7 +1790,7 @@ public class AdminController {
             if (jugador.getMoneda().equals(monedaRepository.findByMonedaName(MonedaName.DOLAR))
                     && type.equals("lempira")) {
                 cambio = cambioRepository.getByCambio(resultado.getCambio()).getCambio();
-            } else if (jugador.getMoneda().equals(monedaRepository.findByMonedaName(MonedaName.LEMPIRAS))
+            } else if (jugador.getMoneda().equals(monedaRepository.findByMonedaName(MonedaName.LEMPIRA))
                     && type.equals("dolar")) {
                 cambio = 1 / cambioRepository.getByCambio(resultado.getCambio()).getCambio();
             }
