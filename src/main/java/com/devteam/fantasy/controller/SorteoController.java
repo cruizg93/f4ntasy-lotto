@@ -54,7 +54,7 @@ public class SorteoController {
 	
 	@GetMapping("/activosResumen/judadores/{id}/{currency}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
-    public ApuestaActivaResumenResponse getSorteosActivosResumteByIdAndCurrency(@PathVariable Long id, @PathVariable String currency) {
+    public ApuestaActivaResumenResponse getSorteosActivosResumteByIdAndCurrency(@PathVariable Long id, @PathVariable String currency, @Valid @RequestBody ObjectNode json) {
     	return sorteoService.getActiveSorteoDetail(id, currency);
 	}
 	
@@ -82,7 +82,7 @@ public class SorteoController {
 	
 	@PutMapping("/bloquear/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
-    public ResponseEntity<?> bloquearApuesta(@PathVariable Long id) {
+    public ResponseEntity<?> bloquearApuesta(@PathVariable Long id, @Valid @RequestBody ObjectNode json) {
 		try {
 			sorteoService.bloquearApuesta(id);
 		} catch (InvalidSorteoStateException e) {
@@ -94,7 +94,7 @@ public class SorteoController {
     
     @PutMapping("/desbloquear/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
-    public ResponseEntity<?> desbloquearApuesta(@PathVariable Long id) {
+    public ResponseEntity<?> desbloquearApuesta(@PathVariable Long id, @Valid @RequestBody ObjectNode json) {
     	try {
 			sorteoService.desBloquearApuesta(id);
 		} catch (InvalidSorteoStateException e) {
@@ -107,7 +107,7 @@ public class SorteoController {
     @Profile({"uat","dev"})
     @PutMapping("/forceCloseStatus/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
-    public ResponseEntity<?> cerrarApuesta(@PathVariable Long id) {
+    public ResponseEntity<?> cerrarApuesta(@PathVariable Long id, @Valid @RequestBody ObjectNode json) {
 		sorteoService.forceCloseStatus(id);
         return ResponseEntity.ok("Sorteo closed");
     }
