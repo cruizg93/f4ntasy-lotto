@@ -3,21 +3,20 @@ package com.devteam.fantasy.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.devteam.fantasy.exception.CanNotInsertApuestaException;
 import com.devteam.fantasy.exception.InvalidSorteoStateException;
 import com.devteam.fantasy.math.SorteoTotales;
+import com.devteam.fantasy.message.response.ApuestaActivaResponse;
 import com.devteam.fantasy.message.response.ApuestaActivaResumenResponse;
 import com.devteam.fantasy.message.response.ApuestasActivasResponse;
 import com.devteam.fantasy.message.response.JugadorSorteosResponse;
@@ -47,10 +46,10 @@ import com.devteam.fantasy.util.ChicaName;
 import com.devteam.fantasy.util.EstadoName;
 import com.devteam.fantasy.util.HistoryEventType;
 import com.devteam.fantasy.util.MonedaName;
+import com.devteam.fantasy.util.PairNV;
 import com.devteam.fantasy.util.SorteoTypeName;
 import com.devteam.fantasy.util.TuplaRiesgo;
 import com.devteam.fantasy.util.Util;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class SorteoServiceImpl implements SorteoService{
@@ -482,6 +481,52 @@ public class SorteoServiceImpl implements SorteoService{
         	}
         }
         
+	}
+	
+	public ApuestaActivaResponse getApuestasActivasBySorteoAndJugador(Long sorteoId, String username) {
+		
+		User user = userRepository.getByUsername(username);
+		Jugador jugador = Util.getJugadorFromUser(user);
+		SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
+		List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUserOrderByNumeroAsc(sorteoDiaria, user);
+		
+		sorteoTotales.processSorteo(user, sorteoDiaria);
+		List<PairNV> pairNVList = new ArrayList<>();
+		mergeApuestasIntoPairNVList(pairNVList, apuestas);
+		
+		if (user instanceof Jugador) {
+            List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
+            asistentes.forEach(asistente -> {
+                List<Apuesta> asistenteApuestasList = apuestaRepository.findAllBySorteoDiariaAndUserOrderByNumeroAsc(sorteoDiaria, asistente);
+                if (!asistenteApuestasList.isEmpty()) {
+                	mergeApuestasIntoPairNVList(pairNVList, asistenteApuestasList);
+                }
+            });
+		}
+		
+		Collections.sort(pairNVList);
+        ApuestaActivaResponse apuestaActivaResponse = new ApuestaActivaResponse();
+        apuestaActivaResponse.setList(pairNVList);
+        apuestaActivaResponse.setTitle(Util.formatTimestamp2String(sorteoDiaria.getSorteoTime()));
+        apuestaActivaResponse.setDay(Util.getDayFromTimestamp(sorteoDiaria.getSorteoTime()));
+        apuestaActivaResponse.setHour(Util.getHourFromTimestamp(sorteoDiaria.getSorteoTime()));
+        apuestaActivaResponse.setTotal(sorteoTotales.getVentas());
+        apuestaActivaResponse.setComision(sorteoTotales.getComisiones());
+        apuestaActivaResponse.setRiesgo(sorteoTotales.getTotal());
+        apuestaActivaResponse.setType(sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString());
+        return apuestaActivaResponse;
+	}
+	
+	private void mergeApuestasIntoPairNVList(List<PairNV> pairNVList, List<Apuesta> apuestas) {
+		for (Apuesta apuesta : apuestas) {
+			PairNV jugadorPair = pairNVList.stream().filter(i -> i.getNumero().intValue()==apuesta.getNumero().intValue()).findFirst().orElse(null);
+        	if(jugadorPair == null) {
+        		jugadorPair = new PairNV(apuesta.getNumero(), apuesta.getCantidad());
+        		pairNVList.add(jugadorPair);
+        	}else {
+        		jugadorPair.setValor(jugadorPair.getValor() + apuesta.getCantidad());
+        	}
+		}
 	}
 }
 

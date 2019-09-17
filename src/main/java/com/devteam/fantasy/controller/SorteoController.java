@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.devteam.fantasy.exception.CanNotInsertApuestaException;
 import com.devteam.fantasy.exception.InvalidSorteoStateException;
+import com.devteam.fantasy.message.response.ApuestaActivaResponse;
 import com.devteam.fantasy.message.response.ApuestaActivaResumenResponse;
 import com.devteam.fantasy.message.response.ApuestasActivasResponse;
 import com.devteam.fantasy.message.response.JugadorSorteosResponse;
@@ -149,6 +150,12 @@ public class SorteoController {
 		}
          
     	return ResponseEntity.ok().body("Update numeros");
+    }
+    
+    @GetMapping("/activos/{id}/apuestas/{username}")
+    @PreAuthorize("hasRole('USER') or hasRole('ASIS') or hasRole('ADMIN') or hasRole('MASTER')")
+    public ApuestaActivaResponse getApuestasActivasBySorteoAndJugador(@PathVariable Long id, @PathVariable String username) {
+        return sorteoService.getApuestasActivasBySorteoAndJugador(id, username);
     }
 	
 }
