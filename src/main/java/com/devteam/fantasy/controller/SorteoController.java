@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -110,6 +111,12 @@ public class SorteoController {
     public ResponseEntity<?> cerrarApuesta(@PathVariable Long id, @Valid @RequestBody ObjectNode json) {
 		sorteoService.forceCloseStatus(id);
         return ResponseEntity.ok("Sorteo closed");
+    }
+    
+    @GetMapping("/activos/detalles/{id}/{moneda}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    public ApuestaActivaResumenResponse getDetallesApuestasActivasById(@PathVariable Long id,@PathVariable String moneda) {
+    	return sorteoService.getDetalleApuestasBySorteo(id, moneda);
     }
 	
 }

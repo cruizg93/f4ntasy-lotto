@@ -1440,7 +1440,7 @@ public class AdminController {
         return apuestasActivasResponses;
     }
 
-    //Reemplazado por SorteoController.getDetallesApuestasActivasById [/sorteos/activos/{id}
+    //Reemplazado por SorteoController.getDetalleApuestasBySorteo [/activos/detalles/{id}/{moneda}]
     @Deprecated
     @PostMapping("/apuestas/activas/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")

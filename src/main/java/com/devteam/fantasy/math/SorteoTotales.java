@@ -113,30 +113,6 @@ public class SorteoTotales {
         return cambio;
 	}
 
-	public double getVentas() {
-		return ventas.doubleValue();
-	}
-	
-	public BigDecimal getVentasBD() {
-		return ventas;
-	}
-	
-	public double getComisiones() {
-		return comisiones.doubleValue();
-	}
-	
-	public BigDecimal getComisionesBD() {
-		return comisiones;
-	}
-	
-	public double getTotal() {
-		return ventas.subtract(comisiones).doubleValue();
-	}
-	
-	public BigDecimal getTotalBD() {
-		return ventas.subtract(comisiones);
-	}
-	
 	public BigDecimal getCantidadMultiplier(Jugador jugador, Apuesta apuesta, SorteoTypeName sorteoType) {
 		BigDecimal cantidad =BigDecimal.ONE;
 		
@@ -180,5 +156,29 @@ public class SorteoTotales {
         }
         
         return cantidad;
+	}
+	
+	public double getVentas() {
+		return ventas.doubleValue();
+	}
+	
+	public BigDecimal getVentasBD() {
+		return ventas;
+	}
+	
+	public double getComisiones() {
+		return comisiones.doubleValue();
+	}
+	
+	public BigDecimal getComisionesBD() {
+		return comisiones;
+	}
+	
+	public double getTotal() {
+		return ventas.subtract(comisiones).doubleValue();
+	}
+	
+	public BigDecimal getTotalBD() {
+		return ventas.subtract(comisiones);
 	}
 }

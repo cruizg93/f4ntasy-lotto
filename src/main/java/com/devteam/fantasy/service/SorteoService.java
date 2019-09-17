@@ -25,5 +25,5 @@ public interface SorteoService {
 	public Sorteo desBloquearApuesta(Long id) throws InvalidSorteoStateException;
 	
 	public Sorteo forceCloseStatus(Long id);
-	
+	public ApuestaActivaResumenResponse getDetalleApuestasBySorteo(Long id, String monedatype);
 }

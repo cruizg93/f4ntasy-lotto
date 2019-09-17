@@ -1,10 +1,13 @@
 package com.devteam.fantasy.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.IntStream;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -352,6 +355,92 @@ public class SorteoServiceImpl implements SorteoService{
         sorteoRepository.save(sorteo);
         historyService.createEvent(HistoryEventType.BLOQUEDA, "Close status forced.");
         return sorteo;
+	}
+	@Override
+	public ApuestaActivaResumenResponse getDetalleApuestasBySorteo(Long id, String monedaType) {
+		
+		 List<TuplaRiesgo> tuplaRiesgos = new ArrayList<>();
+		 SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
+		 
+		 int indexTopRiesgo = -1;
+		 double topRiesgo = 0d;
+		 
+		 BigDecimal totalValue = BigDecimal.ZERO;
+		 BigDecimal totalComision = BigDecimal.ZERO;
+		 Map<Integer, TuplaRiesgo> tuplas = new HashMap<>();
+		 for(Apuesta apuesta: sorteoDiaria.getApuestas()) {
+			int numero = apuesta.getNumero();
+			Jugador jugador = Util.getJugadorFromApuesta(apuesta);
+			
+			BigDecimal cambio = Util.getApuestaCambio(monedaType, apuesta);
+			BigDecimal costoUnidad = sorteoTotales.getCantidadMultiplier(jugador, apuesta, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
+			BigDecimal cantidadTotal = BigDecimal.valueOf(apuesta.getCantidad()).multiply(cambio).multiply(costoUnidad);
+			
+			BigDecimal comisionTotal = apuesta.getComision().doubleValue()==0
+							?BigDecimal.valueOf(apuesta.getComision())
+							:BigDecimal.valueOf(apuesta.getComision()).multiply(cambio);
+			
+			BigDecimal premio = getPremioFromApuesta(jugador, apuesta, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
+			premio = premio.multiply(cambio);
+			
+			TuplaRiesgo tupla = tuplas.get(numero);
+			if(tupla == null) {
+				tupla = new TuplaRiesgo();
+				tupla.setNumero(numero);
+			}
+			
+			BigDecimal dineroApostado = BigDecimal.valueOf(tupla.getDineroApostado()).add(cantidadTotal);
+			tupla.setDineroApostado(dineroApostado.doubleValue());
+			
+			BigDecimal totalRiesgo = BigDecimal.valueOf(tupla.getPosiblePremio()).add(premio);
+			tupla.setPosiblePremio(totalRiesgo.doubleValue());
+			if(topRiesgo < totalRiesgo.doubleValue()) {
+				indexTopRiesgo = numero;
+			}
+			
+			//premio / (venta - comision) 
+			BigDecimal total = cantidadTotal.subtract(comisionTotal);
+			BigDecimal riesgo = premio.divide(total, 2, RoundingMode.HALF_EVEN);
+			riesgo = BigDecimal.valueOf(tupla.getTotalRiesgo()).add(riesgo);
+			tupla.setTotalRiesgo(riesgo.doubleValue());
+			
+			tuplas.put(numero, tupla);
+			totalComision = totalComision.add(comisionTotal);
+			totalValue = totalValue.add(cantidadTotal);
+		 }
+		
+		 
+		TuplaRiesgo tuplaRiesgo = new TuplaRiesgo();
+		if (indexTopRiesgo != -1) {
+			tuplaRiesgo = tuplas.get(indexTopRiesgo);
+        }
+		
+		
+		
+		return new ApuestaActivaResumenResponse(tuplaRiesgo, new ArrayList<TuplaRiesgo>(tuplas.values()), totalComision.doubleValue(), totalValue.doubleValue());
+	}
+	
+	
+	private BigDecimal getPremioFromApuesta(Jugador jugador, Apuesta apuesta, SorteoTypeName sorteoType) {
+		BigDecimal premio = BigDecimal.ZERO;
+		
+		if(sorteoType.equals(SorteoTypeName.DIARIA)) {
+			if( jugador.getTipoApostador().getApostadorName().equals(ApostadorName.DIRECTO)) {
+				premio = BigDecimal.valueOf(jugador.getPremioDirecto());
+			}else if( jugador.getTipoApostador().getApostadorName().equals(ApostadorName.MILES)) {
+				premio = BigDecimal.valueOf(jugador.getPremioMil());
+			}
+		} else if(sorteoType.equals(SorteoTypeName.CHICA)) {
+            if (jugador.getTipoChica().getChicaName().equals(ChicaName.DIRECTO)) {
+            	premio = BigDecimal.valueOf(jugador.getPremioChicaDirecto());
+            } else if (jugador.getTipoChica().getChicaName().equals(ChicaName.MILES)) {
+            	premio = BigDecimal.valueOf(jugador.getPremioChicaMiles());
+            } else if (jugador.getTipoChica().getChicaName().equals(ChicaName.PEDAZOS)) {
+            	premio = BigDecimal.valueOf(jugador.getPremioChicaPedazos());
+            }
+        }
+		
+		return premio.multiply(BigDecimal.valueOf(apuesta.getCantidad()));
 	}
 }
 
