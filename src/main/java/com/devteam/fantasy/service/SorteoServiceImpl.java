@@ -405,7 +405,7 @@ public class SorteoServiceImpl implements SorteoService{
 			//premio / (venta - comision) 
 			BigDecimal total = cantidadTotal.subtract(comisionTotal);
 			BigDecimal riesgo = premio.divide(total, 2, RoundingMode.HALF_EVEN);
-			riesgo = BigDecimal.valueOf(tupla.getTotalRiesgo()).add(riesgo);
+//			riesgo = BigDecimal.valueOf(tupla.getTotalRiesgo()).add(riesgo);
 			tupla.setTotalRiesgo(riesgo.doubleValue());
 			
 			tuplas.put(numero, tupla);
