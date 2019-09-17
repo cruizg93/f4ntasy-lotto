@@ -2,10 +2,12 @@ package com.devteam.fantasy.service;
 
 import java.util.List;
 
+import com.devteam.fantasy.exception.CanNotInsertApuestaException;
 import com.devteam.fantasy.exception.InvalidSorteoStateException;
 import com.devteam.fantasy.message.response.ApuestaActivaResumenResponse;
 import com.devteam.fantasy.message.response.ApuestasActivasResponse;
 import com.devteam.fantasy.message.response.JugadorSorteosResponse;
+import com.devteam.fantasy.message.response.NumeroPlayerEntryResponse;
 import com.devteam.fantasy.message.response.SorteoResponse;
 import com.devteam.fantasy.model.Sorteo;
 import com.devteam.fantasy.model.SorteoDiaria;
@@ -26,4 +28,5 @@ public interface SorteoService {
 	
 	public Sorteo forceCloseStatus(Long id);
 	public ApuestaActivaResumenResponse getDetalleApuestasBySorteo(Long id, String monedatype);
+	public void submitApuestas(String username, Long sorteoId, List<NumeroPlayerEntryResponse> apuestasEntry) throws CanNotInsertApuestaException;
 }

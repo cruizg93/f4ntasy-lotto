@@ -135,7 +135,7 @@ public class SorteoTotales {
 		BigDecimal comisionRate =BigDecimal.ONE;
 		if(sorteoType.equals(SorteoTypeName.DIARIA)){
 			comisionRate = BigDecimal.valueOf(jugador.getComisionDirecto());
-	    }else{
+	    }else if(sorteoType.equals(SorteoTypeName.CHICA)){
 	    	comisionRate= BigDecimal.valueOf(jugador.getComisionChicaDirecto() + jugador.getComisionChicaPedazos());
 	    }
 		return comisionRate;
