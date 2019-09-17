@@ -393,7 +393,8 @@ public class PlayerController {
     }
 
 
-
+    //Replace by SorteoController.submitApuestas [/sorteos/activos/{id}/apuestas]
+    @Deprecated
     @PostMapping("/apuestas/{id}/numeros/update")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
     public ResponseEntity<?> updateNumerosApuestas(@Valid @RequestBody ObjectNode json, @PathVariable Long id) {

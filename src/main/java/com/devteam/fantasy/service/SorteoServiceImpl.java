@@ -8,20 +8,24 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.devteam.fantasy.exception.CanNotInsertApuestaException;
 import com.devteam.fantasy.exception.InvalidSorteoStateException;
 import com.devteam.fantasy.math.SorteoTotales;
 import com.devteam.fantasy.message.response.ApuestaActivaResumenResponse;
 import com.devteam.fantasy.message.response.ApuestasActivasResponse;
 import com.devteam.fantasy.message.response.JugadorSorteosResponse;
+import com.devteam.fantasy.message.response.NumeroPlayerEntryResponse;
 import com.devteam.fantasy.message.response.SorteoResponse;
 import com.devteam.fantasy.model.Apuesta;
 import com.devteam.fantasy.model.Asistente;
+import com.devteam.fantasy.model.Cambio;
 import com.devteam.fantasy.model.Jugador;
 import com.devteam.fantasy.model.Sorteo;
 import com.devteam.fantasy.model.SorteoDiaria;
@@ -441,6 +445,43 @@ public class SorteoServiceImpl implements SorteoService{
         }
 		
 		return premio.multiply(BigDecimal.valueOf(apuesta.getCantidad()));
+	}
+	@Override
+	public void submitApuestas(String username, Long sorteoId, List<NumeroPlayerEntryResponse> apuestasEntry) throws CanNotInsertApuestaException {
+		User user = userRepository.getByUsername(username);
+        Jugador jugador = Util.getJugadorFromUser(user);
+		Cambio cambio = cambioRepository.findFirstByOrderByIdDesc();
+        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
+        Set<Apuesta> apuestasExistentes = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
+        
+        for (NumeroPlayerEntryResponse entryResponse : apuestasEntry) {
+        	try {
+        		Apuesta apuesta = apuestasExistentes.stream().
+            		    filter(a -> a.getNumero() == Integer.parseInt(entryResponse.getNumero()) ).
+            		    findFirst().orElse(null);
+            	
+            	if  (apuesta == null) {
+            		apuesta = new Apuesta();
+            		apuesta.setNumero(Integer.parseInt(entryResponse.getNumero()));
+            		apuesta.setUser(user);
+            		apuesta.setSorteoDiaria(sorteoDiaria);
+            		
+            		apuesta.setCantidad(Double.valueOf(0d));
+            	}
+            	apuesta.setCantidad(apuesta.getCantidad()+entryResponse.getCurrent());
+            	apuesta.setCambio(cambio);
+
+            	BigDecimal comisionRate = sorteoTotales.getComisionRate(jugador, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName()).divide(BigDecimal.valueOf(100));
+            	BigDecimal comision = comisionRate.multiply(BigDecimal.valueOf(apuesta.getCantidad()));
+            	apuesta.setComision(comision.doubleValue());
+            	
+            	apuestaRepository.save(apuesta);
+        	}catch(Exception e) {
+        		e.printStackTrace();
+        		throw new CanNotInsertApuestaException(sorteoDiaria.getSorteo().getSorteoTime().toString(),entryResponse.getNumero(), e.getMessage());
+        	}
+        }
+        
 	}
 }
 

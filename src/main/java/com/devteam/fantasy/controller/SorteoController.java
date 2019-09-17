@@ -1,6 +1,8 @@
 package com.devteam.fantasy.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,11 +19,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.devteam.fantasy.exception.CanNotInsertApuestaException;
 import com.devteam.fantasy.exception.InvalidSorteoStateException;
 import com.devteam.fantasy.message.response.ApuestaActivaResumenResponse;
 import com.devteam.fantasy.message.response.ApuestasActivasResponse;
 import com.devteam.fantasy.message.response.JugadorSorteosResponse;
+import com.devteam.fantasy.message.response.NumeroPlayerEntryResponse;
 import com.devteam.fantasy.message.response.SorteoResponse;
+import com.devteam.fantasy.model.Cambio;
 import com.devteam.fantasy.model.Sorteo;
 import com.devteam.fantasy.model.SorteoDiaria;
 import com.devteam.fantasy.model.User;
@@ -30,6 +35,9 @@ import com.devteam.fantasy.service.SorteoService;
 import com.devteam.fantasy.service.UserService;
 import com.devteam.fantasy.util.EstadoName;
 import com.devteam.fantasy.util.Util;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 
@@ -117,6 +125,30 @@ public class SorteoController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ApuestaActivaResumenResponse getDetallesApuestasActivasById(@PathVariable Long id,@PathVariable String moneda) {
     	return sorteoService.getDetalleApuestasBySorteo(id, moneda);
+    }
+    
+    @PostMapping("/activos/{id}/apuestas")
+    @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
+    public ResponseEntity<?> submitApuestas(@Valid @RequestBody ObjectNode json, @PathVariable Long id) {
+         ObjectMapper mapper = new ObjectMapper();
+         String username = mapper.convertValue(json.get("username"), String.class);
+
+         JsonNode listElements = json.get("data");
+         List<NumeroPlayerEntryResponse> data = mapper.convertValue(
+                 listElements, new TypeReference<List<NumeroPlayerEntryResponse>>() {}
+         );
+         
+         List<NumeroPlayerEntryResponse> result = data.stream()
+                 .filter(entry -> 0.0 != entry.getCurrent())
+                 .collect(Collectors.toList());
+         
+         try {
+			sorteoService.submitApuestas(username, id, result);
+		} catch (CanNotInsertApuestaException e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+		}
+         
+    	return ResponseEntity.ok().body("Update numeros");
     }
 	
 }
