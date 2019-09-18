@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -59,41 +61,52 @@ public class AdminServiceImpl implements AdminService{
 	@Autowired
     ApuestaRepository apuestaRepository;
 	
+	private static final Logger logger = LoggerFactory.getLogger(AdminServiceImpl.class);
 	
 	public List<JugadorResponse> getAllJugadores(){
 		List<JugadorResponse> jugadorResponses = new ArrayList<>();
-        List<Jugador> jugadores = jugadorRepository.findAllByOrderByIdAsc();
-        
-        jugadores.forEach(jugador -> {	
-        	List<SorteoDiaria> sorteoDiarias = sorteoService.getActiveSorteosList(jugador);
-        	List<SorteoResponse> sorteosResponse = sorteoService.getSorteosResponses(sorteoDiarias, (User) jugador);
-        	Map<String, Double> values = processSorteoResponse(sorteosResponse);
-        	
-            JugadorResponse jugadorResponse = new JugadorResponse();
-           
-            jugadorResponse.setTotal(values.get("total"));
-            jugadorResponse.setComision(values.get("comision"));
-            jugadorResponse.setRiesgo(values.get("riesgo"));
-            
-            jugadorResponse.setMonedaType(jugador.getMoneda().toString());
-            jugadorResponse.setId(jugador.getId());
-            jugadorResponse.setBalance(jugador.getBalance());
-            jugadorResponse.setUsername(jugador.getUsername());
-            jugadorResponse.setName(jugador.getName());
-            List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
-            if (asistentes.size() > 0) {
-                List<AsistenteResponse> asistenteResponses = new ArrayList<>();
-                asistentes.forEach(asistente -> {
-                    AsistenteResponse asistenteResponse = new AsistenteResponse();
-                    asistenteResponse.setName(asistente.getName());
-                    asistenteResponse.setUsername(asistente.getUsername());
-                    asistenteResponse.setId(asistente.getId());
-                    asistenteResponses.add(asistenteResponse);
-                });
-                jugadorResponse.setAsistentes(asistenteResponses);
-            }
-            jugadorResponses.add(jugadorResponse);
-        });
+
+		try {
+			logger.debug("getAllJugadores(): START");
+			List<Jugador> jugadores = jugadorRepository.findAllByOrderByIdAsc();
+	        
+	        jugadores.forEach(jugador -> {	
+	        	List<SorteoDiaria> sorteoDiarias = sorteoService.getActiveSorteosList(jugador);
+	        	List<SorteoResponse> sorteosResponse = sorteoService.getSorteosResponses(sorteoDiarias, (User) jugador);
+	        	Map<String, Double> values = processSorteoResponse(sorteosResponse);
+	        	
+	            JugadorResponse jugadorResponse = new JugadorResponse();
+	           
+	            jugadorResponse.setTotal(values.get("total"));
+	            jugadorResponse.setComision(values.get("comision"));
+	            jugadorResponse.setRiesgo(values.get("riesgo"));
+	            
+	            jugadorResponse.setMonedaType(jugador.getMoneda().toString());
+	            jugadorResponse.setId(jugador.getId());
+	            jugadorResponse.setBalance(jugador.getBalance());
+	            jugadorResponse.setUsername(jugador.getUsername());
+	            jugadorResponse.setName(jugador.getName());
+	            List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
+	            if (asistentes.size() > 0) {
+	                List<AsistenteResponse> asistenteResponses = new ArrayList<>();
+	                asistentes.forEach(asistente -> {
+	                    AsistenteResponse asistenteResponse = new AsistenteResponse();
+	                    asistenteResponse.setName(asistente.getName());
+	                    asistenteResponse.setUsername(asistente.getUsername());
+	                    asistenteResponse.setId(asistente.getId());
+	                    asistenteResponses.add(asistenteResponse);
+	                });
+	                jugadorResponse.setAsistentes(asistenteResponses);
+	            }
+	            jugadorResponses.add(jugadorResponse);
+	        });
+		}catch(Exception e) {
+			logger.debug(e.getMessage());
+			logger.debug(e.getStackTrace().toString());
+			throw e;
+		}finally {
+			logger.debug("getAllJugadores(): END");
+		}
         return jugadorResponses;
 	}
 	
@@ -104,15 +117,26 @@ public class AdminServiceImpl implements AdminService{
     	BigDecimal comision = BigDecimal.ZERO;
     	BigDecimal riesgo = BigDecimal.ZERO;
     	
-    	for(SorteoResponse sorteo: sorteosResponse) {
-    		total = total.add(BigDecimal.valueOf(sorteo.getTotal()));
-    		comision = comision.add(BigDecimal.valueOf(sorteo.getComision()));
-    		riesgo = riesgo.add(BigDecimal.valueOf(sorteo.getRiesgo()));
+    	try {
+    		logger.debug("processSorteoResponse(List<SorteoResponse> sorteosResponse): START");
+    		for(SorteoResponse sorteo: sorteosResponse) {
+        		total = total.add(BigDecimal.valueOf(sorteo.getTotal()));
+        		comision = comision.add(BigDecimal.valueOf(sorteo.getComision()));
+        		riesgo = riesgo.add(BigDecimal.valueOf(sorteo.getRiesgo()));
+        	}
+    		
+        	result.put("total",total.doubleValue());
+        	result.put("comision",comision.doubleValue());
+        	result.put("riesgo", riesgo.doubleValue());
+    	}catch(Exception e) {
+    		logger.debug(e.getMessage());
+    		logger.debug(e.getStackTrace().toString());
+    		throw e;
+    	}finally {
+    		logger.debug("processSorteoResponse(List<SorteoResponse> sorteosResponse): END");
     	}
-		
-    	result.put("total",total.doubleValue());
-    	result.put("comision",comision.doubleValue());
-    	result.put("riesgo", riesgo.doubleValue());
+    	
+    	
 		return result;
 	}
 	

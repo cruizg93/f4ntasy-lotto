@@ -560,6 +560,10 @@ public class Util {
     public static boolean isSorteoTypeChica(Sorteo sorteo) {
     	return sorteo.getSorteoType().getSorteoTypeName().equals(SorteoTypeName.CHICA);
     }
+
+	public static MonedaName getMonedaNameFromString(String monedaType) {
+		return MonedaName.LEMPIRA.toString().equals(monedaType)?MonedaName.LEMPIRA:MonedaName.DOLAR;
+	}
 }
 
 
