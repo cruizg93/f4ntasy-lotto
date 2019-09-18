@@ -35,4 +35,5 @@ public interface SorteoService {
 	public ApuestaActivaResponse getApuestasActivasBySorteoAndJugador(Long sorteoId, String username);
 	
 	public void deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, String username);
+	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username);
 }

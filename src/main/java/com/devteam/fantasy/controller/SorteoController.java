@@ -167,6 +167,18 @@ public class SorteoController {
 		}
         return ResponseEntity.ok("Apuesta Eliminada Correctamente.");
     }
+    
+    @DeleteMapping("/activos/{id}/apuestas/{username}")
+    @PreAuthorize("hasRole('USER') or hasRole('ASIS') or hasRole('ADMIN') or hasRole('MASTER')")
+    public ResponseEntity<?> deleteApuestasActivasBySorteoAndJugador(@PathVariable Long id, @PathVariable String username) {
+    	try {
+			sorteoService.deleteAllApuestasOnSorteoDiarioByUser(id, username);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+		}
+        return ResponseEntity.ok("Apuesta Eliminada Correctamente.");
+    }
 }
 
 

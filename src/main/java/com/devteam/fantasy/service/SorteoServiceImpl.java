@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
@@ -693,16 +694,13 @@ public class SorteoServiceImpl implements SorteoService{
 	        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
 
 	        List<Apuesta> apuestasP = apuestaRepository.findAllBySorteoDiariaAndNumeroAndUser(sorteoDiaria,numero, user);
-	        for(Apuesta apuestaP: apuestasP) {
-	        	apuestaRepository.delete(apuestaP);
-	        }
+	        deleteApuestas(apuestasP);
+	        
 	        if (user instanceof Jugador) {
 	            List<Asistente> asistentes = asistenteRepository.findAllByJugador((Jugador)user);
 	            for(Asistente asistente: asistentes) {
 	            	List<Apuesta> apuestasX = apuestaRepository.findAllBySorteoDiariaAndNumeroAndUser(sorteoDiaria,numero, asistente);
-	                for(Apuesta apuestaX: apuestasX) {
-	                	apuestaRepository.delete(apuestaX);
-	                }
+	                deleteApuestas(apuestasX);
 	            }
 			}
 		}catch(Exception e) {
@@ -712,7 +710,37 @@ public class SorteoServiceImpl implements SorteoService{
 		}finally {
 			logger.debug("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, String username): END");
 		}
-        
+	}
+	
+	private void deleteApuestas(List<Apuesta> apuestas) {
+		for(Apuesta apuesta: apuestas) {
+        	apuestaRepository.delete(apuesta);
+        }
+	}
+	@Override
+	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username) {
+		try {
+			logger.debug("deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username): START");
+			User user = userRepository.getByUsername(username);
+	        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
+
+	        Set<Apuesta> apuestasP = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria,user);
+	        deleteApuestas(apuestasP.stream().collect(Collectors.toList()));
+	        
+	        if (user instanceof Jugador) {
+	            List<Asistente> asistentes = asistenteRepository.findAllByJugador((Jugador)user);
+	            for(Asistente asistente: asistentes) {
+	            	Set<Apuesta> apuestasX = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria,asistente);
+	            	deleteApuestas(apuestasX.stream().collect(Collectors.toList()));
+	            }
+			}
+		}catch(Exception e) {
+			logger.debug(e.getMessage());
+			logger.debug(e.getStackTrace().toString());
+			throw e;
+		}finally {
+			logger.debug("deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username): END");
+		}
 	}
 }
 
