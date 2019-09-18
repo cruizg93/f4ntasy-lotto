@@ -13,6 +13,10 @@ public class PairNV implements Comparable<PairNV>{
         this.valor = valor;
     }
 
+    public String getNumeroText() {
+    	return numero<10?"0"+numero.toString():numero.toString();
+    }
+    
     public Integer getNumero() {
         return numero;
     }
