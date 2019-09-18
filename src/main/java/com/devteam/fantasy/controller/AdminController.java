@@ -1225,7 +1225,7 @@ public class AdminController {
                 }
             }
             total += cantidad;
-            pairNVList.add(new PairNV(apuesta.getNumero(), cantidad));
+            pairNVList.add(new PairNV(apuesta.getNumero(), apuesta.getCantidad()));
         }
         ApuestaActivaDetallesResponse detallesResponse = new ApuestaActivaDetallesResponse();
         detallesResponse.setApuestas(pairNVList);
