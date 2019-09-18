@@ -3,6 +3,7 @@ package com.devteam.fantasy.util;
 public class PairNV implements Comparable<PairNV>{
 
     private Integer numero;
+    private String numeroText;
     private Double valor;
 
     public PairNV() {
@@ -13,7 +14,11 @@ public class PairNV implements Comparable<PairNV>{
         this.valor = valor;
     }
 
-    public String getNumeroText() {
+    public void setNumeroText(String numeroText) {
+		this.numeroText = numeroText;
+	}
+
+	public String getNumeroText() {
     	return numero<10?"0"+numero.toString():numero.toString();
     }
     

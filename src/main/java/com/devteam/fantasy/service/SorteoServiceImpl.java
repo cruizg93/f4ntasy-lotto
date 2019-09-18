@@ -13,6 +13,7 @@ import java.util.stream.IntStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.devteam.fantasy.exception.ApuestaNotFoundException;
 import com.devteam.fantasy.exception.CanNotInsertApuestaException;
 import com.devteam.fantasy.exception.InvalidSorteoStateException;
 import com.devteam.fantasy.math.SorteoTotales;
@@ -526,6 +527,28 @@ public class SorteoServiceImpl implements SorteoService{
         	}else {
         		jugadorPair.setValor(jugadorPair.getValor() + apuesta.getCantidad());
         	}
+		}
+	}
+	
+	
+	@Override
+	public void deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, String username) {
+		User user = userRepository.getByUsername(username);
+        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
+//        Apuesta selectedApuesta = apuestaRepository.findById(apuestaId).orElseThrow(() -> new ApuestaNotFoundException("No se encontro apuesta con id = "+apuestaId));
+
+        List<Apuesta> apuestasP = apuestaRepository.findAllBySorteoDiariaAndNumeroAndUser(sorteoDiaria,numero, user);
+        for(Apuesta apuestaP: apuestasP) {
+        	apuestaRepository.delete(apuestaP);
+        }
+        if (user instanceof Jugador) {
+            List<Asistente> asistentes = asistenteRepository.findAllByJugador((Jugador)user);
+            for(Asistente asistente: asistentes) {
+            	List<Apuesta> apuestasX = apuestaRepository.findAllBySorteoDiariaAndNumeroAndUser(sorteoDiaria,numero, asistente);
+                for(Apuesta apuestaX: apuestasX) {
+                	apuestaRepository.delete(apuestaX);
+                }
+            }
 		}
 	}
 }

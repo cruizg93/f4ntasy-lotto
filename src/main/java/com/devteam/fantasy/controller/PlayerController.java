@@ -519,9 +519,9 @@ public class PlayerController {
         JsonNode listElements = json.get("data");
         ObjectMapper mapper = new ObjectMapper();
         Cambio cambio = cambioRepository.findFirstByOrderByIdDesc();
-        List<UpdateNumberForm> data = mapper.convertValue(
+        List<PairNV> data = mapper.convertValue(
                 listElements,
-                new TypeReference<List<UpdateNumberForm>>() {
+                new TypeReference<List<PairNV>>() {
                 }
         );
         String username = mapper.convertValue(json.get("username"), String.class);
@@ -548,7 +548,7 @@ public class PlayerController {
 
         Set<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
         for (Apuesta apuesta : apuestas) {
-            UpdateNumberForm updateNumberForm = data.stream()
+            PairNV updateNumberForm = data.stream()
                     .filter(entry -> apuesta.getNumero() == entry.getNumero())
                     .collect(Util.toSingleton());
             if (updateNumberForm.getValor() == 0) {
@@ -571,6 +571,7 @@ public class PlayerController {
         ObjectMapper mapper = new ObjectMapper();
         Integer numero = mapper.convertValue(json.get("numero"), Integer.class);
         Long userId=mapper.convertValue(json.get("userId"), Long.class);
+       
         Apuesta apuesta= apuestaRepository.getApuestaByNumeroAndSorteoDiariaAndUser(numero, sorteoDiariaRepository.getSorteoDiariaById(id), userRepository.getById(userId));
         apuestaRepository.delete(apuesta);
         return ResponseEntity.ok("Numero eliminado");
