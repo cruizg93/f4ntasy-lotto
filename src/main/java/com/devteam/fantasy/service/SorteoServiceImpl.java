@@ -19,7 +19,9 @@ import org.springframework.stereotype.Service;
 
 import com.devteam.fantasy.exception.ApuestaNotFoundException;
 import com.devteam.fantasy.exception.CanNotInsertApuestaException;
+import com.devteam.fantasy.exception.CanNotRemoveApuestaException;
 import com.devteam.fantasy.exception.InvalidSorteoStateException;
+import com.devteam.fantasy.exception.SorteoEstadoNotValidException;
 import com.devteam.fantasy.math.SorteoTotales;
 import com.devteam.fantasy.message.response.ApuestaActivaResponse;
 import com.devteam.fantasy.message.response.ApuestaActivaResumenResponse;
@@ -56,6 +58,8 @@ import com.devteam.fantasy.util.PairNV;
 import com.devteam.fantasy.util.SorteoTypeName;
 import com.devteam.fantasy.util.TuplaRiesgo;
 import com.devteam.fantasy.util.Util;
+
+import net.bytebuddy.build.HashCodeAndEqualsPlugin.Sorted;
 
 @Service
 public class SorteoServiceImpl implements SorteoService{
@@ -580,7 +584,7 @@ public class SorteoServiceImpl implements SorteoService{
 		return premio.multiply(BigDecimal.valueOf(apuesta.getCantidad()));
 	}
 	@Override
-	public void submitApuestas(String username, Long sorteoId, List<NumeroPlayerEntryResponse> apuestasEntry) throws CanNotInsertApuestaException {
+	public void submitApuestas(String username, Long sorteoId, List<NumeroPlayerEntryResponse> apuestasEntry) throws CanNotInsertApuestaException, SorteoEstadoNotValidException {
         
         try {
 			logger.debug("submitApuestas(String username, Long sorteoId, List<NumeroPlayerEntryResponse> apuestasEntry): START");
@@ -588,6 +592,11 @@ public class SorteoServiceImpl implements SorteoService{
 	        Jugador jugador = Util.getJugadorFromUser(user);
 			Cambio cambio = cambioRepository.findFirstByOrderByIdDesc();
 	        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
+	        
+	        if(!sorteoDiaria.getSorteo().getEstado().getEstado().equals(EstadoName.ABIERTA)){
+	        	throw new SorteoEstadoNotValidException("El sorteo debe de estar abierto para poder comprar apuestas");
+	        }
+	        
 	        Set<Apuesta> apuestasExistentes = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
 	        
 	        for (NumeroPlayerEntryResponse entryResponse : apuestasEntry) {
@@ -687,12 +696,18 @@ public class SorteoServiceImpl implements SorteoService{
 	
 	
 	@Override
-	public void deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, String username) {
-        try {
+	public void deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, String username) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException {
+		SorteoDiaria sorteoDiaria = null;
+		try {
 			logger.debug("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, String username): START");
 			User user = userRepository.getByUsername(username);
-	        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
-
+	        sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
+	        
+	        if(!sorteoDiaria.getSorteo().getEstado().getEstado().equals(EstadoName.ABIERTA)
+	        		&& !sorteoDiaria.getSorteo().getEstado().getEstado().equals(EstadoName.BLOQUEADA)) {
+	        	throw new SorteoEstadoNotValidException("No se puede eliminar apuestas de un sorteo cerrado");
+	        }
+	        
 	        List<Apuesta> apuestasP = apuestaRepository.findAllBySorteoDiariaAndNumeroAndUser(sorteoDiaria,numero, user);
 	        deleteApuestas(apuestasP);
 	        
@@ -706,7 +721,14 @@ public class SorteoServiceImpl implements SorteoService{
 		}catch(Exception e) {
 			logger.debug(e.getMessage());
 			logger.debug(e.getStackTrace().toString());
-			throw e;
+			
+			if(e instanceof SorteoEstadoNotValidException) {
+				throw new SorteoEstadoNotValidException(e.getMessage());
+			}else {
+				throw new CanNotRemoveApuestaException(sorteoDiaria != null
+						?sorteoDiaria.getSorteo().getSorteoTime().toString()
+						:"Sorteo Id"+sorteoId,numero.toString(), e.getMessage());
+			}
 		}finally {
 			logger.debug("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, String username): END");
 		}
@@ -718,12 +740,18 @@ public class SorteoServiceImpl implements SorteoService{
         }
 	}
 	@Override
-	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username) {
+	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException {
+		SorteoDiaria sorteoDiaria = null;
 		try {
 			logger.debug("deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username): START");
 			User user = userRepository.getByUsername(username);
-	        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
-
+	        sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
+	        
+	        if(!sorteoDiaria.getSorteo().getEstado().getEstado().equals(EstadoName.ABIERTA)
+	        		&& !sorteoDiaria.getSorteo().getEstado().getEstado().equals(EstadoName.BLOQUEADA)) {
+	        	throw new SorteoEstadoNotValidException("No se puede eliminar apuestas de un sorteo cerrado");
+	        }
+	        
 	        Set<Apuesta> apuestasP = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria,user);
 	        deleteApuestas(apuestasP.stream().collect(Collectors.toList()));
 	        
@@ -737,7 +765,15 @@ public class SorteoServiceImpl implements SorteoService{
 		}catch(Exception e) {
 			logger.debug(e.getMessage());
 			logger.debug(e.getStackTrace().toString());
-			throw e;
+			
+			if(e instanceof SorteoEstadoNotValidException) {
+				throw new SorteoEstadoNotValidException(e.getMessage());
+			}else {
+				throw new CanNotRemoveApuestaException(
+						sorteoDiaria != null
+							?sorteoDiaria.getSorteo().getSorteoTime().toString()
+							:"Sorteo Id"+sorteoId, e.getMessage());
+			}
 		}finally {
 			logger.debug("deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username): END");
 		}

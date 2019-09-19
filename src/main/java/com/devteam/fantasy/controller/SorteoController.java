@@ -21,7 +21,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.devteam.fantasy.exception.CanNotInsertApuestaException;
+import com.devteam.fantasy.exception.CanNotRemoveApuestaException;
 import com.devteam.fantasy.exception.InvalidSorteoStateException;
+import com.devteam.fantasy.exception.SorteoEstadoNotValidException;
 import com.devteam.fantasy.message.response.ApuestaActivaResponse;
 import com.devteam.fantasy.message.response.ApuestaActivaResumenResponse;
 import com.devteam.fantasy.message.response.ApuestasActivasResponse;
@@ -145,6 +147,8 @@ public class SorteoController {
 			sorteoService.submitApuestas(username, id, result);
 		} catch (CanNotInsertApuestaException e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+		} catch (SorteoEstadoNotValidException e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
 		}
          
     	return ResponseEntity.ok().body("Update numeros");
@@ -161,9 +165,11 @@ public class SorteoController {
     public ResponseEntity<?> deleteApuestasActivasBySorteoAndNumeroAndJugador(@PathVariable Long id, @PathVariable String username, @PathVariable Integer numero) {
     	try {
 			sorteoService.deleteAllApuestasOnSorteoDiarioByNumeroAndUser(id, numero, username);
-		} catch (Exception e) {
+    	} catch (CanNotRemoveApuestaException e) {
 			e.printStackTrace();
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+		}catch (SorteoEstadoNotValidException e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
 		}
         return ResponseEntity.ok("Apuesta Eliminada Correctamente.");
     }
@@ -173,10 +179,13 @@ public class SorteoController {
     public ResponseEntity<?> deleteApuestasActivasBySorteoAndJugador(@PathVariable Long id, @PathVariable String username) {
     	try {
 			sorteoService.deleteAllApuestasOnSorteoDiarioByUser(id, username);
-		} catch (Exception e) {
+		} catch (CanNotRemoveApuestaException e) {
 			e.printStackTrace();
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+		}catch (SorteoEstadoNotValidException e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
 		}
+    	
         return ResponseEntity.ok("Apuesta Eliminada Correctamente.");
     }
 }
