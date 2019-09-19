@@ -188,6 +188,15 @@ public class SorteoController {
     	
         return ResponseEntity.ok("Apuesta Eliminada Correctamente.");
     }
+    
+    @PostMapping("/activos/{id}/numero-ganador")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    public ResponseEntity<?> setNumeroGanadarByApuestaId( @PathVariable Long id, @Valid @RequestBody ObjectNode jsonNodes) {
+    	ObjectMapper mapper = new ObjectMapper();
+        Integer numero = mapper.convertValue(jsonNodes.get("numero"), Integer.class);
+        sorteoService.setNumeroGanador(id, numero);
+    	return ResponseEntity.ok("Numero Asignado correctamente");
+    }
 }
 
 

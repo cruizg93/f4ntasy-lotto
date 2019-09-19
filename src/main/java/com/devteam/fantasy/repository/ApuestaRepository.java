@@ -24,4 +24,5 @@ public interface ApuestaRepository extends JpaRepository<Apuesta, Long> {
     List<Apuesta> findAllBySorteoDiariaOrderByUserDesc(SorteoDiaria sorteoDiaria);
     Apuesta getApuestaByNumeroAndSorteoDiariaAndUser(Integer numero,SorteoDiaria sorteoDiaria, User user);
     List<Apuesta> findAllBySorteoDiariaAndNumeroAndUser(SorteoDiaria sorteoDiaria, Integer numero, User user);
+    List<Apuesta> findAllBySorteoDiariaAndNumero(SorteoDiaria sorteoDiaria, Integer numero);
 }

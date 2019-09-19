@@ -6,6 +6,7 @@ import com.devteam.fantasy.model.HistoricoApuestas;
 import com.devteam.fantasy.model.Jugador;
 import com.devteam.fantasy.model.Sorteo;
 import com.devteam.fantasy.model.SorteoDiaria;
+import com.devteam.fantasy.model.SorteoType;
 import com.devteam.fantasy.model.Status;
 import com.devteam.fantasy.model.User;
 import com.devteam.fantasy.repository.ApuestaRepository;
@@ -562,7 +563,23 @@ public class Util {
     }
 
 	public static MonedaName getMonedaNameFromString(String monedaType) {
-		return MonedaName.LEMPIRA.toString().equals(monedaType)?MonedaName.LEMPIRA:MonedaName.DOLAR;
+		return MonedaName.LEMPIRA.toString().equalsIgnoreCase(monedaType)?MonedaName.LEMPIRA:MonedaName.DOLAR;
+	}
+	
+	public static BigDecimal getPremioMultiplier(Jugador jugador, SorteoTypeName sorteoType) {
+		BigDecimal premio = BigDecimal.valueOf(jugador.getPremioDirecto());
+		
+		if(sorteoType.equals(SorteoTypeName.DIARIA)){
+        	if(jugador.getTipoApostador().getApostadorName().equals(ApostadorName.MILES)){
+            	premio = BigDecimal.valueOf(jugador.getPremioMil());
+        	}
+        }else if(jugador.getTipoChica().getChicaName().equals(ChicaName.MILES)){
+        	premio = BigDecimal.valueOf(jugador.getPremioChicaMiles());
+        }else if(jugador.getTipoChica().getChicaName().equals(ChicaName.PEDAZOS)){
+        	premio = BigDecimal.valueOf(jugador.getPremioChicaPedazos());
+        }
+		
+		return premio;
 	}
 }
 

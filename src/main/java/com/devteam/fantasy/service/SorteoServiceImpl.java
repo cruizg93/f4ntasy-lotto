@@ -2,12 +2,15 @@ package com.devteam.fantasy.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -32,7 +35,10 @@ import com.devteam.fantasy.message.response.SorteoResponse;
 import com.devteam.fantasy.model.Apuesta;
 import com.devteam.fantasy.model.Asistente;
 import com.devteam.fantasy.model.Cambio;
+import com.devteam.fantasy.model.Estado;
+import com.devteam.fantasy.model.HistoricoApuestas;
 import com.devteam.fantasy.model.Jugador;
+import com.devteam.fantasy.model.NumeroGanador;
 import com.devteam.fantasy.model.Sorteo;
 import com.devteam.fantasy.model.SorteoDiaria;
 import com.devteam.fantasy.model.User;
@@ -47,6 +53,7 @@ import com.devteam.fantasy.repository.RestriccionRepository;
 import com.devteam.fantasy.repository.ResultadoRepository;
 import com.devteam.fantasy.repository.SorteoDiariaRepository;
 import com.devteam.fantasy.repository.SorteoRepository;
+import com.devteam.fantasy.repository.SorteoTypeRepository;
 import com.devteam.fantasy.repository.UserRepository;
 import com.devteam.fantasy.security.jwt.JwtAuthEntryPoint;
 import com.devteam.fantasy.util.ApostadorName;
@@ -81,6 +88,9 @@ public class SorteoServiceImpl implements SorteoService{
 	
 	@Autowired
 	EstadoRepository estadoRepository;
+	
+	@Autowired
+	SorteoTypeRepository sorteoTypeRepository;
 	
 	@Autowired
 	AsistenteRepository asistenteRepository;
@@ -417,10 +427,102 @@ public class SorteoServiceImpl implements SorteoService{
 	}
 	
 	@Override
-	public void setNumeroGanador(Long id, int numeroGanador) {
-		// TODO Auto-generated method stub
-		
+	public void setNumeroGanador(Long id, int numero) {
+		try {
+			logger.debug("setNumeroGanador(Long id, int numero): START");
+			
+			SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
+			Sorteo sorteo = sorteoDiaria.getSorteo();
+			NumeroGanador numeroGanador = new NumeroGanador();
+            numeroGanador.setNumeroGanador(numero);
+            numeroGanador.setSorteo(sorteo);
+            numeroGanadorRepository.save(numeroGanador);
+            
+            List<Apuesta> apuestas= apuestaRepository.findAllBySorteoDiariaAndNumero(sorteoDiaria, numero);
+            //Long [jugadorId], Integer unidadesApostadas
+            Map<Long, Integer> map = new HashMap<>();
+            for(Apuesta apuesta: apuestas) {
+            	Jugador jugador = Util.getJugadorFromApuesta(apuesta);
+            	Integer cantidadActual = Optional.ofNullable(map.get(jugador.getId())).orElse(0);
+            	cantidadActual += apuesta.getCantidad().intValue();
+            	map.put(jugador.getId(),cantidadActual);
+            }
+            
+            map.forEach((jugadorId,cantidadTotal)->{
+            	Jugador jugador = jugadorRepository.findById(jugadorId).get();
+            	BigDecimal premioMultiplier = Util.getPremioMultiplier(jugador, sorteo.getSorteoType().getSorteoTypeName());
+            	BigDecimal premio = BigDecimal.valueOf(cantidadTotal).multiply(premioMultiplier);
+            	
+            	//TODO:HISTORY record previous balance on history
+            	BigDecimal newBalance = BigDecimal.valueOf(jugador.getBalance()).add(premio);
+            	jugador.setBalance(newBalance.doubleValue());
+            	jugadorRepository.save(jugador);
+            });
+            
+            copyApuestasToHistoricoApuestas(sorteoDiaria);
+            deleteAndCreateSorteoDiaria(sorteoDiaria);
+		}catch(Exception e) {
+			logger.debug(e.getMessage());
+			logger.debug(e.getStackTrace().toString());
+			throw e;
+		}finally {
+			logger.debug("setNumeroGanador(Long id, int numero): END");
+		}
 	}
+	
+	private void copyApuestasToHistoricoApuestas(SorteoDiaria sorteoDiaria) {
+		try {
+			logger.debug("copyApuestasToHistoricoApuestas(List<Apuesta> apuestas, Sorteo sorteo): START");
+			Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
+			apuestaList.forEach(apuesta->{
+	            HistoricoApuestas historicoApuestas = new HistoricoApuestas();
+	            historicoApuestas.setCantidad(apuesta.getCantidad());
+	            historicoApuestas.setUser(apuesta.getUser());
+	            historicoApuestas.setSorteo(sorteoDiaria.getSorteo());
+	            historicoApuestas.setNumero(apuesta.getNumero());
+	            historicoApuestas.setComision(apuesta.getComision());
+	            historicoApuestas.setCambio(apuesta.getCambio());
+	            historicoApuestaRepository.save(historicoApuestas);
+	            apuestaRepository.delete(apuesta);
+	        });
+		}catch (Exception e) {
+			throw e;
+		}finally {
+			logger.debug("copyApuestasToHistoricoApuestas(List<Apuesta> apuestas, Sorteo sorteo): END");
+		}
+	}
+	
+	private void deleteAndCreateSorteoDiaria(SorteoDiaria sorteoDiaria) {
+		try {
+			logger.debug("deleteAndCreateSorteoDiaria(SorteoDiaria sorteoDiaria): START");
+			sorteoDiariaRepository.delete(sorteoDiaria);
+			
+			int dayNextSorteo = Util.isSorteoTypeDiaria(sorteoDiaria.getSorteo())?1:7;
+	        Timestamp timestamp;
+			LocalDateTime horaSorteoNuevo = sorteoDiaria.getSorteo().getSorteoTime().toLocalDateTime().plusDays(dayNextSorteo);
+			timestamp = Timestamp.valueOf(horaSorteoNuevo);
+	        
+			Sorteo sorteo = new Sorteo();
+	        sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.ABIERTA));
+			sorteo.setSorteoTime(timestamp);
+	        sorteo.setSorteoType(sorteoDiaria.getSorteo().getSorteoType());
+	        sorteo.setSorteoType(sorteoTypeRepository.getBySorteoTypeName(sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName()));
+	        sorteoRepository.save(sorteo);
+	        
+	        SorteoDiaria newSorteoDiaria = new SorteoDiaria();
+	        newSorteoDiaria.setId(sorteo.getId());
+	        newSorteoDiaria.setSorteo(sorteo);
+	        newSorteoDiaria.setSorteoTime(timestamp);
+	        sorteoDiariaRepository.save(newSorteoDiaria);
+		}catch(Exception e) {
+			logger.debug(e.getMessage());
+			logger.debug(e.getStackTrace().toString());
+			throw e;
+		}finally {
+			logger.debug("deleteAndCreateSorteoDiaria(SorteoDiaria sorteoDiaria): END");
+		}
+	}
+	
 	@Override
 	public Sorteo bloquearApuesta(Long id) throws InvalidSorteoStateException{
 		Sorteo sorteo = sorteoRepository.getSorteoById(id);
@@ -487,7 +589,7 @@ public class SorteoServiceImpl implements SorteoService{
 		try {
 			logger.debug("getDetalleApuestasBySorteo(Long id, String monedaType): START");
 			SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
-			sorteoTotales.processSorteo(null,sorteoDiaria, Util.getMonedaNameFromString(monedaType),false);
+			sorteoTotales.processSorteo(null,sorteoDiaria, Util.getMonedaNameFromString(monedaType),true);
 			 
 			int indexTopRiesgo = -1;
 			double topRiesgo = 0d;
@@ -519,16 +621,16 @@ public class SorteoServiceImpl implements SorteoService{
 				BigDecimal dineroApostado = BigDecimal.valueOf(tupla.getDineroApostado()).add(cantidadTotal);
 				tupla.setDineroApostado(dineroApostado.doubleValue());
 				
-				BigDecimal totalRiesgo = BigDecimal.valueOf(tupla.getPosiblePremio()).add(premio);
-				tupla.setPosiblePremio(totalRiesgo.doubleValue());
-				if(topRiesgo < totalRiesgo.doubleValue()) {
+				BigDecimal totalPremio = BigDecimal.valueOf(tupla.getPosiblePremio()).add(premio);
+				tupla.setPosiblePremio(totalPremio.doubleValue());
+				if(topRiesgo < totalPremio.doubleValue()) {
 					indexTopRiesgo = numero;
 				}
 				
 				BigDecimal total = cantidadTotal.subtract(comisionTotal);
 				BigDecimal riesgo = premio.divide(sorteoTotales.getTotalBD(), 2, RoundingMode.HALF_EVEN);
 				//				riesgo = BigDecimal.valueOf(tupla.getTotalRiesgo()).add(riesgo);
-				tupla.setTotalRiesgo(riesgo.doubleValue());
+				tupla.setTotalRiesgo(BigDecimal.valueOf(tupla.getTotalRiesgo()).add(riesgo).doubleValue());
 				
 				tuplas.put(numero, tupla);
 				totalComision = totalComision.add(comisionTotal);
