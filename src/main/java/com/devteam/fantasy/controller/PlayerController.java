@@ -175,7 +175,7 @@ public class PlayerController {
         return sorteoResponses;
     }
 
-    //SorteoController.getDetallesApuestasActivasById => [/activos/judadores/{id}]
+    //SorteoController.getSorteosActivosByUsername => [/activos/judadores/{username}]
     @Deprecated
     @PostMapping("/apuestas/hoy/list")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
@@ -501,6 +501,7 @@ public class PlayerController {
         return ResponseEntity.ok().body("Update numeros");
     }
 
+    //Replaced by SorteoController.getApuestasActivasBySorteoAndJugador [/activos/{id}/apuestas/{username}]
     @PostMapping("/apuestas/activas/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
     public ApuestaActivaResponse getApuestasActivas(@Valid @RequestBody ObjectNode json,

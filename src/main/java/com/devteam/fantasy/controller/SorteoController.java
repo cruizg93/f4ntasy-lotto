@@ -88,7 +88,7 @@ public class SorteoController {
         return jugadorSorteosResponse;
 	}
 	
-	@PutMapping("/bloquear/{id}")
+	@PostMapping("/bloquear/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ResponseEntity<?> bloquearApuesta(@PathVariable Long id, @Valid @RequestBody ObjectNode json) {
 		try {
@@ -100,7 +100,7 @@ public class SorteoController {
         return ResponseEntity.ok("Sorteo locked");
     }
     
-    @PutMapping("/desbloquear/{id}")
+    @PostMapping("/desbloquear/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ResponseEntity<?> desbloquearApuesta(@PathVariable Long id, @Valid @RequestBody ObjectNode json) {
     	try {
@@ -113,7 +113,7 @@ public class SorteoController {
     }
     
     @Profile({"uat","dev"})
-    @PutMapping("/forceCloseStatus/{id}")
+    @PostMapping("/forceCloseStatus/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ResponseEntity<?> cerrarApuesta(@PathVariable Long id, @Valid @RequestBody ObjectNode json) {
 		sorteoService.forceCloseStatus(id);
