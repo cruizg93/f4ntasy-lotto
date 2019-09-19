@@ -16,6 +16,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import org.apache.catalina.mapper.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -785,9 +787,13 @@ public class PlayerController {
 
     @PostMapping("/balance")
     @PreAuthorize("hasRole('USER')")
-    public Double getJugadorBalance(@Valid @RequestBody ObjectNode json) {
-        User user = getUserFromJsonNode(json);
-        return ((Jugador) user).getBalance();
+    public ObjectNode getJugadorBalance(@Valid @RequestBody ObjectNode json) {
+    	User user = getUserFromJsonNode(json);
+    	ObjectMapper mapper = new ObjectMapper();
+    	ObjectNode node = mapper.createObjectNode();
+    	node.put("balance", ((Jugador) user).getBalance());
+    	node.put("currency", ((Jugador) user).getMoneda().toString().equalsIgnoreCase("lempira")?"L":"$");
+        return node;
     }
 
     private void updateDataApuestaAndRestriccion(Restriccion restriccion, int diff, Apuesta apuesta,
