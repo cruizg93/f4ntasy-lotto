@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -19,8 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.devteam.fantasy.exception.ApuestaNotFoundException;
 import com.devteam.fantasy.exception.CanNotInsertApuestaException;
 import com.devteam.fantasy.exception.CanNotRemoveApuestaException;
 import com.devteam.fantasy.exception.InvalidSorteoStateException;
@@ -35,7 +36,6 @@ import com.devteam.fantasy.message.response.SorteoResponse;
 import com.devteam.fantasy.model.Apuesta;
 import com.devteam.fantasy.model.Asistente;
 import com.devteam.fantasy.model.Cambio;
-import com.devteam.fantasy.model.Estado;
 import com.devteam.fantasy.model.HistoricoApuestas;
 import com.devteam.fantasy.model.Jugador;
 import com.devteam.fantasy.model.NumeroGanador;
@@ -49,13 +49,11 @@ import com.devteam.fantasy.repository.EstadoRepository;
 import com.devteam.fantasy.repository.HistoricoApuestaRepository;
 import com.devteam.fantasy.repository.JugadorRepository;
 import com.devteam.fantasy.repository.NumeroGanadorRepository;
-import com.devteam.fantasy.repository.RestriccionRepository;
 import com.devteam.fantasy.repository.ResultadoRepository;
 import com.devteam.fantasy.repository.SorteoDiariaRepository;
 import com.devteam.fantasy.repository.SorteoRepository;
 import com.devteam.fantasy.repository.SorteoTypeRepository;
 import com.devteam.fantasy.repository.UserRepository;
-import com.devteam.fantasy.security.jwt.JwtAuthEntryPoint;
 import com.devteam.fantasy.util.ApostadorName;
 import com.devteam.fantasy.util.ChicaName;
 import com.devteam.fantasy.util.EstadoName;
@@ -65,8 +63,6 @@ import com.devteam.fantasy.util.PairNV;
 import com.devteam.fantasy.util.SorteoTypeName;
 import com.devteam.fantasy.util.TuplaRiesgo;
 import com.devteam.fantasy.util.Util;
-
-import net.bytebuddy.build.HashCodeAndEqualsPlugin.Sorted;
 
 @Service
 public class SorteoServiceImpl implements SorteoService{
@@ -121,14 +117,16 @@ public class SorteoServiceImpl implements SorteoService{
 	 * Type [Diaria] [Sorteos] must be sort by time, 
 	 * but keeping the original position of [Sorteo] [Chica]    
 	 */
+	
 	public List<SorteoDiaria> getActiveSorteosList() {
 		List<SorteoDiaria> result = null;
 		try {
 			logger.debug("getActiveSorteosList(): START");
 			result = getActiveSorteosList(null);
 		}catch(Exception e) {
-			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
+			logger.error("getActiveSorteosList(): START");
+			logger.error(e.getMessage());
+			logger.error(e.getStackTrace().toString());
 		throw e;}finally {
 			logger.debug("getActiveSorteosList(): END");
 		}
@@ -137,7 +135,7 @@ public class SorteoServiceImpl implements SorteoService{
 	public List<SorteoDiaria> getActiveSorteosList(User user) {
 		List<SorteoDiaria> sorteos = null;
         try {
-			logger.debug("getActiveSorteosList(User user): START");
+        	logger.debug("getActiveSorteosList(User {}): START",user);
 			Iterable<SorteoDiaria> sorteosDB = sorteoDiariaRepository.findAll();
 			sorteos = sortDiariaList(sorteosDB);
 			
@@ -151,9 +149,11 @@ public class SorteoServiceImpl implements SorteoService{
 	            sorteoDiaria.setApuestas(apuestas);
 	        }
 		}catch(Exception e) {
-			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
-		throw e;}finally {
+			logger.error("getActiveSorteosList(User {}): CATCH", user);
+			logger.error(e.getMessage());
+			logger.error(e.getStackTrace().toString());
+			throw e;
+		}finally {
 			logger.debug("getActiveSorteosList(User user): END");
 		}
         return sorteos;
@@ -162,7 +162,7 @@ public class SorteoServiceImpl implements SorteoService{
 	public ApuestaActivaResumenResponse getActiveSorteoDetail(Long id, String currency) {
 		ApuestaActivaResumenResponse result = null;
         try {
-			logger.debug("getActiveSorteoDetail(Long id, String currency): START");
+        	logger.debug("getActiveSorteoDetail(Long {}, String {}): START",id,currency);
 			List<TuplaRiesgo> tuplaRiesgos = new ArrayList<>();
 	        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
 	        Sorteo sorteo = sorteoDiaria.getSorteo();
@@ -206,8 +206,9 @@ public class SorteoServiceImpl implements SorteoService{
 	        result = new ApuestaActivaResumenResponse(tuplaRiesgo, tuplaRiesgos, comision[0], totalValue);
 	        
 		}catch(Exception e) {
-			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
+			logger.error("getActiveSorteoDetail(Long {}, String {}): CATCH",id,currency);
+			logger.error(e.getMessage());
+			logger.error(e.getStackTrace().toString());
 		throw e;}finally {
 			logger.debug("getActiveSorteoDetail(Long id, String currency): END");
 		}
@@ -218,7 +219,7 @@ public class SorteoServiceImpl implements SorteoService{
 	private List<SorteoDiaria> sortDiariaList(Iterable<SorteoDiaria> list){
 		List<SorteoDiaria> result = null;
 		try {
-			logger.debug("sortDiariaList(Iterable<SorteoDiaria> list): START");
+			logger.debug("sortDiariaList(Iterable<SorteoDiaria> {}): START",list);
 			List<SorteoDiaria> sorteos = new LinkedList<SorteoDiaria>();
 			list.forEach(sorteos::add);
 
@@ -234,8 +235,9 @@ public class SorteoServiceImpl implements SorteoService{
 			
 			result = sorteos;
 		}catch(Exception e) {
-			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
+			logger.error("sortDiariaList(Iterable<SorteoDiaria> {}): CATCH",list);
+			logger.error(e.getMessage());
+			logger.error(e.getStackTrace().toString());
 		throw e;}finally {
 			logger.debug("sortDiariaList(Iterable<SorteoDiaria> list): END");
 		}
@@ -250,7 +252,7 @@ public class SorteoServiceImpl implements SorteoService{
 	public List<SorteoResponse> getSorteosResponses(List<SorteoDiaria> sorteos, User user) {
 		List<SorteoResponse> sorteoResponses = null;
 		try {
-			logger.debug("getSorteosResponses(List<SorteoDiaria> sorteos, User user): START");
+			logger.debug("getSorteosResponses(List<SorteoDiaria> {}, User {}): START",sorteos, user);
 			sorteoResponses = new ArrayList<>();
 	        Jugador jugador = Util.getJugadorFromUser(user);
 	        MonedaName moneda = jugador.getMoneda().getMonedaName();
@@ -267,8 +269,9 @@ public class SorteoServiceImpl implements SorteoService{
 	                    estado, moneda.toString(), sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString()));
 	        }
 		}catch(Exception e) {
-			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
+			logger.error("getSorteosResponses(List<SorteoDiaria> {}, User {}): CATCH",sorteos, user);
+			logger.error(e.getMessage());
+			logger.error(e.getStackTrace().toString());
 		throw e;}finally {
 			logger.debug("getSorteosResponses(List<SorteoDiaria> sorteos, User user): END");
 		}
@@ -278,6 +281,7 @@ public class SorteoServiceImpl implements SorteoService{
 	private void calcularCantRiesgo(Sorteo sorteo, double[] cantidad, double[] riesgo, Apuesta apuesta, int numero,
 													Jugador jugador, double[] total, String currency, double[] comision) {
 
+		//TODO needs to use Util.getPremioMultiplier and sorteoTotales methods to get costomultiplier and comisionRate
 		try {
 			logger.debug("calcularCantRiesgo(...): START");
 			BigDecimal cambio = Util.getApuestaCambio(currency, apuesta);
@@ -336,8 +340,11 @@ public class SorteoServiceImpl implements SorteoService{
 			}
 			total[0] += premio.doubleValue();
 		}catch(Exception e) {
-			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
+			logger.error("calcularCantRiesgo(...): CATCH");
+			logger.error("sorteo= {}, cantidad[]= {}, riesgo[]={}, Apuesta={}, Numero={}, Jugador={}, total={}, currency={}, comision={}:",
+					sorteo,Arrays.toString(cantidad), Arrays.toString(riesgo), apuesta, numero, jugador, Arrays.toString(total), currency, Arrays.toString(comision));
+			logger.error(e.getMessage());
+			logger.error(e.getStackTrace().toString());
 		throw e;}finally {
 			logger.debug("calcularCantRiesgo(...): END");
 		}
@@ -347,17 +354,18 @@ public class SorteoServiceImpl implements SorteoService{
 	public List<ApuestasActivasResponse> getSorteosListWithMoneda(String currency) {
 		List<ApuestasActivasResponse> apuestasActivasResponses = new ArrayList<>();
 		try {
-			logger.debug("getActiveSorteosList(): START");
+			logger.debug("getSorteosListWithMoneda(String {}): START",currency);
 			List<SorteoDiaria> sorteoDiarias = getActiveSorteosList();
 			sorteoDiarias.forEach(sorteoDiaria -> {
 				apuestasActivasResponses.add(getApuestasActivasResponse(sorteoDiaria, currency));
 			});
 		}catch(Exception e) {
-			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
+			logger.error("getSorteosListWithMoneda(String {}): CATCH",currency);
+			logger.error(e.getMessage());
+			logger.error(e.getStackTrace().toString());
 			throw e;
 		}finally {
-			logger.debug("getActiveSorteosList(): END");
+			logger.debug("getSorteosListWithMoneda(String currency): END");
 		}
 		return apuestasActivasResponses;
 	}
@@ -372,7 +380,7 @@ public class SorteoServiceImpl implements SorteoService{
 		ApuestasActivasResponse activaResponse = new ApuestasActivasResponse();
 		
 		try {
-			logger.debug("getApuestasActivasResponse( SorteoDiaria sorteoDiaria, String currency): START");
+			logger.debug("getApuestasActivasResponse( SorteoDiaria {}, String {}): START", sorteoDiaria, currency);
 			MonedaName moneda = currency.equalsIgnoreCase(MonedaName.LEMPIRA.toString())?MonedaName.LEMPIRA:MonedaName.DOLAR;
 
 	        sorteoTotales.processSorteo(null, sorteoDiaria,moneda, true);
@@ -392,8 +400,9 @@ public class SorteoServiceImpl implements SorteoService{
 	        activaResponse.setType(sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString());
 	        
 		}catch(Exception e) {
-			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
+			logger.error("getApuestasActivasResponse( SorteoDiaria {}, String {}): CATCH", sorteoDiaria, currency);
+			logger.error(e.getMessage());
+			logger.error(e.getStackTrace().toString());
 			throw e;
 		}finally {
 			logger.debug("getApuestasActivasResponse( SorteoDiaria sorteoDiaria, String currency): END");
@@ -416,8 +425,8 @@ public class SorteoServiceImpl implements SorteoService{
 	        jugadorSorteosResponse.setSorteos(getSorteosResponses(sorteos, user));
 	        
 		}catch(Exception e) {
-			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
+			logger.error(e.getMessage());
+			logger.error(e.getStackTrace().toString());
 			throw e;
 		}finally {
 			logger.debug("getJugadorList(): END");
@@ -427,9 +436,10 @@ public class SorteoServiceImpl implements SorteoService{
 	}
 	
 	@Override
+	@Transactional(rollbackFor = Exception.class)
 	public void setNumeroGanador(Long id, int numero) {
 		try {
-			logger.debug("setNumeroGanador(Long id, int numero): START");
+			logger.debug("setNumeroGanador(Long {}, int {}): START",id,numero);
 			
 			SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
 			Sorteo sorteo = sorteoDiaria.getSorteo();
@@ -437,17 +447,22 @@ public class SorteoServiceImpl implements SorteoService{
             numeroGanador.setNumeroGanador(numero);
             numeroGanador.setSorteo(sorteo);
             numeroGanadorRepository.save(numeroGanador);
+            logger.debug("numeroGanadorRepository.save({})",numeroGanador);
+            
             
             List<Apuesta> apuestas= apuestaRepository.findAllBySorteoDiariaAndNumero(sorteoDiaria, numero);
             //Long [jugadorId], Integer unidadesApostadas
             Map<Long, Integer> map = new HashMap<>();
+            StringBuilder jugadorIds = new StringBuilder();
             for(Apuesta apuesta: apuestas) {
             	Jugador jugador = Util.getJugadorFromApuesta(apuesta);
             	Integer cantidadActual = Optional.ofNullable(map.get(jugador.getId())).orElse(0);
             	cantidadActual += apuesta.getCantidad().intValue();
             	map.put(jugador.getId(),cantidadActual);
+            	jugadorIds.append(jugador.getId());
             }
             
+            logger.debug("update balance for jugadores by id:{}",jugadorIds.toString());
             map.forEach((jugadorId,cantidadTotal)->{
             	Jugador jugador = jugadorRepository.findById(jugadorId).get();
             	BigDecimal premioMultiplier = Util.getPremioMultiplier(jugador, sorteo.getSorteoType().getSorteoTypeName());
@@ -458,21 +473,23 @@ public class SorteoServiceImpl implements SorteoService{
             	jugador.setBalance(newBalance.doubleValue());
             	jugadorRepository.save(jugador);
             });
-            
             copyApuestasToHistoricoApuestas(sorteoDiaria);
             deleteAndCreateSorteoDiaria(sorteoDiaria);
 		}catch(Exception e) {
-			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
+			logger.error("setNumeroGanador(Long {}, int {}): CATCH",id,numero);
+			logger.error(e.getMessage());
+			logger.error(e.getStackTrace().toString());
 			throw e;
 		}finally {
 			logger.debug("setNumeroGanador(Long id, int numero): END");
 		}
 	}
+
 	
+	@Transactional(rollbackFor = Exception.class)
 	private void copyApuestasToHistoricoApuestas(SorteoDiaria sorteoDiaria) {
 		try {
-			logger.debug("copyApuestasToHistoricoApuestas(List<Apuesta> apuestas, Sorteo sorteo): START");
+			logger.debug("copyApuestasToHistoricoApuestas(SorteoDiaria {}): START",sorteoDiaria);
 			Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
 			apuestaList.forEach(apuesta->{
 	            HistoricoApuestas historicoApuestas = new HistoricoApuestas();
@@ -488,14 +505,16 @@ public class SorteoServiceImpl implements SorteoService{
 		}catch (Exception e) {
 			throw e;
 		}finally {
-			logger.debug("copyApuestasToHistoricoApuestas(List<Apuesta> apuestas, Sorteo sorteo): END");
+			logger.debug("copyApuestasToHistoricoApuestas(SorteoDiaria sorteoDiaria): END");
 		}
 	}
 	
+	@Transactional(rollbackFor = Exception.class)
 	private void deleteAndCreateSorteoDiaria(SorteoDiaria sorteoDiaria) {
 		try {
-			logger.debug("deleteAndCreateSorteoDiaria(SorteoDiaria sorteoDiaria): START");
+			logger.debug("deleteAndCreateSorteoDiaria(SorteoDiaria {}): START",sorteoDiaria);
 			sorteoDiariaRepository.delete(sorteoDiaria);
+			logger.debug("sorteoDiariaRepository.delete({});",sorteoDiaria);
 			
 			int dayNextSorteo = Util.isSorteoTypeDiaria(sorteoDiaria.getSorteo())?1:7;
 	        Timestamp timestamp;
@@ -509,14 +528,18 @@ public class SorteoServiceImpl implements SorteoService{
 	        sorteo.setSorteoType(sorteoTypeRepository.getBySorteoTypeName(sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName()));
 	        sorteoRepository.save(sorteo);
 	        
+	        logger.debug("sorteoRepository.save({});",sorteo);
+	        
 	        SorteoDiaria newSorteoDiaria = new SorteoDiaria();
 	        newSorteoDiaria.setId(sorteo.getId());
 	        newSorteoDiaria.setSorteo(sorteo);
 	        newSorteoDiaria.setSorteoTime(timestamp);
 	        sorteoDiariaRepository.save(newSorteoDiaria);
+	        logger.debug("sorteoDiariaRepository.save({});",newSorteoDiaria);
 		}catch(Exception e) {
-			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
+			logger.error("deleteAndCreateSorteoDiaria(SorteoDiaria {}): CATCH",sorteoDiaria);
+			logger.error(e.getMessage());
+			logger.error(e.getStackTrace().toString());
 			throw e;
 		}finally {
 			logger.debug("deleteAndCreateSorteoDiaria(SorteoDiaria sorteoDiaria): END");
@@ -524,31 +547,36 @@ public class SorteoServiceImpl implements SorteoService{
 	}
 	
 	@Override
+	@Transactional(rollbackFor = InvalidSorteoStateException.class)
 	public Sorteo bloquearApuesta(Long id) throws InvalidSorteoStateException{
 		Sorteo sorteo = sorteoRepository.getSorteoById(id);
 		try {
-			logger.debug("bloquearApuesta(Long id): START");
+			logger.debug("bloquearApuesta(Long {}): START",id);
 			if(sorteo.getEstado().getEstado().equals(EstadoName.ABIERTA)) {
 				sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.BLOQUEADA));
 		        sorteoRepository.save(sorteo);
 		        historyService.createEvent(HistoryEventType.BLOQUEDA, "Sorteo Bloqueado");
 			}else {
+				logger.debug("InvalidSorteoStateException({}):",sorteo);
 				throw new InvalidSorteoStateException(sorteo);
 			}
 		}catch(Exception e) {
-			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
+			logger.error("bloquearApuesta(Long {}): CATCH",id);
+			logger.error(e.getMessage());
+			logger.error(e.getStackTrace().toString());
 			throw e;
 		}finally {
 			logger.debug("bloquearApuesta(Long id): END");
 		}
         return sorteo;
 	}
+	
 	@Override
+	@Transactional(rollbackFor = {InvalidSorteoStateException.class,Exception.class})
 	public Sorteo desBloquearApuesta(Long id) throws InvalidSorteoStateException {
 		Sorteo sorteo = sorteoRepository.getSorteoById(id);
         try {
-        	logger.debug("desBloquearApuesta(Long id): START");
+        	logger.debug("desBloquearApuesta(Long {}): START",id);
         	if(sorteo.getEstado().getEstado().equals(EstadoName.BLOQUEADA)) {
     			sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.ABIERTA));
     	        sorteoRepository.save(sorteo);
@@ -557,8 +585,9 @@ public class SorteoServiceImpl implements SorteoService{
     			throw new InvalidSorteoStateException(sorteo);
     		}
         }catch(Exception e) {
-        	logger.debug(e.getMessage());
-        	logger.debug(e.getStackTrace().toString());
+        	logger.error("desBloquearApuesta(Long {}): CATCH",id);
+        	logger.error(e.getMessage());
+        	logger.error(e.getStackTrace().toString());
         	throw e;
         }finally {
         	logger.debug("desBloquearApuesta(Long id): END");
@@ -570,13 +599,14 @@ public class SorteoServiceImpl implements SorteoService{
 	public Sorteo forceCloseStatus(Long id) {
 		Sorteo sorteo = sorteoRepository.getSorteoById(id);
 		try {
-			logger.debug("forceCloseStatus(Long id): START");
+			logger.debug("forceCloseStatus(Long {}): START",id);
 			sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.CERRADA));
 	        sorteoRepository.save(sorteo);
 	        historyService.createEvent(HistoryEventType.BLOQUEDA, "Close status forced.");
 		}catch(Exception e) {
-			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
+			logger.error("forceCloseStatus(Long {}): CATCH",id);
+			logger.error(e.getMessage());
+			logger.error(e.getStackTrace().toString());
 			throw e;
 		}finally {
 			logger.debug("forceCloseStatus(Long id): END");
@@ -587,7 +617,7 @@ public class SorteoServiceImpl implements SorteoService{
 	public ApuestaActivaResumenResponse getDetalleApuestasBySorteo(Long id, String monedaType) {
 		ApuestaActivaResumenResponse result = null;
 		try {
-			logger.debug("getDetalleApuestasBySorteo(Long id, String monedaType): START");
+			logger.debug("getDetalleApuestasBySorteo(Long {}, String {}): START",id, monedaType);
 			SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
 			sorteoTotales.processSorteo(null,sorteoDiaria, Util.getMonedaNameFromString(monedaType),true);
 			 
@@ -645,8 +675,9 @@ public class SorteoServiceImpl implements SorteoService{
 			
 			result = new ApuestaActivaResumenResponse(tuplaRiesgo, new ArrayList<TuplaRiesgo>(tuplas.values()), totalComision.doubleValue(), totalValue.doubleValue());
 		}catch(Exception e) {
-			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
+			logger.error("getDetalleApuestasBySorteo(Long {}, String {}): CATCH",id, monedaType);
+			logger.error(e.getMessage());
+			logger.error(e.getStackTrace().toString());
 			throw e;
 		}finally {
 			logger.debug("getDetalleApuestasBySorteo(Long id, String monedaType): END");
@@ -660,7 +691,6 @@ public class SorteoServiceImpl implements SorteoService{
 	private BigDecimal getPremioFromApuesta(Jugador jugador, Apuesta apuesta, SorteoTypeName sorteoType) {
 		BigDecimal premio = BigDecimal.ZERO;
 		try {
-			logger.debug("getPremioFromApuesta(Jugador jugador, Apuesta apuesta, SorteoTypeName sorteoType): START");
 			if(sorteoType.equals(SorteoTypeName.DIARIA)) {
 				if( jugador.getTipoApostador().getApostadorName().equals(ApostadorName.DIRECTO)) {
 					premio = BigDecimal.valueOf(jugador.getPremioDirecto());
@@ -677,19 +707,19 @@ public class SorteoServiceImpl implements SorteoService{
 	            }
 	        }
 		}catch(Exception e) {
-			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
+			logger.error("getPremioFromApuesta(Jugador {}, Apuesta {}, SorteoTypeName {}): CATCH",jugador, apuesta,sorteoType);
+			logger.error(e.getMessage());
+			logger.error(e.getStackTrace().toString());
 			throw e;
-		}finally {
-			logger.debug("getPremioFromApuesta(Jugador jugador, Apuesta apuesta, SorteoTypeName sorteoType): END");
 		}
 		return premio.multiply(BigDecimal.valueOf(apuesta.getCantidad()));
 	}
 	@Override
+	@Transactional(rollbackFor = {CanNotInsertApuestaException.class, SorteoEstadoNotValidException.class,Exception.class})
 	public void submitApuestas(String username, Long sorteoId, List<NumeroPlayerEntryResponse> apuestasEntry) throws CanNotInsertApuestaException, SorteoEstadoNotValidException {
         
         try {
-			logger.debug("submitApuestas(String username, Long sorteoId, List<NumeroPlayerEntryResponse> apuestasEntry): START");
+        	logger.debug("submitApuestas(String {}, Long {}, List<NumeroPlayerEntryResponse> {}): START",username, sorteoId, apuestasEntry);
 			User user = userRepository.getByUsername(username);
 	        Jugador jugador = Util.getJugadorFromUser(user);
 			Cambio cambio = cambioRepository.findFirstByOrderByIdDesc();
@@ -729,8 +759,9 @@ public class SorteoServiceImpl implements SorteoService{
 	        	}
 	        }
 		}catch(CanNotInsertApuestaException ex) {
-			logger.debug(ex.getMessage());
-			logger.debug(ex.getStackTrace().toString());
+			logger.error("submitApuestas(String {}, Long {}, List<NumeroPlayerEntryResponse> {}): CATCH",username, sorteoId, apuestasEntry);
+			logger.error(ex.getMessage());
+			logger.error(ex.getStackTrace().toString());
 			throw ex;
 		}finally {
 			logger.debug("submitApuestas(String username, Long sorteoId, List<NumeroPlayerEntryResponse> apuestasEntry): END");
@@ -742,7 +773,7 @@ public class SorteoServiceImpl implements SorteoService{
 		
         ApuestaActivaResponse apuestaActivaResponse = null;
         try {
-			logger.debug("getApuestasActivasBySorteoAndJugador(Long sorteoId, String username): START");
+			logger.debug("getApuestasActivasBySorteoAndJugador(Long {}, String {}): START",sorteoId, username);
 			User user = userRepository.getByUsername(username);
 			Jugador jugador = Util.getJugadorFromUser(user);
 			SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
@@ -774,8 +805,9 @@ public class SorteoServiceImpl implements SorteoService{
 	        apuestaActivaResponse.setType(sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString());
 
         }catch(Exception e) {
-			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
+        	logger.error("getApuestasActivasBySorteoAndJugador(Long {}, String {}): CATCH",sorteoId, username);
+			logger.error(e.getMessage());
+			logger.error(e.getStackTrace().toString());
 			throw e;
 		}finally {
 			logger.debug("getApuestasActivasBySorteoAndJugador(Long sorteoId, String username): END");
@@ -801,7 +833,7 @@ public class SorteoServiceImpl implements SorteoService{
 	public void deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, String username) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException {
 		SorteoDiaria sorteoDiaria = null;
 		try {
-			logger.debug("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, String username): START");
+			logger.debug("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long {}, Integer {}, String {}): START",sorteoId,numero,username);
 			User user = userRepository.getByUsername(username);
 	        sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
 	        
@@ -821,8 +853,9 @@ public class SorteoServiceImpl implements SorteoService{
 	            }
 			}
 		}catch(Exception e) {
-			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
+			logger.error("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long {}, Integer {}, String {}): CATCH",sorteoId,numero,username);
+			logger.error(e.getMessage());
+			logger.error(e.getStackTrace().toString());
 			
 			if(e instanceof SorteoEstadoNotValidException) {
 				throw new SorteoEstadoNotValidException(e.getMessage());
@@ -845,7 +878,7 @@ public class SorteoServiceImpl implements SorteoService{
 	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException {
 		SorteoDiaria sorteoDiaria = null;
 		try {
-			logger.debug("deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username): START");
+			logger.debug("deleteAllApuestasOnSorteoDiarioByUser(Long {}, String {}): END",sorteoId, username);
 			User user = userRepository.getByUsername(username);
 	        sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
 	        
@@ -865,8 +898,9 @@ public class SorteoServiceImpl implements SorteoService{
 	            }
 			}
 		}catch(Exception e) {
-			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
+			logger.error("deleteAllApuestasOnSorteoDiarioByUser(Long {}, String {}): CATCH",sorteoId, username);
+			logger.error(e.getMessage());
+			logger.error(e.getStackTrace().toString());
 			
 			if(e instanceof SorteoEstadoNotValidException) {
 				throw new SorteoEstadoNotValidException(e.getMessage());

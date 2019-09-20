@@ -2,7 +2,8 @@ package com.devteam.fantasy.service;
 
 import java.util.List;
 
-import com.devteam.fantasy.exception.ApuestaNotFoundException;
+import javax.transaction.Transactional;
+
 import com.devteam.fantasy.exception.CanNotInsertApuestaException;
 import com.devteam.fantasy.exception.CanNotRemoveApuestaException;
 import com.devteam.fantasy.exception.InvalidSorteoStateException;
@@ -16,8 +17,8 @@ import com.devteam.fantasy.message.response.SorteoResponse;
 import com.devteam.fantasy.model.Sorteo;
 import com.devteam.fantasy.model.SorteoDiaria;
 import com.devteam.fantasy.model.User;
-import com.devteam.fantasy.util.PairNV;
 
+@Transactional
 public interface SorteoService {
 	
 	public List<SorteoDiaria> getActiveSorteosList(User user);

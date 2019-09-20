@@ -37,4 +37,11 @@ public class NumeroGanador {
     public void setNumeroGanador(Integer numeroGanador) {
         this.numeroGanador = numeroGanador;
     }
+
+	@Override
+	public String toString() {
+		return "NumeroGanador [id=" + id + ", numeroGanador=" + numeroGanador + ", sorteo=" + sorteo + "]";
+	}
+    
+    
 }

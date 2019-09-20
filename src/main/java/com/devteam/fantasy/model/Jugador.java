@@ -210,5 +210,18 @@ public class Jugador extends User {
         this.balance = balance;
     }
 
+	@Override
+	public String toString() {
+		return "Jugador [Username="+this.getUsername()+"moneda=" + moneda + ", tipoApostador=" + tipoApostador 
+				+ ", tipoChica=" + tipoChica
+				+ ", comisionChicaDirecto=" + comisionChicaDirecto + ", premioChicaDirecto=" + premioChicaDirecto
+				+ ", costoChicaMiles=" + costoChicaMiles + ", premioChicaMiles=" + premioChicaMiles
+				+ ", comisionChicaPedazos=" + comisionChicaPedazos + ", costoChicaPedazos=" + costoChicaPedazos
+				+ ", premioChicaPedazos=" + premioChicaPedazos + ", comisionDirecto=" + comisionDirecto
+				+ ", premioDirecto=" + premioDirecto + ", costoMil=" + costoMil + ", premioMil=" + premioMil
+				+ ", balance=" + balance + "]";
+	}
 
+
+    
 }

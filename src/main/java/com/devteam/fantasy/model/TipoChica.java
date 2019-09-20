@@ -41,4 +41,11 @@ public class TipoChica {
     public void setChicaName(ChicaName chicaName) {
         this.chicaName = chicaName;
     }
+
+	@Override
+	public String toString() {
+		return "TipoChica [chicaName=" + chicaName.toString() + "]";
+	}
+    
+    
 }

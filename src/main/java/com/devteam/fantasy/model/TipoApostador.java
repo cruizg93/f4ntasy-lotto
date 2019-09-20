@@ -39,4 +39,11 @@ public class TipoApostador {
     public void setApostadorName(ApostadorName apostadorName) {
         this.apostadorName = apostadorName;
     }
+
+	@Override
+	public String toString() {
+		return "TipoApostador [apostadorName=" + apostadorName.toString() + "]";
+	}
+    
+    
 }

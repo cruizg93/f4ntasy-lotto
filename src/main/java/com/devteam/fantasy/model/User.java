@@ -109,4 +109,12 @@ public class User {
     public void setNoFirstConnection(boolean noFirstConnection) {
         this.noFirstConnection = noFirstConnection;
     }
+
+	@Override
+	public String toString() {
+		return "User [id=" + id + ", name=" + name + ", username=" + username + ", password=" + password + ", roles="
+				+ roles + ", apuestas=" + apuestas + ", noFirstConnection=" + noFirstConnection + "]";
+	}
+    
+    
 }
