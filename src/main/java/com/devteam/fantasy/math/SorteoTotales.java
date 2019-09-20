@@ -55,7 +55,12 @@ public class SorteoTotales {
 	}
 	
 	public void processSorteo(User user, SorteoDiaria sorteoDiaria) {
-		processSorteo(user, sorteoDiaria,MonedaName.LEMPIRA, false);
+		MonedaName moneda = MonedaName.LEMPIRA;
+		Jugador jugador = Util.getJugadorFromUser(user);
+		if(jugador != null) {
+			moneda = jugador.getMoneda().getMonedaName();
+		}
+		processSorteo(user, sorteoDiaria,moneda, false);
 	}
 	
 	public void processSorteo(User user, SorteoDiaria sorteoDiaria, MonedaName monedaName, boolean skipAsistentes) {
@@ -66,8 +71,12 @@ public class SorteoTotales {
 		this.comisiones = BigDecimal.ZERO;
 		
 		Jugador jugador = Util.getJugadorFromUser(user);
-        
-        for (Apuesta apuesta : sorteoDiaria.getApuestas()) {
+		Set<Apuesta> apuestas =  apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
+		if(user == null) {
+			apuestas = sorteoDiaria.getApuestas();
+		}
+		
+        for (Apuesta apuesta : apuestas) {
         	if(user == null ) { jugador = Util.getJugadorFromUser(apuesta.getUser()); }
         	
         	BigDecimal cantidad = getCantidadMultiplier(jugador, apuesta, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName()).multiply(BigDecimal.valueOf(apuesta.getCantidad()));
