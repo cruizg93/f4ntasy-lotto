@@ -46,10 +46,6 @@ public class SorteoTotales {
 	private User user;
 	private SorteoDiaria sorteoDiaria;
 
-	public void setMonedaName(MonedaName monedaName) {
-		this.monedaName = monedaName;
-	}
-	
 	public SorteoTotales() {
 		
 	}
@@ -79,7 +75,8 @@ public class SorteoTotales {
         for (Apuesta apuesta : apuestas) {
         	if(user == null ) { jugador = Util.getJugadorFromUser(apuesta.getUser()); }
         	
-        	BigDecimal cantidad = getCantidadMultiplier(jugador, apuesta, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName()).multiply(BigDecimal.valueOf(apuesta.getCantidad()));
+        	BigDecimal cantidad = MathUtil.getCantidadMultiplier(jugador, apuesta, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName(), this.monedaName);
+			cantidad = cantidad.multiply(BigDecimal.valueOf(apuesta.getCantidad()));
             ventas = ventas.add(cantidad);
             comisiones = comisiones.add(BigDecimal.valueOf(apuesta.getComision()));
         }
@@ -92,7 +89,7 @@ public class SorteoTotales {
             for(Asistente asistente: asistentes) {
             	Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
     			for(Apuesta apuesta : apuestaList) {
-    				BigDecimal multiplier = getCantidadMultiplier(jugador, apuesta,sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
+    				BigDecimal multiplier = MathUtil.getCantidadMultiplier(jugador, apuesta,sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName(), this.monedaName);
     				cantidadAsistentesVentas = multiplier.multiply(BigDecimal.valueOf(apuesta.getCantidad())).add(cantidadAsistentesVentas);
     				comisionAsistentesVentas = comisionAsistentesVentas.add(BigDecimal.valueOf(apuesta.getComision()));
     			}
@@ -106,50 +103,6 @@ public class SorteoTotales {
 //        }
 	}
 	
-	private double getDollarChangeRate(Apuesta apuesta) {
-		Jugador jugador;
-		double cambio = 1d;
-		if(apuesta.getUser() instanceof Jugador){
-			jugador =  (Jugador) apuesta.getUser();
-		}else {
-			jugador =  ((Asistente) apuesta.getUser()).getJugador();
-		}
-        if(this.monedaName.toString().equalsIgnoreCase("lempira") && jugador.getMoneda().getMonedaName().equals(MonedaName.DOLAR)){
-            cambio = apuesta.getCambio().getCambio();
-        }else if(this.monedaName.toString().equalsIgnoreCase("dolar") && jugador.getMoneda().getMonedaName().equals(MonedaName.LEMPIRA)){
-            cambio = 1/apuesta.getCambio().getCambio();
-        }
-        return cambio;
-	}
-
-	public BigDecimal getCantidadMultiplier(Jugador jugador, Apuesta apuesta, SorteoTypeName sorteoType) {
-		BigDecimal cantidad =BigDecimal.ONE;
-		
-		if(sorteoType.equals(SorteoTypeName.DIARIA)){
-        	if(jugador.getTipoApostador().getApostadorName().equals(ApostadorName.MILES)){
-            	cantidad= BigDecimal.valueOf(jugador.getCostoMil());
-            }
-        }else if(jugador.getTipoChica().getChicaName().equals(ChicaName.MILES)){
-        	cantidad= BigDecimal.valueOf(jugador.getCostoChicaMiles());
-        }else if(jugador.getTipoChica().getChicaName().equals(ChicaName.PEDAZOS)){
-        	cantidad= BigDecimal.valueOf(jugador.getCostoChicaPedazos());
-        }
-		
-		double cambioRate = getDollarChangeRate(apuesta);
-		
-		return cantidad.multiply(BigDecimal.valueOf(cambioRate));
-	}
-	
-	public BigDecimal getComisionRate(Jugador jugador, SorteoTypeName sorteoType) {
-		BigDecimal comisionRate =BigDecimal.ONE;
-		if(sorteoType.equals(SorteoTypeName.DIARIA)){
-			comisionRate = BigDecimal.valueOf(jugador.getComisionDirecto());
-	    }else if(sorteoType.equals(SorteoTypeName.CHICA)){
-	    	comisionRate= BigDecimal.valueOf(jugador.getComisionChicaDirecto() + jugador.getComisionChicaPedazos());
-	    }
-		return comisionRate;
-	}
-	
 	//Need to return multiple values.
 	@Deprecated 
 	public BigDecimal getAsistentesVentasOnSorteo(Jugador jugador, SorteoDiaria sorteoDiaria) {
@@ -159,7 +112,7 @@ public class SorteoTotales {
         for(Asistente asistente: asistentes) {
         	Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
 			for(Apuesta apuesta : apuestaList) {
-				BigDecimal multiplier = getCantidadMultiplier(jugador, apuesta,sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
+				BigDecimal multiplier = MathUtil.getCantidadMultiplier(jugador, apuesta,sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName(), this.monedaName);
 				cantidad = multiplier.multiply(BigDecimal.valueOf(apuesta.getCantidad())).add(cantidad);
 			}
         }
@@ -190,4 +143,13 @@ public class SorteoTotales {
 	public BigDecimal getTotalBD() {
 		return ventas.subtract(comisiones);
 	}
+	
+	public void setMonedaName(MonedaName monedaName) {
+		this.monedaName = monedaName;
+	}
+
+	public MonedaName getMonedaName() {
+		return monedaName;
+	}
+	
 }

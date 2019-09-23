@@ -514,6 +514,11 @@ public class Util {
         }
         return timeValue;
     }
+    public static int getlocalDateTimeHourFromTimestamp(Timestamp timestamp) {
+        LocalDateTime localDateTime = timestamp.toLocalDateTime();
+        return localDateTime.getHour();
+    }
+    
     
     /**
      * @Author Cristian Ruiz
@@ -527,6 +532,11 @@ public class Util {
         		localDate.getDayOfMonth(),
         		monthsAbb[localDate.getMonthValue() - 1]
                 );
+    }
+    
+    public static DayOfWeek getDayOfWeekFromTimestamp(Timestamp timestamp) {
+        LocalDate localDate = timestamp.toLocalDateTime().toLocalDate();
+        return localDate.getDayOfWeek();
     }
     
     public static Jugador getJugadorFromApuesta(Apuesta apuesta) {

@@ -1,5 +1,6 @@
 package com.devteam.fantasy;
 
+import com.devteam.fantasy.math.MathUtil;
 import com.devteam.fantasy.math.SorteoTotales;
 import com.devteam.fantasy.model.*;
 import com.devteam.fantasy.repository.*;
@@ -267,6 +268,7 @@ public class FantasyApplication {
             insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 10, 20);
             insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 11, 46);
             insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 15, 28);
+            insertApuestaDiaria(sorteoDiaria11.getId(), x1, cambio, 0, 33);
             insertApuestaDiaria(sorteoDiaria11.getId(), x1, cambio, 5, 30);
             insertApuestaDiaria(sorteoDiaria11.getId(), x1, cambio, 8, 50);
             insertApuestaDiaria(sorteoDiaria11.getId(), x1, cambio, 10, 18);
@@ -280,7 +282,7 @@ public class FantasyApplication {
             insertApuestaChica(sorteoChica.getId(),x1, cambio,8,36);
             insertApuestaChica(sorteoChica.getId(),x1, cambio,10,55);
             insertApuestaChica(sorteoChica.getId(),x1, cambio,18,1);
-//            
+            
             /**
              * Jugador 2
              */
@@ -302,7 +304,7 @@ public class FantasyApplication {
             insertApuestaChica(sorteoChica.getId(),x2, cambio,8,105);
             insertApuestaChica(sorteoChica.getId(),x2, cambio,10,48);
             insertApuestaChica(sorteoChica.getId(),x2, cambio,19,70);
-//            
+            
             /**
              * Jugador 3
              */
@@ -314,7 +316,7 @@ public class FantasyApplication {
             insertApuestaDiaria(sorteoDiaria11.getId(), x3, cambio, 5, 44);
             insertApuestaDiaria(sorteoDiaria11.getId(), x3, cambio, 8, 40);
             insertApuestaDiaria(sorteoDiaria11.getId(), x3, cambio, 10, 23);
-//           
+           
             insertApuestaChica(sorteoChica.getId(),p3, cambio,0,160);
             insertApuestaChica(sorteoChica.getId(),p3, cambio,3,180);
             insertApuestaChica(sorteoChica.getId(),p3, cambio,10,240);
@@ -324,7 +326,7 @@ public class FantasyApplication {
             insertApuestaChica(sorteoChica.getId(),x3, cambio,8,160);
             insertApuestaChica(sorteoChica.getId(),x3, cambio,10,190);
             insertApuestaChica(sorteoChica.getId(),x3, cambio,14,190);
-//            
+            
             /**
              * Jugador 4
              */
@@ -484,7 +486,7 @@ public class FantasyApplication {
 	    } else if (user instanceof Asistente) {
 	    	jugador = ((Asistente) user).getJugador();
 	    }
-	    comision = sorteoTotales.getComisionRate(jugador, SorteoTypeName.DIARIA).doubleValue(); 
+	    comision = MathUtil.getComisionRate(jugador, SorteoTypeName.DIARIA).doubleValue(); 
         
 	    
 	    
@@ -497,7 +499,7 @@ public class FantasyApplication {
         apuesta.setCambio(cambio);
         apuesta.setUser(user);
         
-        double costo = sorteoTotales.getCantidadMultiplier(jugador, apuesta, SorteoTypeName.DIARIA).doubleValue();
+        double costo = MathUtil.getCantidadMultiplier(jugador, apuesta, SorteoTypeName.DIARIA, MonedaName.LEMPIRA).doubleValue();
         apuesta.setComision((comision/100)*(costo*cantidad));
         apuestaRepository.save(apuesta);
     }
@@ -513,7 +515,7 @@ public class FantasyApplication {
 	    	jugador = ((Asistente) user).getJugador();
 	    }
 	    
-	    comision = sorteoTotales.getComisionRate(jugador, SorteoTypeName.CHICA).doubleValue(); 
+	    comision = MathUtil.getComisionRate(jugador, SorteoTypeName.CHICA).doubleValue(); 
 	    costoPedazo = jugador.getCostoChicaPedazos()==0?1:jugador.getCostoChicaPedazos();
 	    
     	Apuesta apuesta = new Apuesta();
@@ -524,7 +526,7 @@ public class FantasyApplication {
         apuesta.setCambio(cambio);
         apuesta.setUser(user);
         
-        double costo = sorteoTotales.getCantidadMultiplier(jugador, apuesta, SorteoTypeName.CHICA).doubleValue();
+        double costo = MathUtil.getCantidadMultiplier(jugador, apuesta, SorteoTypeName.CHICA, MonedaName.LEMPIRA).doubleValue();
         apuesta.setComision((comision/100)*(costo*cantidad));
         apuestaRepository.save(apuesta);
     }
