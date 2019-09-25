@@ -313,6 +313,7 @@ public class Util {
                     historicoApuestas.setNumero(apuesta.getNumero());
                     historicoApuestas.setComision(apuesta.getComision());
                     historicoApuestas.setCambio(apuesta.getCambio());
+                    historicoApuestas.setDate(apuesta.getDate());
                     historicoApuestaRepository.save(historicoApuestas);
                     apuestaRepository.delete(apuesta);
                 });

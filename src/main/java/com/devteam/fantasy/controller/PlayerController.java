@@ -28,7 +28,10 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.swing.SortingFocusTraversalPolicy;
 import javax.validation.Valid;
+
+import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -472,6 +475,7 @@ public class PlayerController {
                     Optional<User> users = userRepository.findByUsername(username);
                     users.ifPresent(apuesta::setUser);
                     balance -= apuesta.getCantidad();
+                    apuesta.setDate(Timestamp.valueOf(LocalDateTime.now()));
                     apuestaRepository.save(apuesta);
                 }
             } else {
@@ -483,6 +487,7 @@ public class PlayerController {
                     apuesta_ele.setCantidad(entryResponse.getCurrent());
                     apuesta_ele.setComision(entryResponse.getCurrent() * costoPedazo * comision / 100);
                     apuesta_ele.setCambio(cambio);
+                    apuesta_ele.setDate(Timestamp.valueOf(LocalDateTime.now()));
                     balance -= apuesta_ele.getCantidad();
                     apuestaRepository.save(apuesta_ele);
                 } else {
@@ -493,6 +498,7 @@ public class PlayerController {
                     apuesta.setCantidad(entryResponse.getCurrent());
                     apuesta.setComision(entryResponse.getCurrent() * costoPedazo *comision / 100);
                     apuesta.setCambio(cambio);
+                    apuesta.setDate(Timestamp.valueOf(LocalDateTime.now()));
                     Optional<User> users = userRepository.findByUsername(username);
                     users.ifPresent(apuesta::setUser);
                     balance -= apuesta.getCantidad();
@@ -559,6 +565,7 @@ public class PlayerController {
             } else {
                 apuesta.setCantidad(updateNumberForm.getValor());
                 apuesta.setCambio(cambio);
+                apuesta.setDate(Timestamp.valueOf(LocalDateTime.now()));
                 apuestaRepository.save(apuesta);
             }
         }

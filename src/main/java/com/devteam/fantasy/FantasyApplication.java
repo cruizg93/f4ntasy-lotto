@@ -498,7 +498,7 @@ public class FantasyApplication {
         
         apuesta.setCambio(cambio);
         apuesta.setUser(user);
-        
+        apuesta.setDate(Timestamp.valueOf(LocalDateTime.now()));
         double costo = MathUtil.getCantidadMultiplier(jugador, apuesta, SorteoTypeName.DIARIA, MonedaName.LEMPIRA).doubleValue();
         apuesta.setComision((comision/100)*(costo*cantidad));
         apuestaRepository.save(apuesta);
@@ -525,6 +525,7 @@ public class FantasyApplication {
         apuesta.setCantidad(Double.valueOf(cantidad));
         apuesta.setCambio(cambio);
         apuesta.setUser(user);
+        apuesta.setDate(Timestamp.valueOf(LocalDateTime.now()));
         
         double costo = MathUtil.getCantidadMultiplier(jugador, apuesta, SorteoTypeName.CHICA, MonedaName.LEMPIRA).doubleValue();
         apuesta.setComision((comision/100)*(costo*cantidad));

@@ -5,6 +5,7 @@ import java.util.List;
 import javax.transaction.Transactional;
 
 import com.devteam.fantasy.exception.CanNotInsertApuestaException;
+import com.devteam.fantasy.exception.CanNotInsertHistoricoBalanceException;
 import com.devteam.fantasy.exception.CanNotRemoveApuestaException;
 import com.devteam.fantasy.exception.InvalidSorteoStateException;
 import com.devteam.fantasy.exception.SorteoEstadoNotValidException;
@@ -26,7 +27,7 @@ public interface SorteoService {
 	public JugadorSorteosResponse getJugadorList();
 	public List<SorteoResponse> getSorteosResponses(List<SorteoDiaria> sorteos, User user);
 	
-	public void setNumeroGanador(Long id, int numeroGanador);
+	public void setNumeroGanador(Long id, int numeroGanador) throws Exception;
 	public List<ApuestasActivasResponse> getSorteosListWithMoneda(String currency);
 	public ApuestaActivaResumenResponse getActiveSorteoDetail(Long id, String currency); 
 	public Sorteo bloquearApuesta(Long id) throws InvalidSorteoStateException;
@@ -39,4 +40,5 @@ public interface SorteoService {
 	
 	public void deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, String username) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
 	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
+	void cerrarSemana(SorteoDiaria sorteoDiaria) throws CanNotInsertHistoricoBalanceException;
 }

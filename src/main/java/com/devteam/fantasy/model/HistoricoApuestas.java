@@ -1,7 +1,8 @@
 package com.devteam.fantasy.model;
 
-import javax.persistence.*;
+import java.sql.Timestamp;
 
+import javax.persistence.*;
 @Entity
 public class HistoricoApuestas {
     @Id
@@ -26,9 +27,8 @@ public class HistoricoApuestas {
 
     private Double comision;
 
-
-
-
+    private Timestamp date;
+    
     public Long getId() {
         return id;
     }
@@ -84,4 +84,20 @@ public class HistoricoApuestas {
     public void setComision(Double comision) {
         this.comision = comision;
     }
+
+	public Timestamp getDate() {
+		return date;
+	}
+
+	public void setDate(Timestamp date) {
+		this.date = date;
+	}
+
+	@Override
+	public String toString() {
+		return "HistoricoApuestas [id=" + id + ", sorteo=" + sorteo + ", user=" + user + ", cambio=" + cambio
+				+ ", numero=" + numero + ", cantidad=" + cantidad + ", comision=" + comision + ", date=" + date + "]";
+	}
+    
+    
 }
