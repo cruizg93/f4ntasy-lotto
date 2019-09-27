@@ -12,4 +12,5 @@ public interface NumeroGanadorRepository extends JpaRepository<NumeroGanador, Lo
     NumeroGanador getBySorteo(Sorteo sorteo);
     Optional<Integer> getByNumeroGanador(Integer numero);
     Optional<NumeroGanador> getNumeroGanadorBySorteo(Sorteo sorteo);
+	Integer findBySorteo(Sorteo sorteo);
 }

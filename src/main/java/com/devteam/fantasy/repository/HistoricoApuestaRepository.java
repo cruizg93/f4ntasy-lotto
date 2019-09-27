@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface HistoricoApuestaRepository extends JpaRepository<HistoricoApuestas, Long> {
-    List<HistoricoApuestas> findAllBySorteoAndUser(Sorteo sorteo, User user);
+	List<HistoricoApuestas> findAllBySorteo(Sorteo sorteo);
+	List<HistoricoApuestas> findAllBySorteoAndUser(Sorteo sorteo, User user);
     List<HistoricoApuestas> findAllBySorteoAndNumero(Sorteo sorteo, Integer numero);
 }
