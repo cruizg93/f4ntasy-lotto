@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 
 import com.devteam.fantasy.model.Apuesta;
 import com.devteam.fantasy.model.Asistente;
+import com.devteam.fantasy.model.HistoricoApuestas;
 import com.devteam.fantasy.model.Jugador;
+import com.devteam.fantasy.model.SorteoDiaria;
 import com.devteam.fantasy.util.ApostadorName;
 import com.devteam.fantasy.util.ChicaName;
 import com.devteam.fantasy.util.MonedaName;
@@ -27,7 +29,6 @@ public class MathUtil {
 		return comisionRate;
 	}
 	
-	
 	public static BigDecimal getCantidadMultiplier(Jugador jugador, Apuesta apuesta, SorteoTypeName sorteoType, MonedaName currencyRequested) {
 		BigDecimal cantidad =BigDecimal.ONE;
 		
@@ -45,6 +46,23 @@ public class MathUtil {
 		
 		return cantidad.multiply(BigDecimal.valueOf(cambioRate));
 	}
+	
+	public static BigDecimal getPremioMultiplier(Jugador jugador, SorteoTypeName sorteoType) {
+		BigDecimal premio = BigDecimal.valueOf(jugador.getPremioDirecto());
+		
+		if(sorteoType.equals(SorteoTypeName.DIARIA)){
+        	if(jugador.getTipoApostador().getApostadorName().equals(ApostadorName.MILES)){
+            	premio = BigDecimal.valueOf(jugador.getPremioMil());
+        	}
+        }else if(jugador.getTipoChica().getChicaName().equals(ChicaName.MILES)){
+        	premio = BigDecimal.valueOf(jugador.getPremioChicaMiles());
+        }else if(jugador.getTipoChica().getChicaName().equals(ChicaName.PEDAZOS)){
+        	premio = BigDecimal.valueOf(jugador.getPremioChicaPedazos());
+        }
+		
+		return premio;
+	}
+	
 	
 	public static double getDollarChangeRate(Apuesta apuesta, MonedaName currencyRequested) {
 		Jugador jugador;

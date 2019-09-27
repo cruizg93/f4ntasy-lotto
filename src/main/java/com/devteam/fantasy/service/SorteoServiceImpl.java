@@ -42,6 +42,7 @@ import com.devteam.fantasy.message.response.ApuestasActivasResponse;
 import com.devteam.fantasy.message.response.JugadorSorteosResponse;
 import com.devteam.fantasy.message.response.NumeroPlayerEntryResponse;
 import com.devteam.fantasy.message.response.SorteoResponse;
+import com.devteam.fantasy.message.response.SorteosPasadosWeek;
 import com.devteam.fantasy.model.Apuesta;
 import com.devteam.fantasy.model.Asistente;
 import com.devteam.fantasy.model.Cambio;
@@ -52,6 +53,7 @@ import com.devteam.fantasy.model.NumeroGanador;
 import com.devteam.fantasy.model.Sorteo;
 import com.devteam.fantasy.model.SorteoDiaria;
 import com.devteam.fantasy.model.User;
+import com.devteam.fantasy.model.Week;
 import com.devteam.fantasy.repository.ApuestaRepository;
 import com.devteam.fantasy.repository.AsistenteRepository;
 import com.devteam.fantasy.repository.CambioRepository;
@@ -65,6 +67,7 @@ import com.devteam.fantasy.repository.SorteoDiariaRepository;
 import com.devteam.fantasy.repository.SorteoRepository;
 import com.devteam.fantasy.repository.SorteoTypeRepository;
 import com.devteam.fantasy.repository.UserRepository;
+import com.devteam.fantasy.repository.WeekRepository;
 import com.devteam.fantasy.util.ApostadorName;
 import com.devteam.fantasy.util.BalanceType;
 import com.devteam.fantasy.util.ChicaName;
@@ -126,6 +129,9 @@ public class SorteoServiceImpl implements SorteoService {
 
 	@Autowired
 	HistoryService historyService;
+	
+	@Autowired
+	WeekRepository weekRepository;
 
 	private static final Logger logger = LoggerFactory.getLogger(SorteoServiceImpl.class);
 
@@ -458,6 +464,19 @@ public class SorteoServiceImpl implements SorteoService {
 
 	}
 
+	/*
+	 * Steps
+	 * 1) Set NumeroGanador.
+	 * 2) Create History Event for Winning Number.
+	 * 3) Collect all the Users who have bet to the winning number.
+	 * 4) Reset User's balance to Zero.
+	 * 5) Create History Balance.
+	 * 6) Copy all bets to history Bets.
+	 * 7) Delete sorteoDiaria and create the next sorteo Diaria with the same time.
+	 * 8) If is the last sorteoDiaria of the week close the week.
+	 * 8.1) Save week balance in history
+	 * 8.2) Create week model
+	 */
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public void setNumeroGanador(Long id, int numero) throws Exception {
@@ -470,6 +489,7 @@ public class SorteoServiceImpl implements SorteoService {
 			numeroGanador.setNumeroGanador(numero);
 			numeroGanador.setSorteo(sorteo);
 			numeroGanadorRepository.save(numeroGanador);
+			historyService.createEvent(HistoryEventType.WINNING_NUMBER, id, "", String.valueOf(numero));
 			logger.debug("numeroGanadorRepository.save({})", numeroGanador);
 
 			List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndNumero(sorteoDiaria, numero);
@@ -493,16 +513,14 @@ public class SorteoServiceImpl implements SorteoService {
 			Iterator<Entry<Long, Integer>> jugadoresIterator = jugadores.iterator();
 			while(jugadoresIterator.hasNext()) {
 				Map.Entry<Long, Integer> jugadorApuestasGanadas = (Map.Entry<Long, Integer>)jugadoresIterator.next();
-						
+
 				Jugador jugador = jugadorRepository.findById(jugadorApuestasGanadas.getKey()).get();
-				BigDecimal premioMultiplier = Util.getPremioMultiplier(jugador,sorteo.getSorteoType().getSorteoTypeName());
+				BigDecimal premioMultiplier = MathUtil.getPremioMultiplier(jugador,sorteo.getSorteoType().getSorteoTypeName());
 				BigDecimal premio = BigDecimal.valueOf(jugadorApuestasGanadas.getValue()).multiply(premioMultiplier);
 
-				// TODO:HISTORY record previous balance on history
 				BigDecimal newBalance = BigDecimal.valueOf(jugador.getBalance()).add(premio);
 				jugador.setBalance(newBalance.doubleValue());
 				jugadorRepository.save(jugador);
-				
 				createHistoricoBalance(jugador, BalanceType.DAILY ,sorteoDiaria.getSorteoTime());
 			}
 			
@@ -512,6 +530,7 @@ public class SorteoServiceImpl implements SorteoService {
 			if (Util.isSorteoTypeDiaria(sorteoDiaria.getSorteo())
 					&& Util.getDayOfWeekFromTimestamp(sorteoDiaria.getSorteo().getSorteoTime()).equals(DayOfWeek.SUNDAY)
 					&& Util.getlocalDateTimeHourFromTimestamp(sorteoDiaria.getSorteo().getSorteoTime()) == 21) {
+				logger.debug("Cerrar Semana");
             	cerrarSemana(sorteoDiaria);
 			}
 		} catch (Exception e) {
@@ -528,9 +547,15 @@ public class SorteoServiceImpl implements SorteoService {
 	@Transactional(rollbackFor = CanNotInsertHistoricoBalanceException.class)
 	public void cerrarSemana(SorteoDiaria sorteoDiaria) throws CanNotInsertHistoricoBalanceException {
 		try {
-			LocalDateTime sundayLastSorteo = sorteoDiaria.getSorteoTime().toLocalDateTime();
-			sundayLastSorteo = sundayLastSorteo.with(DayOfWeek.SUNDAY);
-			sundayLastSorteo = sundayLastSorteo.with(LocalTime.of(21, 0, 0));
+			LocalDateTime mondayFirstSorteo = sorteoDiaria.getSorteoTime().toLocalDateTime();
+			mondayFirstSorteo = mondayFirstSorteo.with(DayOfWeek.MONDAY);
+			mondayFirstSorteo = mondayFirstSorteo.with(LocalTime.of(9, 0, 0));
+
+			Week week = new Week();
+			week.setYear(mondayFirstSorteo.getYear());
+			week.setMonday(Timestamp.valueOf(mondayFirstSorteo));
+			week.setSunday(sorteoDiaria.getSorteoTime());
+			weekRepository.save(week);
 			
 			Set<Jugador> jugadorPositivos = jugadorRepository.findAllByBalanceGreaterThan(0d);
 			Set<Jugador> jugadorNegativos = jugadorRepository.findAllByBalanceLessThan(0d);
@@ -538,19 +563,24 @@ public class SorteoServiceImpl implements SorteoService {
 	
 			for(Jugador jugador:jugadoresWithBalance){
 				try {
-					createHistoricoBalance(jugador, BalanceType.WEEKLY ,Timestamp.valueOf(sundayLastSorteo));
+					createHistoricoBalance(jugador, BalanceType.WEEKLY ,sorteoDiaria.getSorteoTime(), week);
 					jugador.setBalance(0);
 					jugadorRepository.save(jugador);
 				}catch(CanNotInsertHistoricoBalanceException hbe) {
 					throw new CanNotInsertHistoricoBalanceException(hbe, jugador, sorteoDiaria);
 				}
 			};
+			historyService.createEvent(HistoryEventType.WEEK_CLOSED, sorteoDiaria.getId());
 		}catch (CanNotInsertHistoricoBalanceException hbe) {
 			throw hbe;
 		}
 	}
-	
+	//BalanceType DAILY
 	private void createHistoricoBalance(Jugador jugador, BalanceType balanceType, Timestamp sorteoTime) throws CanNotInsertHistoricoBalanceException {
+		createHistoricoBalance(jugador, balanceType, sorteoTime, null);
+	}
+	//BalanceType WEEKLY
+	private void createHistoricoBalance(Jugador jugador, BalanceType balanceType, Timestamp sorteoTime, Week week) throws CanNotInsertHistoricoBalanceException {
 		try {
 			User loggedUser = userService.getLoggedInUser();
 			HistoricoBalance historico = new HistoricoBalance();
@@ -560,6 +590,7 @@ public class SorteoServiceImpl implements SorteoService {
 			historico.setSorteoTime(sorteoTime);
 			historico.setMoneda(jugador.getMoneda());
 			historico.setBalanceType(balanceType);
+			historico.setWeek(week);
 			historicoBalanceRepository.save(historico);
 		}catch (Exception e) {
 			throw new CanNotInsertHistoricoBalanceException(e);
@@ -572,6 +603,7 @@ public class SorteoServiceImpl implements SorteoService {
 			logger.debug("copyApuestasToHistoricoApuestas(SorteoDiaria {}): START", sorteoDiaria);
 			Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
 			apuestaList.forEach(apuesta -> {
+				Jugador jugador = Util.getJugadorFromApuesta(apuesta);
 				HistoricoApuestas historicoApuestas = new HistoricoApuestas();
 				historicoApuestas.setCantidad(apuesta.getCantidad());
 				historicoApuestas.setUser(apuesta.getUser());
@@ -580,6 +612,11 @@ public class SorteoServiceImpl implements SorteoService {
 				historicoApuestas.setComision(apuesta.getComision());
 				historicoApuestas.setCambio(apuesta.getCambio());
 				historicoApuestas.setDate(apuesta.getDate());
+				historicoApuestas.setMoneda(jugador.getMoneda().getMonedaName().toString());
+				double cantidadMultiplier = MathUtil.getCantidadMultiplier(jugador, apuesta, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName(), jugador.getMoneda().getMonedaName()).doubleValue();
+				historicoApuestas.setCantidadMultiplier(cantidadMultiplier);
+				double premioMultiplier = MathUtil.getPremioMultiplier(jugador, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName()).doubleValue();
+				historicoApuestas.setPremioMultiplier(premioMultiplier);
 				historicoApuestaRepository.save(historicoApuestas);
 				apuestaRepository.delete(apuesta);
 			});
@@ -638,7 +675,7 @@ public class SorteoServiceImpl implements SorteoService {
 			if (sorteo.getEstado().getEstado().equals(EstadoName.ABIERTA)) {
 				sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.BLOQUEADA));
 				sorteoRepository.save(sorteo);
-				historyService.createEvent(HistoryEventType.BLOQUEDA, "Sorteo Bloqueado");
+				historyService.createEvent(HistoryEventType.SORTEO_LOCKED);
 			} else {
 				logger.debug("InvalidSorteoStateException({}):", sorteo);
 				throw new InvalidSorteoStateException(sorteo);
@@ -663,7 +700,7 @@ public class SorteoServiceImpl implements SorteoService {
 			if (sorteo.getEstado().getEstado().equals(EstadoName.BLOQUEADA)) {
 				sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.ABIERTA));
 				sorteoRepository.save(sorteo);
-				historyService.createEvent(HistoryEventType.BLOQUEDA, "Sorteo Desbloqueado");
+				historyService.createEvent(HistoryEventType.SORTEO_LOCKED);
 			} else {
 				throw new InvalidSorteoStateException(sorteo);
 			}
@@ -685,7 +722,7 @@ public class SorteoServiceImpl implements SorteoService {
 			logger.debug("forceCloseStatus(Long {}): START", id);
 			sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.CERRADA));
 			sorteoRepository.save(sorteo);
-			historyService.createEvent(HistoryEventType.BLOQUEDA, "Close status forced.");
+			historyService.createEvent(HistoryEventType.SORTEO_LOCKED);
 		} catch (Exception e) {
 			logger.error("forceCloseStatus(Long {}): CATCH", id);
 			logger.error(e.getMessage());
@@ -950,6 +987,7 @@ public class SorteoServiceImpl implements SorteoService {
 					deleteApuestas(apuestasX);
 				}
 			}
+			historyService.createEvent(HistoryEventType.BET_DELETED,sorteoId,String.valueOf(numero),null);
 		} catch (Exception e) {
 			logger.error("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long {}, Integer {}, String {}): CATCH",
 					sorteoId, numero, username);
@@ -979,6 +1017,8 @@ public class SorteoServiceImpl implements SorteoService {
 	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username)
 			throws CanNotRemoveApuestaException, SorteoEstadoNotValidException {
 		SorteoDiaria sorteoDiaria = null;
+		List<Integer> numeros = new ArrayList<>();
+		
 		try {
 			logger.debug("deleteAllApuestasOnSorteoDiarioByUser(Long {}, String {}): END", sorteoId, username);
 			User user = userRepository.getByUsername(username);
@@ -990,15 +1030,18 @@ public class SorteoServiceImpl implements SorteoService {
 			}
 
 			Set<Apuesta> apuestasP = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
+			apuestasP.forEach(x ->{numeros.add(x.getNumero());});
 			deleteApuestas(apuestasP.stream().collect(Collectors.toList()));
 
 			if (user instanceof Jugador) {
 				List<Asistente> asistentes = asistenteRepository.findAllByJugador((Jugador) user);
 				for (Asistente asistente : asistentes) {
 					Set<Apuesta> apuestasX = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
+					apuestasX.forEach(x ->{numeros.add(x.getNumero());});
 					deleteApuestas(apuestasX.stream().collect(Collectors.toList()));
 				}
 			}
+			historyService.createEvent(HistoryEventType.BET_DELETED,sorteoId,numeros.toArray().toString(),null);
 		} catch (Exception e) {
 			logger.error("deleteAllApuestasOnSorteoDiarioByUser(Long {}, String {}): CATCH", sorteoId, username);
 			logger.error(e.getMessage());
@@ -1016,4 +1059,5 @@ public class SorteoServiceImpl implements SorteoService {
 			logger.debug("deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username): END");
 		}
 	}
+
 }

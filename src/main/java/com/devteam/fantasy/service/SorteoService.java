@@ -1,5 +1,6 @@
 package com.devteam.fantasy.service;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -15,6 +16,8 @@ import com.devteam.fantasy.message.response.ApuestasActivasResponse;
 import com.devteam.fantasy.message.response.JugadorSorteosResponse;
 import com.devteam.fantasy.message.response.NumeroPlayerEntryResponse;
 import com.devteam.fantasy.message.response.SorteoResponse;
+import com.devteam.fantasy.message.response.SorteosPasadosWeek;
+import com.devteam.fantasy.model.HistoricoApuestas;
 import com.devteam.fantasy.model.Sorteo;
 import com.devteam.fantasy.model.SorteoDiaria;
 import com.devteam.fantasy.model.User;
@@ -40,5 +43,6 @@ public interface SorteoService {
 	
 	public void deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, String username) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
 	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
-	void cerrarSemana(SorteoDiaria sorteoDiaria) throws CanNotInsertHistoricoBalanceException;
+	public void cerrarSemana(SorteoDiaria sorteoDiaria) throws CanNotInsertHistoricoBalanceException;
+	
 }
