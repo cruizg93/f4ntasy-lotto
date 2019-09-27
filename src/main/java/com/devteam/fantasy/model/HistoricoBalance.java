@@ -49,6 +49,10 @@ public class HistoricoBalance {
     @JoinColumn(name = "moneda_id")
     private Moneda moneda;	
 	
+	@ManyToOne
+    @JoinColumn(nullable = true)
+    private Week week;
+	
 	public Long getId() {
 		return id;
 	}
@@ -104,6 +108,14 @@ public class HistoricoBalance {
 
 	public void setSorteoTime(Timestamp sorteoTime) {
 		this.sorteoTime = sorteoTime;
+	}
+
+	public Week getWeek() {
+		return week;
+	}
+
+	public void setWeek(Week week) {
+		this.week = week;
 	}
 
 	@Override

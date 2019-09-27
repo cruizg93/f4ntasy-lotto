@@ -29,6 +29,12 @@ public class HistoricoApuestas {
 
     private Timestamp date;
     
+    private double cantidadMultiplier;
+    
+    private double premioMultiplier;
+    
+    private String moneda;
+    
     public Long getId() {
         return id;
     }
@@ -93,11 +99,35 @@ public class HistoricoApuestas {
 		this.date = date;
 	}
 
+	public double getCantidadMultiplier() {
+		return cantidadMultiplier;
+	}
+
+	public void setCantidadMultiplier(double cantidadMultiplier) {
+		this.cantidadMultiplier = cantidadMultiplier;
+	}
+
+	public double getPremioMultiplier() {
+		return premioMultiplier;
+	}
+
+	public void setPremioMultiplier(double premioMultiplier) {
+		this.premioMultiplier = premioMultiplier;
+	}
+
+	public String getMoneda() {
+		return moneda;
+	}
+
+	public void setMoneda(String moneda) {
+		this.moneda = moneda;
+	}
+
 	@Override
 	public String toString() {
-		return "HistoricoApuestas [id=" + id + ", sorteo=" + sorteo + ", user=" + user + ", cambio=" + cambio
-				+ ", numero=" + numero + ", cantidad=" + cantidad + ", comision=" + comision + ", date=" + date + "]";
+		return "HistoricoApuestas [id=" + id + ", sorteo=" + sorteo.getSorteoTime() + ", user=" + user.getUsername() + ", cambio=" + cambio.getCambio()
+				+ ", numero=" + numero + ", cantidad=" + cantidad + ", comision=" + comision + ", date=" + date
+				+ ", cantidadMultiplier=" + cantidadMultiplier + ", premioMultiplier=" + premioMultiplier + ", moneda="
+				+ moneda + "]";
 	}
-    
-    
 }
