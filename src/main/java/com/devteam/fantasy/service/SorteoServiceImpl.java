@@ -248,15 +248,15 @@ public class SorteoServiceImpl implements SorteoService {
 			List<SorteoDiaria> sorteos = new LinkedList<SorteoDiaria>();
 			list.forEach(sorteos::add);
 
-			int indexChica = IntStream.range(0, sorteos.size()).filter(
-					i -> SorteoTypeName.CHICA.equals(sorteos.get(i).getSorteo().getSorteoType().getSorteoTypeName()))
-					.findFirst().getAsInt();
+//			int indexChica = IntStream.range(0, sorteos.size()).filter(
+//					i -> SorteoTypeName.CHICA.equals(sorteos.get(i).getSorteo().getSorteoType().getSorteoTypeName()))
+//					.findFirst().getAsInt();
+//
+//			SorteoDiaria sorteoChica = sorteos.get(indexChica);
 
-			SorteoDiaria sorteoChica = sorteos.get(indexChica);
-
-			sorteos.remove(indexChica);
+//			sorteos.remove(indexChica);
 			sorteos.sort((sorteo1, sorteo2) -> sorteo1.getSorteoTime().compareTo(sorteo2.getSorteoTime()));
-			sorteos.add(indexChica, sorteoChica);
+//			sorteos.add(indexChica, sorteoChica);
 
 			result = sorteos;
 		} catch (Exception e) {
@@ -492,33 +492,44 @@ public class SorteoServiceImpl implements SorteoService {
 			historyService.createEvent(HistoryEventType.WINNING_NUMBER, id, "", String.valueOf(numero));
 			logger.debug("numeroGanadorRepository.save({})", numeroGanador);
 
-			List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndNumero(sorteoDiaria, numero);
-			// Long [jugadorId], Integer unidadesApostadas
+			Set<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
+			// Long [jugadorId], Integer [unidadesApostadas]
 			Map<Long, Integer> map = new HashMap<>();
 			
 			//Ids for logging a few lines below
 			List<Long> jugadorIds = new ArrayList<>();
+			
 			for (Apuesta apuesta : apuestas) {
 				Jugador jugador = Util.getJugadorFromApuesta(apuesta);
 				Integer cantidadActual = Optional.ofNullable(map.get(jugador.getId())).orElse(0);
-				cantidadActual += apuesta.getCantidad().intValue();
+				
+				if(apuesta.getNumero() == numero) {
+					cantidadActual += apuesta.getCantidad().intValue();
+				}
 				
 				if (!map.containsKey(jugador.getId()) ) jugadorIds.add(jugador.getId());
-				
 				map.put(jugador.getId(), cantidadActual);
 			}
 
 			logger.debug("update balance for jugadores by id:{}", jugadorIds);
+			/*
+			 * New balance will be determine by premio of a bet.
+			 * then the premio will be added or substract of the total of bets made for the sorteo
+			 * the result will be added or substract from the jugador current balance.
+			 */
 			Set<Entry<Long, Integer>> jugadores = map.entrySet();
 			Iterator<Entry<Long, Integer>> jugadoresIterator = jugadores.iterator();
 			while(jugadoresIterator.hasNext()) {
 				Map.Entry<Long, Integer> jugadorApuestasGanadas = (Map.Entry<Long, Integer>)jugadoresIterator.next();
-
 				Jugador jugador = jugadorRepository.findById(jugadorApuestasGanadas.getKey()).get();
 				BigDecimal premioMultiplier = MathUtil.getPremioMultiplier(jugador,sorteo.getSorteoType().getSorteoTypeName());
 				BigDecimal premio = BigDecimal.valueOf(jugadorApuestasGanadas.getValue()).multiply(premioMultiplier);
 
-				BigDecimal newBalance = BigDecimal.valueOf(jugador.getBalance()).add(premio);
+				sorteoTotales.processSorteo(jugador, sorteoDiaria);
+				BigDecimal totalApuestas = sorteoTotales.getTotalBD();
+				BigDecimal result = premio.subtract(totalApuestas);
+				
+				BigDecimal newBalance = BigDecimal.valueOf(jugador.getBalance()).add(result);
 				jugador.setBalance(newBalance.doubleValue());
 				jugadorRepository.save(jugador);
 				createHistoricoBalance(jugador, BalanceType.DAILY ,sorteoDiaria.getSorteoTime());
@@ -557,9 +568,7 @@ public class SorteoServiceImpl implements SorteoService {
 			week.setSunday(sorteoDiaria.getSorteoTime());
 			weekRepository.save(week);
 			
-			Set<Jugador> jugadorPositivos = jugadorRepository.findAllByBalanceGreaterThan(0d);
-			Set<Jugador> jugadorNegativos = jugadorRepository.findAllByBalanceLessThan(0d);
-			Set<Jugador> jugadoresWithBalance= Stream.concat(jugadorPositivos.stream(), jugadorNegativos.stream()).collect(Collectors.toSet());
+			Set<Jugador> jugadoresWithBalance = jugadorRepository.findAllByBalanceNot(0d);
 	
 			for(Jugador jugador:jugadoresWithBalance){
 				try {
@@ -570,7 +579,7 @@ public class SorteoServiceImpl implements SorteoService {
 					throw new CanNotInsertHistoricoBalanceException(hbe, jugador, sorteoDiaria);
 				}
 			};
-			historyService.createEvent(HistoryEventType.WEEK_CLOSED, sorteoDiaria.getId());
+			historyService.createEvent(HistoryEventType.WEEK_CLOSED, week.getId());
 		}catch (CanNotInsertHistoricoBalanceException hbe) {
 			throw hbe;
 		}
