@@ -131,21 +131,22 @@ public class SorteoController {
     @PostMapping("/activos/{id}/apuestas")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
     public ResponseEntity<?> submitApuestas(@Valid @RequestBody ObjectNode json, @PathVariable Long id) {
-         ObjectMapper mapper = new ObjectMapper();
-         String username = mapper.convertValue(json.get("username"), String.class);
-
-         JsonNode listElements = json.get("data");
-         List<NumeroPlayerEntryResponse> data = mapper.convertValue(
-                 listElements, new TypeReference<List<NumeroPlayerEntryResponse>>() {}
-         );
+    	try {
+	    	ObjectMapper mapper = new ObjectMapper();
+	         String username = mapper.convertValue(json.get("username"), String.class);
+	
+	         JsonNode listElements = json.get("data");
+	         List<NumeroPlayerEntryResponse> data = mapper.convertValue(
+	                 listElements, new TypeReference<List<NumeroPlayerEntryResponse>>() {}
+	         );
+	         
+	         List<NumeroPlayerEntryResponse> result = data.stream()
+	                 .filter(entry -> 0.0 != entry.getCurrent())
+	                 .collect(Collectors.toList());
          
-         List<NumeroPlayerEntryResponse> result = data.stream()
-                 .filter(entry -> 0.0 != entry.getCurrent())
-                 .collect(Collectors.toList());
-         
-         try {
 			sorteoService.submitApuestas(username, id, result);
-		} catch (CanNotInsertApuestaException e) {
+
+    	} catch (CanNotInsertApuestaException e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
 		} catch (SorteoEstadoNotValidException e) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
@@ -194,7 +195,11 @@ public class SorteoController {
     public ResponseEntity<?> setNumeroGanadarByApuestaId( @PathVariable Long id, @Valid @RequestBody ObjectNode jsonNodes) {
     	ObjectMapper mapper = new ObjectMapper();
         Integer numero = mapper.convertValue(jsonNodes.get("numero"), Integer.class);
-        sorteoService.setNumeroGanador(id, numero);
+        try {
+			sorteoService.setNumeroGanador(id, numero);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage()+"\n"+e.getStackTrace());
+		}
     	return ResponseEntity.ok("Numero Asignado correctamente");
     }
 }

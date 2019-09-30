@@ -1,5 +1,6 @@
 package com.devteam.fantasy.util;
 
+import com.devteam.fantasy.math.MathUtil;
 import com.devteam.fantasy.model.Apuesta;
 import com.devteam.fantasy.model.Asistente;
 import com.devteam.fantasy.model.HistoricoApuestas;
@@ -9,6 +10,7 @@ import com.devteam.fantasy.model.SorteoDiaria;
 import com.devteam.fantasy.model.SorteoType;
 import com.devteam.fantasy.model.Status;
 import com.devteam.fantasy.model.User;
+import com.devteam.fantasy.model.Week;
 import com.devteam.fantasy.repository.ApuestaRepository;
 import com.devteam.fantasy.repository.EstadoRepository;
 import com.devteam.fantasy.repository.HistoricoApuestaRepository;
@@ -313,6 +315,13 @@ public class Util {
                     historicoApuestas.setNumero(apuesta.getNumero());
                     historicoApuestas.setComision(apuesta.getComision());
                     historicoApuestas.setCambio(apuesta.getCambio());
+                    historicoApuestas.setDate(apuesta.getDate());
+                    Jugador jugador = Util.getJugadorFromApuesta(apuesta);
+                    historicoApuestas.setMoneda(jugador.getMoneda().getMonedaName().toString());
+                    double cantidadMultiplier = MathUtil.getCantidadMultiplier(jugador, apuesta, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName(), jugador.getMoneda().getMonedaName()).doubleValue();
+    				historicoApuestas.setCantidadMultiplier(cantidadMultiplier);
+    				double premioMultiplier = MathUtil.getPremioMultiplier(jugador, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName()).doubleValue();
+    				historicoApuestas.setPremioMultiplier(premioMultiplier);
                     historicoApuestaRepository.save(historicoApuestas);
                     apuestaRepository.delete(apuesta);
                 });
@@ -357,7 +366,11 @@ public class Util {
             case 11:
                 timeValue = "- 11 am";
                 break;
+            case 12:
+            	timeValue = "";
+            	break;
             default:
+            	timeValue = "- 0 am";
                 break;
         }
         return String.format("%s - %s %d, %d %s", weekNames[localDate.getDayOfWeek().getValue() - 1],
@@ -444,7 +457,11 @@ public class Util {
             case 11:
                 timeValue = "11 am";
                 break;
+            case 12:
+            	timeValue = "";
+            	break;
             default:
+            	timeValue = "- 0 am";
                 break;
         }
         if (timeValue.equals("Chica")) {
@@ -474,7 +491,11 @@ public class Util {
             case 11:
                 timeValue = "11 am";
                 break;
+            case 12:
+            	timeValue = "";
+            	break;
             default:
+            	timeValue = "- 0 am";
                 break;
         }
         if (timeValue.equals("Chica")) {
@@ -509,11 +530,20 @@ public class Util {
             case 11:
                 timeValue = "11 am";
                 break;
+            case 12:
+            	timeValue = "";
+            	break;
             default:
+            	timeValue = "- 0 am";
                 break;
         }
         return timeValue;
     }
+    public static int getlocalDateTimeHourFromTimestamp(Timestamp timestamp) {
+        LocalDateTime localDateTime = timestamp.toLocalDateTime();
+        return localDateTime.getHour();
+    }
+    
     
     /**
      * @Author Cristian Ruiz
@@ -527,6 +557,16 @@ public class Util {
         		localDate.getDayOfMonth(),
         		monthsAbb[localDate.getMonthValue() - 1]
                 );
+    }
+    
+    public static String getShortDayFromTimestamp(Timestamp timestamp) {
+        LocalDate localDate = timestamp.toLocalDateTime().toLocalDate();
+        return String.format("%s %s",localDate.getDayOfMonth(), monthsAbb[localDate.getMonthValue() - 1]);
+    }
+    
+    public static DayOfWeek getDayOfWeekFromTimestamp(Timestamp timestamp) {
+        LocalDate localDate = timestamp.toLocalDateTime().toLocalDate();
+        return localDate.getDayOfWeek();
     }
     
     public static Jugador getJugadorFromApuesta(Apuesta apuesta) {
@@ -566,21 +606,17 @@ public class Util {
 		return MonedaName.LEMPIRA.toString().equalsIgnoreCase(monedaType)?MonedaName.LEMPIRA:MonedaName.DOLAR;
 	}
 	
-	public static BigDecimal getPremioMultiplier(Jugador jugador, SorteoTypeName sorteoType) {
-		BigDecimal premio = BigDecimal.valueOf(jugador.getPremioDirecto());
-		
-		if(sorteoType.equals(SorteoTypeName.DIARIA)){
-        	if(jugador.getTipoApostador().getApostadorName().equals(ApostadorName.MILES)){
-            	premio = BigDecimal.valueOf(jugador.getPremioMil());
-        	}
-        }else if(jugador.getTipoChica().getChicaName().equals(ChicaName.MILES)){
-        	premio = BigDecimal.valueOf(jugador.getPremioChicaMiles());
-        }else if(jugador.getTipoChica().getChicaName().equals(ChicaName.PEDAZOS)){
-        	premio = BigDecimal.valueOf(jugador.getPremioChicaPedazos());
-        }
-		
-		return premio;
+	public static Apuesta mapHistsoricoApuestaToApuesta(HistoricoApuestas apuesta) {
+		Apuesta apuestaTemp = new Apuesta();
+		apuestaTemp.setCambio(apuesta.getCambio());
+		apuestaTemp.setCantidad(apuesta.getCantidad());
+		apuestaTemp.setComision(apuesta.getComision());
+		apuestaTemp.setDate(apuesta.getDate());
+		apuestaTemp.setNumero(apuesta.getNumero());
+		apuestaTemp.setUser(apuesta.getUser());
+		return apuestaTemp;
 	}
+	
 }
 
 

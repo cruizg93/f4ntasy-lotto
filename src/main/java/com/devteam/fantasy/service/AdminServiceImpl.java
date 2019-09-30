@@ -14,31 +14,42 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import com.devteam.fantasy.exception.CanNotInsertBonoException;
+import com.devteam.fantasy.message.request.BonoRequest;
 import com.devteam.fantasy.message.response.ApuestasActivasResponse;
 import com.devteam.fantasy.message.response.AsistenteResponse;
 import com.devteam.fantasy.message.response.JugadorResponse;
 import com.devteam.fantasy.message.response.SorteoResponse;
 import com.devteam.fantasy.model.Apuesta;
 import com.devteam.fantasy.model.Asistente;
+import com.devteam.fantasy.model.Bono;
 import com.devteam.fantasy.model.Jugador;
 import com.devteam.fantasy.model.SorteoDiaria;
 import com.devteam.fantasy.model.User;
+import com.devteam.fantasy.model.Week;
 import com.devteam.fantasy.repository.ApuestaRepository;
 import com.devteam.fantasy.repository.AsistenteRepository;
+import com.devteam.fantasy.repository.BonoRepository;
 import com.devteam.fantasy.repository.JugadorRepository;
 import com.devteam.fantasy.repository.NumeroGanadorRepository;
 import com.devteam.fantasy.repository.ResultadoRepository;
 import com.devteam.fantasy.repository.SorteoDiariaRepository;
 import com.devteam.fantasy.repository.SorteoRepository;
+import com.devteam.fantasy.repository.WeekRepository;
 import com.devteam.fantasy.util.MonedaName;
 import com.devteam.fantasy.util.SorteoTypeName;
 import com.devteam.fantasy.util.Util;
+
+import javassist.NotFoundException;
 
 @Service
 public class AdminServiceImpl implements AdminService{
 
 	@Autowired
 	private SorteoService sorteoService;
+
+	@Autowired
+	private UserService userService;
 	
 	@Autowired
     SorteoRepository sorteoRepository;
@@ -60,6 +71,15 @@ public class AdminServiceImpl implements AdminService{
 	
 	@Autowired
     ApuestaRepository apuestaRepository;
+	
+	@Autowired
+	WeekRepository weekRepository;
+	
+	@Autowired
+	BonoRepository bonoRepository;
+
+    @Autowired
+    private HistoryService historyService;
 	
 	private static final Logger logger = LoggerFactory.getLogger(AdminServiceImpl.class);
 	
@@ -102,7 +122,6 @@ public class AdminServiceImpl implements AdminService{
 	        });
 		}catch(Exception e) {
 			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
 			throw e;
 		}finally {
 			logger.debug("getAllJugadores(): END");
@@ -130,7 +149,6 @@ public class AdminServiceImpl implements AdminService{
         	result.put("riesgo", riesgo.doubleValue());
     	}catch(Exception e) {
     		logger.debug(e.getMessage());
-    		logger.debug(e.getStackTrace().toString());
     		throw e;
     	}finally {
     		logger.debug("processSorteoResponse(List<SorteoResponse> sorteosResponse): END");
@@ -139,6 +157,30 @@ public class AdminServiceImpl implements AdminService{
     	
 		return result;
 	}
+
+	@Override
+	public void submitBono(BonoRequest request, Long jugadorId) throws CanNotInsertBonoException, NotFoundException {
+		try {
+			Jugador jugador = jugadorRepository.findById(jugadorId).orElseThrow(() -> new NotFoundException("Jugador not found"));
+			Week week = weekRepository.findById(request.getWeekId()).orElseThrow(() -> new NotFoundException("Week not found"));
+			
+			if(historyService.isJugadorElegibleForBono(jugador, week)) {
+				User createdBy 	= userService.getLoggedInUser();
+				Bono bono 		= new Bono();
+				
+				bono.setBono(request.getBono());
+				bono.setWeek(week);
+				bono.setUser(jugador);
+				bono.setCreatedBy(createdBy);
+				bonoRepository.save(bono);
+			}else {
+				throw new CanNotInsertBonoException(week.getId(), jugador.getId(), "Jugador not elegible for bono");
+			}
+		} catch (CanNotInsertBonoException | NotFoundException e) {
+			throw e;
+		}	
+	}
+	
 	
 }
 

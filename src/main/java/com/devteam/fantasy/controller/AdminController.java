@@ -1,12 +1,15 @@
 package com.devteam.fantasy.controller;
 
 
+import com.devteam.fantasy.math.MathUtil;
 import com.devteam.fantasy.message.request.*;
 import com.devteam.fantasy.message.response.*;
 import com.devteam.fantasy.model.*;
 import com.devteam.fantasy.repository.*;
 import com.devteam.fantasy.security.jwt.JwtProvider;
 import com.devteam.fantasy.service.AdminService;
+import com.devteam.fantasy.service.HistoryService;
+import com.devteam.fantasy.service.HistoryServiceImpl;
 import com.devteam.fantasy.service.SorteoService;
 import com.devteam.fantasy.util.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -105,6 +108,17 @@ public class AdminController {
     @Autowired
     private AdminService adminService;
     
+    
+    @PostMapping("/bono/jugadores/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    public ResponseEntity<String> submitBono(@PathVariable Long id, @Valid @RequestBody BonoRequest request){
+    	try {
+    		adminService.submitBono(request, id);
+    	}catch (Exception e) {
+    		return new ResponseEntity<String>(e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+    	return new ResponseEntity<String>("success",HttpStatus.OK);
+    }
     
     
     @GetMapping("/jugadores")
@@ -872,15 +886,14 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public List<ApuestaNumeroGanadorResponse> getApuestasToday() {
         List<ApuestaNumeroGanadorResponse> ganadorResponses = new ArrayList<>();
-        Iterable<SorteoDiaria> sorteoDiarias = sorteoDiariaRepository.findAll();
-        sorteoDiarias.forEach(sorteoDiaria -> {
-            Sorteo sorteo = sorteoRepository.getSorteoById(sorteoDiaria.getId());
+        Iterable<Sorteo> sorteos = sorteoRepository.findAllByOrderByIdAsc();
+        sorteos.forEach(sorteo -> {
             ApuestaNumeroGanadorResponse ganadorResponse = new ApuestaNumeroGanadorResponse();
             Integer numero = -1;
             if (sorteo.getEstado().getEstado().equals(EstadoName.CERRADA)) {
-                ganadorResponse.setStatus("cerrada");
+            	numero = numeroGanadorRepository.getBySorteo(sorteo).getNumeroGanador();
+            	ganadorResponse.setStatus("cerrada");
             } else if (sorteo.getEstado().getEstado().equals(EstadoName.BLOQUEADA)) {
-                numero = numeroGanadorRepository.getBySorteo(sorteo).getNumeroGanador();
                 ganadorResponse.setStatus("bloqueada");
             } else {
                 ganadorResponse.setStatus("abierta");
@@ -888,8 +901,8 @@ public class AdminController {
             ganadorResponse.setType(sorteo.getSorteoType().getSorteoTypeName().toString());
             ganadorResponse.setSorteId(sorteo.getId());
             ganadorResponse.setNumero(numero);
-            ganadorResponse.setTitle(Util.formatTimestamp2StringShortAbb(sorteoDiaria.getSorteoTime()));
-            ganadorResponse.setSorteId(sorteoDiaria.getId());
+            ganadorResponse.setTitle(Util.formatTimestamp2StringShortAbb(sorteo.getSorteoTime()));
+            ganadorResponse.setSorteId(sorteo.getId());
             ganadorResponses.add(ganadorResponse);
         });
         return ganadorResponses;
@@ -1101,6 +1114,13 @@ public class AdminController {
                 historicoApuestas.setNumero(apuesta.getNumero());
                 historicoApuestas.setComision(apuesta.getComision());
                 historicoApuestas.setCambio(apuesta.getCambio());
+                historicoApuestas.setDate(apuesta.getDate());
+                Jugador jugador = Util.getJugadorFromApuesta(apuesta);
+                double cantidadMultiplier = MathUtil.getCantidadMultiplier(jugador, apuesta, sorteo.getSorteoType().getSorteoTypeName(), jugador.getMoneda().getMonedaName()).doubleValue();
+				historicoApuestas.setCantidadMultiplier(cantidadMultiplier);
+				double premioMultiplier = MathUtil.getPremioMultiplier(jugador, sorteo.getSorteoType().getSorteoTypeName()).doubleValue();
+				historicoApuestas.setPremioMultiplier(premioMultiplier);
+				historicoApuestas.setMoneda(jugador.getMoneda().getMonedaName().toString());
                 historicoApuestaRepository.save(historicoApuestas);
                 apuestaRepository.delete(apuesta);
             });

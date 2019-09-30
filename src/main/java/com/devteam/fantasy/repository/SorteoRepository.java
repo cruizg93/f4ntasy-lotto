@@ -2,6 +2,7 @@ package com.devteam.fantasy.repository;
 
 import com.devteam.fantasy.model.Estado;
 import com.devteam.fantasy.model.Sorteo;
+import com.devteam.fantasy.model.SorteoDiaria;
 import com.devteam.fantasy.model.SorteoType;
 import com.devteam.fantasy.model.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,6 +30,7 @@ public interface SorteoRepository extends CrudRepository<Sorteo, Long> {
 
     Sorteo getSorteoBySorteoTypeEquals(SorteoType sorteoType);
 
+	Iterable<Sorteo> findAllByOrderByIdAsc();
 
-
+	List<Sorteo> findAllBySorteoTimeBetween(Timestamp start, Timestamp end);
 }

@@ -55,8 +55,7 @@ public class SorteoDiaria {
 
 	@Override
 	public String toString() {
-		return "SorteoDiaria [id=" + id + ", sorteo=" + sorteo + ", sorteoTime=" + sorteoTime + ", apuestas=" + apuestas
-				+ "]";
+		return "SorteoDiaria [id=" + id + ", sorteo=" + sorteo + ", sorteoTime=" + sorteoTime + "]";
 	}
 
     

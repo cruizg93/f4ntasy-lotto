@@ -1,6 +1,8 @@
 package com.devteam.fantasy.model;
 
 
+import java.sql.Timestamp;
+
 import javax.persistence.*;
 
 @Entity
@@ -23,6 +25,8 @@ public class Apuesta {
     @JoinColumn(name = "cambio_id")
     Cambio cambio;
 
+    Timestamp date;
+    
     private Integer numero;
 
     private Double cantidad;
@@ -88,11 +92,18 @@ public class Apuesta {
         this.cambio = cambio;
     }
 
+	public Timestamp getDate() {
+		return date;
+	}
+
+	public void setDate(Timestamp date) {
+		this.date = date;
+	}
+
 	@Override
 	public String toString() {
-		return "Apuesta [id=" + id +", cambio=" + cambio
-				+ ", numero=" + numero + ", cantidad=" + cantidad + ", comision=" + comision + "]";
+		return "Apuesta [id=" + id + ", sorteo=" + sorteoDiaria.getSorteoTime().toString() + ", user=" + user + ", cambio=" + cambio
+				+ ", date=" + date + ", numero=" + numero + ", cantidad=" + cantidad + ", comision=" + comision + "]";
 	}
-    
-    
+
 }

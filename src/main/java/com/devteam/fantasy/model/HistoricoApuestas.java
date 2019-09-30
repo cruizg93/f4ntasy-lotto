@@ -1,7 +1,8 @@
 package com.devteam.fantasy.model;
 
-import javax.persistence.*;
+import java.sql.Timestamp;
 
+import javax.persistence.*;
 @Entity
 public class HistoricoApuestas {
     @Id
@@ -15,6 +16,10 @@ public class HistoricoApuestas {
     @ManyToOne
     @JoinColumn(name = "users_id")
     private User user;
+    
+    @ManyToOne
+    @JoinColumn(name = "asistente_id")
+    private User asistente;
 
     @ManyToOne
     @JoinColumn(name = "cambio_id")
@@ -26,9 +31,14 @@ public class HistoricoApuestas {
 
     private Double comision;
 
-
-
-
+    private Timestamp date;
+    
+    private double cantidadMultiplier;
+    
+    private double premioMultiplier;
+    
+    private String moneda;
+    
     public Long getId() {
         return id;
     }
@@ -84,4 +94,52 @@ public class HistoricoApuestas {
     public void setComision(Double comision) {
         this.comision = comision;
     }
+
+	public Timestamp getDate() {
+		return date;
+	}
+
+	public void setDate(Timestamp date) {
+		this.date = date;
+	}
+
+	public double getCantidadMultiplier() {
+		return cantidadMultiplier;
+	}
+
+	public void setCantidadMultiplier(double cantidadMultiplier) {
+		this.cantidadMultiplier = cantidadMultiplier;
+	}
+
+	public double getPremioMultiplier() {
+		return premioMultiplier;
+	}
+
+	public void setPremioMultiplier(double premioMultiplier) {
+		this.premioMultiplier = premioMultiplier;
+	}
+
+	public String getMoneda() {
+		return moneda;
+	}
+
+	public void setMoneda(String moneda) {
+		this.moneda = moneda;
+	}
+	
+	public User getAsistente() {
+		return asistente;
+	}
+
+	public void setAsistente(User asistente) {
+		this.asistente = asistente;
+	}
+
+	@Override
+	public String toString() {
+		return "HistoricoApuestas [id=" + id + ", sorteo=" + sorteo + ", user=" + user + ", asistente=" + asistente
+				+ ", cambio=" + cambio + ", numero=" + numero + ", cantidad=" + cantidad + ", comision=" + comision
+				+ ", date=" + date + ", cantidadMultiplier=" + cantidadMultiplier + ", premioMultiplier="
+				+ premioMultiplier + ", moneda=" + moneda + "]";
+	}
 }
