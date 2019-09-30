@@ -195,13 +195,13 @@ public class HistoryServiceImpl implements HistoryService {
 				NumeroGanador numeroGanador = numeroGanadorRepository.getBySorteo(sorteo);
 				
 				if(sorteoTime.getHour() == 11) {
-					sorteo11 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),11);
+					sorteo11 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),"11 am");
 				}else if(sorteoTime.getHour() == 12) {
-					sorteo12 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),12);
+					sorteo12 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),"12 pm");
 				} else if(sorteoTime.getHour() == 15) {
-					sorteo15 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),15);
+					sorteo15 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),"3 pm");
 				}else if(sorteoTime.getHour() == 21) {
-					sorteo21 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),21);
+					sorteo21 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),"9 pm");
 					
 					SummaryResponse summaryDay = new SummaryResponse();
 					summaryDay.setComisiones(comisionDay.doubleValue());
@@ -284,9 +284,9 @@ public class HistoryServiceImpl implements HistoryService {
 		return weekBalance.getBalanceSemana()<0?true:false;
 	}
 	
-	private SorteoNumeroGanador buildSorteoNumeroGanador(Sorteo sorteo, Integer numeroGanador, int hour) {
+	private SorteoNumeroGanador buildSorteoNumeroGanador(Sorteo sorteo, Integer numeroGanador, String hour) {
 		SorteoNumeroGanador sorteoNumeroGanador = new SorteoNumeroGanador();
-		sorteoNumeroGanador.setHour(String.valueOf(hour));
+		sorteoNumeroGanador.setHour(hour);
 		sorteoNumeroGanador.setId(String.valueOf(sorteo.getId()));
 		sorteoNumeroGanador.setNumero(String.valueOf(numeroGanador));
 		sorteoNumeroGanador.setType(sorteo.getSorteoType().getSorteoTypeName().toString());
