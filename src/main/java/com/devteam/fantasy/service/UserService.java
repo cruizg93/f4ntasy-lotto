@@ -7,6 +7,8 @@ import com.devteam.fantasy.model.Jugador;
 import com.devteam.fantasy.model.User;
 
 public interface UserService {
+	
+	public boolean verifyAdminPassword(String password) ;
 
 	public User getLoggedInUser();
 	

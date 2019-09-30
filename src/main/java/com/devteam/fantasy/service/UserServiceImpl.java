@@ -7,10 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.devteam.fantasy.model.Asistente;
 import com.devteam.fantasy.model.Jugador;
+import com.devteam.fantasy.model.Role;
 import com.devteam.fantasy.model.User;
 import com.devteam.fantasy.repository.AsistenteRepository;
 import com.devteam.fantasy.repository.UserRepository;
@@ -23,6 +25,9 @@ public class UserServiceImpl implements UserService{
 	
 	@Autowired
 	AsistenteRepository asistenteRepository;
+	
+	@Autowired
+	PasswordEncoder passwordEncoder;
 	
 	public User getLoggedInUser(){
 		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -47,6 +52,16 @@ public class UserServiceImpl implements UserService{
 	
 	public List<Asistente> getJugadorAsistentes(Jugador jugador){
 		return asistenteRepository.findAllByJugador(jugador);
+	}
+
+	@Override
+	public boolean verifyAdminPassword(String password) {
+		User logged = getLoggedInUser();
+		if( passwordEncoder.matches(password, logged.getPassword())) {
+			return true;
+		}
+
+		return false;
 	}
 	
 }

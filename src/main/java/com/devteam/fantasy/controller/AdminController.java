@@ -11,6 +11,7 @@ import com.devteam.fantasy.service.AdminService;
 import com.devteam.fantasy.service.HistoryService;
 import com.devteam.fantasy.service.HistoryServiceImpl;
 import com.devteam.fantasy.service.SorteoService;
+import com.devteam.fantasy.service.UserService;
 import com.devteam.fantasy.util.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -107,6 +108,23 @@ public class AdminController {
     
     @Autowired
     private AdminService adminService;
+    
+    @Autowired
+    private UserService userService;
+    
+    @PostMapping("/validateAdminPassword")
+    //@PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    public ResponseEntity<String> verifyAdming(@Valid @RequestBody ObjectNode json){
+    	boolean validPassword = false;
+    	try {
+    		ObjectMapper mapper = new ObjectMapper();
+            String password = mapper.convertValue(json.get("password"), String.class);
+            validPassword = userService.verifyAdminPassword(password);
+    	}catch (Exception e) {
+    		return new ResponseEntity<String>(e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+    	return new ResponseEntity<String>(String.valueOf(validPassword),HttpStatus.OK);
+    }
     
     
     @PostMapping("/bono/jugadores/{id}")
