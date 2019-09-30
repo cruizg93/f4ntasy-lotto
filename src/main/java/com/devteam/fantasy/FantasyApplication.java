@@ -252,7 +252,7 @@ public class FantasyApplication {
 
 
             LocalDate monday = localDate.with(previousOrSame(MONDAY));
-            LocalDate nextSunday =LocalDate.now().with( next( SUNDAY ) );
+            LocalDate nextSunday =LocalDate.now().with( SUNDAY );
 
             timestamp = Timestamp.valueOf(LocalDateTime.of(nextSunday, LocalTime.NOON));
             if (!sorteoDiariaRepository.existsSorteoActivoBySorteoTime(timestamp)) {
@@ -393,11 +393,8 @@ public class FantasyApplication {
 
             sorteoDiarias.forEach(sorteoDiaria -> {
                 Sorteo sorteo = sorteoRepository.getSorteoById(sorteoDiaria.getId());
-                if (sorteo.getSorteoType().getSorteoTypeName().equals(SorteoTypeName.DIARIA)) {
-                    sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.CERRADA));
-                    sorteoRepository.save(sorteo);
-                }
-
+                sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.CERRADA));
+                sorteoRepository.save(sorteo);
             });
 
         }
