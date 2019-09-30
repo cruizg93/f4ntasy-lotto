@@ -11,9 +11,16 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.devteam.fantasy.message.response.SorteosPasadosApuestas;
+import com.devteam.fantasy.message.response.SorteosPasadosJugador;
 import com.devteam.fantasy.message.response.SorteosPasadosWeek;
+import com.devteam.fantasy.message.response.WeekResponse;
+import com.devteam.fantasy.model.Jugador;
+import com.devteam.fantasy.model.User;
 import com.devteam.fantasy.model.Week;
 import com.devteam.fantasy.service.HistoryService;
+import com.devteam.fantasy.service.UserService;
+import com.devteam.fantasy.util.Util;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -23,8 +30,11 @@ public class HistoryController {
 	@Autowired
 	HistoryService historyService;
 	
-	@GetMapping("/weeks/")
-	public List<Week> getWeeksList() {
+	@Autowired
+	UserService userService;
+	
+	@GetMapping("/weeks")
+	public List<WeekResponse> getWeeksList() {
 		return historyService.getAllWeeks();
 	}
 	
@@ -37,5 +47,36 @@ public class HistoryController {
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		return new ResponseEntity<SorteosPasadosWeek>(result,HttpStatus.OK);
+	}
+	
+	@GetMapping("/weeks/{id}/jugador")
+	public ResponseEntity<SorteosPasadosJugador> getWeekOverviewByJugador(@PathVariable Long id){
+		SorteosPasadosJugador result = null;
+		try {
+			User user = userService.getLoggedInUser();
+			Jugador jugador = Util.getJugadorFromUser(user);
+			if(jugador != null) {
+				result = historyService.getSorteosPasadosJugadorByWeek(id, jugador);
+			}
+			
+		} catch (Exception e) {
+			return new ResponseEntity<SorteosPasadosJugador>(result,HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		return new ResponseEntity<SorteosPasadosJugador>(result,HttpStatus.OK);
+	}
+	
+	@GetMapping("/weeks/jugador/sorteo/{id}")
+	public ResponseEntity<SorteosPasadosApuestas> getApuestasOverviewBySorteo(@PathVariable Long id){
+		SorteosPasadosApuestas result = null;
+		try {
+			User user = userService.getLoggedInUser();
+			Jugador jugador = Util.getJugadorFromUser(user);
+			if(jugador != null) {
+				result = historyService.getApuestasPasadasBySorteoAndJugador(id, jugador);
+			}
+		} catch (Exception e) {
+			return new ResponseEntity<SorteosPasadosApuestas>(result,HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		return new ResponseEntity<SorteosPasadosApuestas>(result,HttpStatus.OK);
 	}
 }

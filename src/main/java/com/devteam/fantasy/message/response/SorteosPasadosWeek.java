@@ -1,6 +1,5 @@
 package com.devteam.fantasy.message.response;
 
-import java.util.List;
 import java.util.Set;
 
 public class SorteosPasadosWeek {

@@ -148,7 +148,6 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (Exception e) {
 			logger.error("getActiveSorteosList(): START");
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 			throw e;
 		} finally {
 			logger.debug("getActiveSorteosList(): END");
@@ -175,7 +174,6 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (Exception e) {
 			logger.error("getActiveSorteosList(User {}): CATCH", user);
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 			throw e;
 		} finally {
 			logger.debug("getActiveSorteosList(User user): END");
@@ -232,7 +230,6 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (Exception e) {
 			logger.error("getActiveSorteoDetail(Long {}, String {}): CATCH", id, currency);
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 			throw e;
 		} finally {
 			logger.debug("getActiveSorteoDetail(Long id, String currency): END");
@@ -262,7 +259,6 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (Exception e) {
 			logger.error("sortDiariaList(Iterable<SorteoDiaria> {}): CATCH", list);
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 			throw e;
 		} finally {
 			logger.debug("sortDiariaList(Iterable<SorteoDiaria> list): END");
@@ -297,7 +293,6 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (Exception e) {
 			logger.error("getSorteosResponses(List<SorteoDiaria> {}, User {}): CATCH", sorteos, user);
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 			throw e;
 		} finally {
 			logger.debug("getSorteosResponses(List<SorteoDiaria> sorteos, User user): END");
@@ -371,7 +366,6 @@ public class SorteoServiceImpl implements SorteoService {
 					sorteo, Arrays.toString(cantidad), Arrays.toString(riesgo), apuesta, numero, jugador,
 					Arrays.toString(total), currency, Arrays.toString(comision));
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 			throw e;
 		} finally {
 			logger.debug("calcularCantRiesgo(...): END");
@@ -390,7 +384,6 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (Exception e) {
 			logger.error("getSorteosListWithMoneda(String {}): CATCH", currency);
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 			throw e;
 		} finally {
 			logger.debug("getSorteosListWithMoneda(String currency): END");
@@ -431,7 +424,6 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (Exception e) {
 			logger.error("getApuestasActivasResponse( SorteoDiaria {}, String {}): CATCH", sorteoDiaria, currency);
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 			throw e;
 		} finally {
 			logger.debug("getApuestasActivasResponse( SorteoDiaria sorteoDiaria, String currency): END");
@@ -455,7 +447,6 @@ public class SorteoServiceImpl implements SorteoService {
 
 		} catch (Exception e) {
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 			throw e;
 		} finally {
 			logger.debug("getJugadorList(): END");
@@ -491,7 +482,7 @@ public class SorteoServiceImpl implements SorteoService {
 			numeroGanadorRepository.save(numeroGanador);
 			historyService.createEvent(HistoryEventType.WINNING_NUMBER, id, "", String.valueOf(numero));
 			logger.debug("numeroGanadorRepository.save({})", numeroGanador);
-
+			
 			Set<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
 			// Long [jugadorId], Integer [unidadesApostadas]
 			Map<Long, Integer> map = new HashMap<>();
@@ -547,7 +538,6 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (Exception e) {
 			logger.error("setNumeroGanador(Long {}, int {}): CATCH", id, numero);
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 			throw e;
 		} finally {
 			logger.debug("setNumeroGanador(Long id, int numero): END");
@@ -560,7 +550,7 @@ public class SorteoServiceImpl implements SorteoService {
 		try {
 			LocalDateTime mondayFirstSorteo = sorteoDiaria.getSorteoTime().toLocalDateTime();
 			mondayFirstSorteo = mondayFirstSorteo.with(DayOfWeek.MONDAY);
-			mondayFirstSorteo = mondayFirstSorteo.with(LocalTime.of(9, 0, 0));
+			mondayFirstSorteo = mondayFirstSorteo.with(LocalTime.of(11, 0, 0));
 
 			Week week = new Week();
 			week.setYear(mondayFirstSorteo.getYear());
@@ -612,10 +602,15 @@ public class SorteoServiceImpl implements SorteoService {
 			logger.debug("copyApuestasToHistoricoApuestas(SorteoDiaria {}): START", sorteoDiaria);
 			Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
 			apuestaList.forEach(apuesta -> {
-				Jugador jugador = Util.getJugadorFromApuesta(apuesta);
 				HistoricoApuestas historicoApuestas = new HistoricoApuestas();
+				Jugador jugador = Util.getJugadorFromApuesta(apuesta);
+				
+				historicoApuestas.setUser(jugador);
+				if( apuesta.getUser() instanceof Asistente) {
+					historicoApuestas.setAsistente(apuesta.getUser());
+				}
+				
 				historicoApuestas.setCantidad(apuesta.getCantidad());
-				historicoApuestas.setUser(apuesta.getUser());
 				historicoApuestas.setSorteo(sorteoDiaria.getSorteo());
 				historicoApuestas.setNumero(apuesta.getNumero());
 				historicoApuestas.setComision(apuesta.getComision());
@@ -668,7 +663,6 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (Exception e) {
 			logger.error("deleteAndCreateSorteoDiaria(SorteoDiaria {}): CATCH", sorteoDiaria);
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 			throw e;
 		} finally {
 			logger.debug("deleteAndCreateSorteoDiaria(SorteoDiaria sorteoDiaria): END");
@@ -692,7 +686,6 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (Exception e) {
 			logger.error("bloquearApuesta(Long {}): CATCH", id);
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 			throw e;
 		} finally {
 			logger.debug("bloquearApuesta(Long id): END");
@@ -716,7 +709,6 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (Exception e) {
 			logger.error("desBloquearApuesta(Long {}): CATCH", id);
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 			throw e;
 		} finally {
 			logger.debug("desBloquearApuesta(Long id): END");
@@ -735,7 +727,6 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (Exception e) {
 			logger.error("forceCloseStatus(Long {}): CATCH", id);
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 			throw e;
 		} finally {
 			logger.debug("forceCloseStatus(Long id): END");
@@ -809,7 +800,6 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (Exception e) {
 			logger.error("getDetalleApuestasBySorteo(Long {}, String {}): CATCH", id, monedaType);
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 			throw e;
 		} finally {
 			logger.debug("getDetalleApuestasBySorteo(Long id, String monedaType): END");
@@ -840,7 +830,6 @@ public class SorteoServiceImpl implements SorteoService {
 			logger.error("getPremioFromApuesta(Jugador {}, Apuesta {}, SorteoTypeName {}): CATCH", jugador, apuesta,
 					sorteoType);
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 			throw e;
 		}
 		return premio.multiply(BigDecimal.valueOf(apuesta.getCantidad()));
@@ -899,7 +888,6 @@ public class SorteoServiceImpl implements SorteoService {
 			logger.error("submitApuestas(String {}, Long {}, List<NumeroPlayerEntryResponse> {}): CATCH", username,
 					sorteoId, apuestasEntry);
 			logger.error(ex.getMessage());
-			logger.error(ex.getStackTrace().toString());
 			throw ex;
 		} finally {
 			logger.debug(
@@ -947,7 +935,6 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (Exception e) {
 			logger.error("getApuestasActivasBySorteoAndJugador(Long {}, String {}): CATCH", sorteoId, username);
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 			throw e;
 		} finally {
 			logger.debug("getApuestasActivasBySorteoAndJugador(Long sorteoId, String username): END");
@@ -1001,7 +988,6 @@ public class SorteoServiceImpl implements SorteoService {
 			logger.error("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long {}, Integer {}, String {}): CATCH",
 					sorteoId, numero, username);
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 
 			if (e instanceof SorteoEstadoNotValidException) {
 				throw new SorteoEstadoNotValidException(e.getMessage());
@@ -1054,7 +1040,6 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (Exception e) {
 			logger.error("deleteAllApuestasOnSorteoDiarioByUser(Long {}, String {}): CATCH", sorteoId, username);
 			logger.error(e.getMessage());
-			logger.error(e.getStackTrace().toString());
 
 			if (e instanceof SorteoEstadoNotValidException) {
 				throw new SorteoEstadoNotValidException(e.getMessage());

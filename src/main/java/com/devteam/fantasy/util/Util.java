@@ -366,7 +366,11 @@ public class Util {
             case 11:
                 timeValue = "- 11 am";
                 break;
+            case 12:
+            	timeValue = "";
+            	break;
             default:
+            	timeValue = "- 0 am";
                 break;
         }
         return String.format("%s - %s %d, %d %s", weekNames[localDate.getDayOfWeek().getValue() - 1],
@@ -453,7 +457,11 @@ public class Util {
             case 11:
                 timeValue = "11 am";
                 break;
+            case 12:
+            	timeValue = "";
+            	break;
             default:
+            	timeValue = "- 0 am";
                 break;
         }
         if (timeValue.equals("Chica")) {
@@ -483,7 +491,11 @@ public class Util {
             case 11:
                 timeValue = "11 am";
                 break;
+            case 12:
+            	timeValue = "";
+            	break;
             default:
+            	timeValue = "- 0 am";
                 break;
         }
         if (timeValue.equals("Chica")) {
@@ -518,7 +530,11 @@ public class Util {
             case 11:
                 timeValue = "11 am";
                 break;
+            case 12:
+            	timeValue = "";
+            	break;
             default:
+            	timeValue = "- 0 am";
                 break;
         }
         return timeValue;
@@ -541,6 +557,11 @@ public class Util {
         		localDate.getDayOfMonth(),
         		monthsAbb[localDate.getMonthValue() - 1]
                 );
+    }
+    
+    public static String getShortDayFromTimestamp(Timestamp timestamp) {
+        LocalDate localDate = timestamp.toLocalDateTime().toLocalDate();
+        return String.format("%s %s",localDate.getDayOfMonth(), monthsAbb[localDate.getMonthValue() - 1]);
     }
     
     public static DayOfWeek getDayOfWeekFromTimestamp(Timestamp timestamp) {

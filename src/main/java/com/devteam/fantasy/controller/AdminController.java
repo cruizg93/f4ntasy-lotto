@@ -886,15 +886,14 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public List<ApuestaNumeroGanadorResponse> getApuestasToday() {
         List<ApuestaNumeroGanadorResponse> ganadorResponses = new ArrayList<>();
-        Iterable<SorteoDiaria> sorteoDiarias = sorteoDiariaRepository.findAll();
-        sorteoDiarias.forEach(sorteoDiaria -> {
-            Sorteo sorteo = sorteoRepository.getSorteoById(sorteoDiaria.getId());
+        Iterable<Sorteo> sorteos = sorteoRepository.findAllByOrderByIdAsc();
+        sorteos.forEach(sorteo -> {
             ApuestaNumeroGanadorResponse ganadorResponse = new ApuestaNumeroGanadorResponse();
             Integer numero = -1;
             if (sorteo.getEstado().getEstado().equals(EstadoName.CERRADA)) {
-                ganadorResponse.setStatus("cerrada");
+            	numero = numeroGanadorRepository.getBySorteo(sorteo).getNumeroGanador();
+            	ganadorResponse.setStatus("cerrada");
             } else if (sorteo.getEstado().getEstado().equals(EstadoName.BLOQUEADA)) {
-                numero = numeroGanadorRepository.getBySorteo(sorteo).getNumeroGanador();
                 ganadorResponse.setStatus("bloqueada");
             } else {
                 ganadorResponse.setStatus("abierta");
@@ -902,8 +901,8 @@ public class AdminController {
             ganadorResponse.setType(sorteo.getSorteoType().getSorteoTypeName().toString());
             ganadorResponse.setSorteId(sorteo.getId());
             ganadorResponse.setNumero(numero);
-            ganadorResponse.setTitle(Util.formatTimestamp2StringShortAbb(sorteoDiaria.getSorteoTime()));
-            ganadorResponse.setSorteId(sorteoDiaria.getId());
+            ganadorResponse.setTitle(Util.formatTimestamp2StringShortAbb(sorteo.getSorteoTime()));
+            ganadorResponse.setSorteId(sorteo.getId());
             ganadorResponses.add(ganadorResponse);
         });
         return ganadorResponses;

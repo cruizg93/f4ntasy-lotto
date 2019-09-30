@@ -16,6 +16,10 @@ public class HistoricoApuestas {
     @ManyToOne
     @JoinColumn(name = "users_id")
     private User user;
+    
+    @ManyToOne
+    @JoinColumn(name = "asistente_id")
+    private User asistente;
 
     @ManyToOne
     @JoinColumn(name = "cambio_id")
@@ -122,12 +126,20 @@ public class HistoricoApuestas {
 	public void setMoneda(String moneda) {
 		this.moneda = moneda;
 	}
+	
+	public User getAsistente() {
+		return asistente;
+	}
+
+	public void setAsistente(User asistente) {
+		this.asistente = asistente;
+	}
 
 	@Override
 	public String toString() {
-		return "HistoricoApuestas [id=" + id + ", sorteo=" + sorteo.getSorteoTime() + ", user=" + user.getUsername() + ", cambio=" + cambio.getCambio()
-				+ ", numero=" + numero + ", cantidad=" + cantidad + ", comision=" + comision + ", date=" + date
-				+ ", cantidadMultiplier=" + cantidadMultiplier + ", premioMultiplier=" + premioMultiplier + ", moneda="
-				+ moneda + "]";
+		return "HistoricoApuestas [id=" + id + ", sorteo=" + sorteo + ", user=" + user + ", asistente=" + asistente
+				+ ", cambio=" + cambio + ", numero=" + numero + ", cantidad=" + cantidad + ", comision=" + comision
+				+ ", date=" + date + ", cantidadMultiplier=" + cantidadMultiplier + ", premioMultiplier="
+				+ premioMultiplier + ", moneda=" + moneda + "]";
 	}
 }

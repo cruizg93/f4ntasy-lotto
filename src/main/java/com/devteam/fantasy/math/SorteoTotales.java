@@ -14,11 +14,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.devteam.fantasy.message.response.SorteosPasadosWeek;
+import com.devteam.fantasy.message.response.SummaryResponse;
 import com.devteam.fantasy.model.Apuesta;
 import com.devteam.fantasy.model.Asistente;
 import com.devteam.fantasy.model.HistoricoApuestas;
 import com.devteam.fantasy.model.HistoricoBalance;
 import com.devteam.fantasy.model.Jugador;
+import com.devteam.fantasy.model.Moneda;
 import com.devteam.fantasy.model.NumeroGanador;
 import com.devteam.fantasy.model.Sorteo;
 import com.devteam.fantasy.model.SorteoDiaria;
@@ -116,18 +118,16 @@ public class SorteoTotales {
 //        }
 	}
 	
-	public void processHitoricoApuestas(List<HistoricoApuestas> apuestas, List<Sorteo> sorteos, SorteosPasadosWeek sorteosPasadosWeek, MonedaName moneda) {
+	public SummaryResponse processHitoricoApuestas(List<HistoricoApuestas> apuestas) {
+		SummaryResponse summary = new SummaryResponse();
 		BigDecimal ventas = BigDecimal.ZERO;
 		BigDecimal comisiones = BigDecimal.ZERO;
 		BigDecimal premios = BigDecimal.ZERO;
-		
-		//SorteoID, NumeroGanador
-		Map<Long,Integer> numerosGanadores = new HashMap<Long,Integer>();
-		for(Sorteo sorteo: sorteos) {
-			Integer numero = numeroGanadorRepository.findBySorteo(sorteo);
-			numerosGanadores.put(sorteo.getId(), numero);
-		}
+		MonedaName moneda = MonedaName.LEMPIRA;
+
 		for (HistoricoApuestas apuesta: apuestas) {
+			NumeroGanador numero = numeroGanadorRepository.getBySorteo(apuesta.getSorteo());
+			moneda = MonedaName.LEMPIRA.toString().equals(apuesta.getMoneda())?MonedaName.LEMPIRA:MonedaName.DOLAR;
 			double currencyExchange = MathUtil.getDollarChangeRate(Util.mapHistsoricoApuestaToApuesta(apuesta), moneda);
         	BigDecimal costo = BigDecimal.valueOf(apuesta.getCantidad()).multiply(BigDecimal.valueOf(apuesta.getCantidadMultiplier()));
             costo = costo.multiply(BigDecimal.valueOf(currencyExchange));
@@ -136,16 +136,17 @@ public class SorteoTotales {
         	BigDecimal comision = BigDecimal.valueOf(apuesta.getComision()).multiply(BigDecimal.valueOf(currencyExchange));
             comisiones = comisiones.add(comision);
             
-            if(numerosGanadores.containsKey(apuesta.getSorteo().getId())
-            		&& numerosGanadores.get(apuesta.getSorteo().getId()) == apuesta.getNumero()) {
+            if(numero.getNumeroGanador() == apuesta.getNumero()) {
         		premios = premios.add(BigDecimal.valueOf(apuesta.getCantidad()).multiply(BigDecimal.valueOf(apuesta.getPremioMultiplier())));
             }
         }
 		
-		sorteosPasadosWeek.setComisiones(comisiones.toString());
-		sorteosPasadosWeek.setVentas(ventas.toString());
-		sorteosPasadosWeek.setSubTotal(ventas.subtract(comisiones).toString());
-		sorteosPasadosWeek.setPremios(premios.toString());
+		summary.setCurrency(moneda.name());
+		summary.setComisiones(comisiones.doubleValue());
+		summary.setVentas(ventas.doubleValue());
+		summary.setSubTotal(ventas.subtract(comisiones).doubleValue());
+		summary.setPremios(premios.doubleValue());
+		return summary;
 	}
 	
 	//Need to return multiple values.

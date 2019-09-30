@@ -28,7 +28,7 @@ public class HistoricoBalance {
     @JoinColumn(name = "created_by")
     private User createdBy;
 	
-	double balanceSemana;
+	double balance;
 	
 	@Enumerated(EnumType.STRING)
     @Column(length = 60)
@@ -70,11 +70,11 @@ public class HistoricoBalance {
 	}
 
 	public double getBalanceSemana() {
-		return balanceSemana;
+		return balance;
 	}
 
 	public void setBalanceSemana(double balanceSemana) {
-		this.balanceSemana = balanceSemana;
+		this.balance = balanceSemana;
 	}
 
 
@@ -120,7 +120,7 @@ public class HistoricoBalance {
 
 	@Override
 	public String toString() {
-		return "HistoricoBalance [id=" + id + ", createdBy=" + createdBy + ", balanceSemana=" + balanceSemana
+		return "HistoricoBalance [id=" + id + ", createdBy=" + createdBy + ", balanceSemana=" + balance
 				+ ", balanceType=" + balanceType.toString() + ", sorteoTime=" + sorteoTime + ", jugador=" + jugador.getName() + ", moneda="
 				+ moneda.getMonedaName().toString() + "]";
 	}

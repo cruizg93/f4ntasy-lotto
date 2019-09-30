@@ -210,7 +210,7 @@ public class FantasyApplication {
             LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             int year = localDate.getYear();
             int month = localDate.getMonthValue();
-            int day = localDate.getDayOfMonth()+1;
+            int day = localDate.getDayOfMonth();//+1;
 
 
             Timestamp timestamp = (new Timestamp(

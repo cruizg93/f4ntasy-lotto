@@ -12,7 +12,5 @@ public interface JugadorRepository extends JpaRepository<Jugador, Long> {
     List<Jugador> findAllByOrderByIdAsc();
 //	Set<Jugador> findallByBalanceGreaterThan(double d);
 //	Set<Jugador> findallByBalanceLessThan(double d);
-	Set<Jugador> findAllByBalanceGreaterThan(double d);
-	Set<Jugador> findAllByBalanceLessThan(double d);
-
+	Set<Jugador> findAllByBalanceNot(double d);
 }

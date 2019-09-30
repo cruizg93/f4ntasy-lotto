@@ -122,7 +122,6 @@ public class AdminServiceImpl implements AdminService{
 	        });
 		}catch(Exception e) {
 			logger.debug(e.getMessage());
-			logger.debug(e.getStackTrace().toString());
 			throw e;
 		}finally {
 			logger.debug("getAllJugadores(): END");
@@ -150,7 +149,6 @@ public class AdminServiceImpl implements AdminService{
         	result.put("riesgo", riesgo.doubleValue());
     	}catch(Exception e) {
     		logger.debug(e.getMessage());
-    		logger.debug(e.getStackTrace().toString());
     		throw e;
     	}finally {
     		logger.debug("processSorteoResponse(List<SorteoResponse> sorteosResponse): END");
