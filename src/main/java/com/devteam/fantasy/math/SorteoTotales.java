@@ -13,7 +13,7 @@ import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.devteam.fantasy.message.response.SorteosPasadosWeek;
+import com.devteam.fantasy.message.response.SorteosPasadosJugadores;
 import com.devteam.fantasy.message.response.SummaryResponse;
 import com.devteam.fantasy.model.Apuesta;
 import com.devteam.fantasy.model.Asistente;
@@ -118,18 +118,19 @@ public class SorteoTotales {
 //        }
 	}
 	
-	public SummaryResponse processHitoricoApuestas(List<HistoricoApuestas> apuestas) {
+	public SummaryResponse processHitoricoApuestas(List<HistoricoApuestas> apuestas, String currencyRequested) {
 		SummaryResponse summary = new SummaryResponse();
 		BigDecimal ventas = BigDecimal.ZERO;
 		BigDecimal comisiones = BigDecimal.ZERO;
 		BigDecimal premios = BigDecimal.ZERO;
-		MonedaName moneda = MonedaName.LEMPIRA;
+		MonedaName moneda = Util.getMonedaNameFromString(currencyRequested);
 
 		for (HistoricoApuestas apuesta: apuestas) {
 			NumeroGanador numero = numeroGanadorRepository.getBySorteo(apuesta.getSorteo());
-			moneda = MonedaName.LEMPIRA.toString().equals(apuesta.getMoneda())?MonedaName.LEMPIRA:MonedaName.DOLAR;
+
 			double currencyExchange = MathUtil.getDollarChangeRate(Util.mapHistsoricoApuestaToApuesta(apuesta), moneda);
-        	BigDecimal costo = BigDecimal.valueOf(apuesta.getCantidad()).multiply(BigDecimal.valueOf(apuesta.getCantidadMultiplier()));
+        	
+			BigDecimal costo = BigDecimal.valueOf(apuesta.getCantidad()).multiply(BigDecimal.valueOf(apuesta.getCantidadMultiplier()));
             costo = costo.multiply(BigDecimal.valueOf(currencyExchange));
         	ventas = ventas.add(costo);
             

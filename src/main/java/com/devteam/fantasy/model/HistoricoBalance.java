@@ -50,6 +50,10 @@ public class HistoricoBalance {
     private Moneda moneda;	
 	
 	@ManyToOne
+    @JoinColumn(name = "cambio_id")
+    Cambio cambio;
+	
+	@ManyToOne
     @JoinColumn(nullable = true)
     private Week week;
 	
@@ -116,6 +120,22 @@ public class HistoricoBalance {
 
 	public void setWeek(Week week) {
 		this.week = week;
+	}
+	
+	public double getBalance() {
+		return balance;
+	}
+
+	public void setBalance(double balance) {
+		this.balance = balance;
+	}
+
+	public Cambio getCambio() {
+		return cambio;
+	}
+
+	public void setCambio(Cambio cambio) {
+		this.cambio = cambio;
 	}
 
 	@Override

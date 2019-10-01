@@ -6,6 +6,7 @@ import com.devteam.fantasy.model.User;
 import com.devteam.fantasy.model.Week;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -13,5 +14,5 @@ public interface BonoRepository extends JpaRepository<Bono, Long> {
 	
 	List<Bono> findAllByWeek(Week week);
 	List<Bono> findAllByUser(User user);
-	Bono findByWeekAndUser(Week week, User user);
+	Optional<Bono> findByWeekAndUser(Week week, User user);
 }

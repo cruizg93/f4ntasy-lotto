@@ -23,6 +23,14 @@ public class Bono {
     private User user;
 
 	private Double bono;
+	
+	@ManyToOne
+    @JoinColumn(name = "moneda_id")
+    private Moneda moneda;	
+	
+	@ManyToOne
+    @JoinColumn(name = "cambio_id")
+    Cambio cambio;
 
 	@ManyToOne
     @JoinColumn(name = "created_by")
@@ -66,6 +74,22 @@ public class Bono {
 
 	public void setCreatedBy(User createdBy) {
 		this.createdBy = createdBy;
+	}
+
+	public Moneda getMoneda() {
+		return moneda;
+	}
+
+	public void setMoneda(Moneda moneda) {
+		this.moneda = moneda;
+	}
+
+	public Cambio getCambio() {
+		return cambio;
+	}
+
+	public void setCambio(Cambio cambio) {
+		this.cambio = cambio;
 	}
 
 	@Override

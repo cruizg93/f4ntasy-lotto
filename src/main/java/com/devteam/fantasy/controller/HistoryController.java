@@ -23,8 +23,9 @@ import com.devteam.fantasy.message.response.ApuestaActivaDetallesResponse;
 import com.devteam.fantasy.message.response.HistoricoApuestaDetallesResponse;
 import com.devteam.fantasy.message.response.NumeroGanadorSorteoResponse;
 import com.devteam.fantasy.message.response.SorteosPasadosApuestas;
-import com.devteam.fantasy.message.response.SorteosPasadosJugador;
-import com.devteam.fantasy.message.response.SorteosPasadosWeek;
+import com.devteam.fantasy.message.response.SorteosPasadosDays;
+import com.devteam.fantasy.message.response.SorteosPasados;
+import com.devteam.fantasy.message.response.SorteosPasadosJugadores;
 import com.devteam.fantasy.message.response.WeekResponse;
 import com.devteam.fantasy.model.Apuesta;
 import com.devteam.fantasy.model.Asistente;
@@ -39,6 +40,8 @@ import com.devteam.fantasy.util.PairNV;
 import com.devteam.fantasy.util.SorteoTypeName;
 import com.devteam.fantasy.util.Util;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import javassist.NotFoundException;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -67,20 +70,26 @@ public class HistoryController {
 		return historyService.getAllWeeks();
 	}
 	
-	@GetMapping("/weeks/{id}/{moneda}")
-	public ResponseEntity<SorteosPasadosWeek> getWeekOverview(@PathVariable Long id, @PathVariable String moneda) {
-		SorteosPasadosWeek result = null;
+	@GetMapping("/weeks/{id}/{historyType}/{moneda}")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+	public ResponseEntity<Object> getWeekOverview(@PathVariable Long id, @PathVariable String historyType, @PathVariable String moneda) {
+		Object result = null;
 		try {
-			result = historyService.getSorteosPasadosByWeek(id, moneda);
+			if("casa".equalsIgnoreCase(historyType)) {
+				result = historyService.getSorteosPasadosCasaByWeek(id, moneda);
+			}else if("vendedor".equalsIgnoreCase(historyType)) {
+				result = historyService.getSorteosPasadosJugadoresByWeek(id, moneda);
+			}
+			
 		} catch (Exception e) {
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		return new ResponseEntity<SorteosPasadosWeek>(result,HttpStatus.OK);
+		return new ResponseEntity<Object>(result,HttpStatus.OK);
 	}
 	
 	@GetMapping("/weeks/{id}/jugador")
-	public ResponseEntity<SorteosPasadosJugador> getWeekOverviewByJugador(@PathVariable Long id){
-		SorteosPasadosJugador result = null;
+	public ResponseEntity<SorteosPasados> getWeekOverviewByJugador(@PathVariable Long id){
+		SorteosPasados result = null;
 		try {
 			User user = userService.getLoggedInUser();
 			Jugador jugador = Util.getJugadorFromUser(user);
@@ -89,10 +98,31 @@ public class HistoryController {
 			}
 			
 		} catch (Exception e) {
-			return new ResponseEntity<SorteosPasadosJugador>(result,HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<SorteosPasados>(result,HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		return new ResponseEntity<SorteosPasadosJugador>(result,HttpStatus.OK);
+		return new ResponseEntity<SorteosPasados>(result,HttpStatus.OK);
 	}
+	
+	@GetMapping("/weeks/{weekId}/jugador/{jugadorId}")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+	public ResponseEntity<SorteosPasados> getWeekOverviewByJugador(@PathVariable Long weekId, @PathVariable Long jugadorId){
+		SorteosPasados result = null;
+		try {
+			User user = userService.getById(jugadorId);
+			Jugador jugador = Util.getJugadorFromUser(user);
+			
+			if(jugador != null) {
+				result = historyService.getSorteosPasadosJugadorByWeek(weekId, jugador);
+			}else {
+				throw new NotFoundException("Jugador with id "+jugadorId+" not found");
+			}
+		} catch (Exception e) {
+			return new ResponseEntity<SorteosPasados>(result,HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		return new ResponseEntity<SorteosPasados>(result,HttpStatus.OK);
+	}
+	
+	
 	
 	@GetMapping("/weeks/jugador/sorteo/{id}")
 	public ResponseEntity<SorteosPasadosApuestas> getApuestasOverviewBySorteo(@PathVariable Long id){

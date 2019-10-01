@@ -23,13 +23,16 @@ import com.devteam.fantasy.message.response.SorteoResponse;
 import com.devteam.fantasy.model.Apuesta;
 import com.devteam.fantasy.model.Asistente;
 import com.devteam.fantasy.model.Bono;
+import com.devteam.fantasy.model.Cambio;
 import com.devteam.fantasy.model.Jugador;
+import com.devteam.fantasy.model.Moneda;
 import com.devteam.fantasy.model.SorteoDiaria;
 import com.devteam.fantasy.model.User;
 import com.devteam.fantasy.model.Week;
 import com.devteam.fantasy.repository.ApuestaRepository;
 import com.devteam.fantasy.repository.AsistenteRepository;
 import com.devteam.fantasy.repository.BonoRepository;
+import com.devteam.fantasy.repository.CambioRepository;
 import com.devteam.fantasy.repository.JugadorRepository;
 import com.devteam.fantasy.repository.NumeroGanadorRepository;
 import com.devteam.fantasy.repository.ResultadoRepository;
@@ -80,6 +83,9 @@ public class AdminServiceImpl implements AdminService{
 
     @Autowired
     private HistoryService historyService;
+    
+    @Autowired
+    private CambioRepository cambioRepository;
 	
 	private static final Logger logger = LoggerFactory.getLogger(AdminServiceImpl.class);
 	
@@ -163,11 +169,15 @@ public class AdminServiceImpl implements AdminService{
 		try {
 			Jugador jugador = jugadorRepository.findById(jugadorId).orElseThrow(() -> new NotFoundException("Jugador not found"));
 			Week week = weekRepository.findById(request.getWeekId()).orElseThrow(() -> new NotFoundException("Week not found"));
+			Cambio cambio = cambioRepository.findFirstByOrderByIdDesc();
+			Moneda moneda = new Moneda(Util.getMonedaNameFromString(request.getMoneda()));
 			
 			if(historyService.isJugadorElegibleForBono(jugador, week)) {
 				User createdBy 	= userService.getLoggedInUser();
 				Bono bono 		= new Bono();
 				
+				bono.setCambio(cambio);
+				bono.setMoneda(moneda);
 				bono.setBono(request.getBono());
 				bono.setWeek(week);
 				bono.setUser(jugador);

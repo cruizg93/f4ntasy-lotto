@@ -113,7 +113,7 @@ public class AdminController {
     private UserService userService;
     
     @PostMapping("/validateAdminPassword")
-    //@PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ResponseEntity<String> verifyAdming(@Valid @RequestBody ObjectNode json){
     	boolean validPassword = false;
     	try {

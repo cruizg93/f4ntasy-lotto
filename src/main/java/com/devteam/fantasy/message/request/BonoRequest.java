@@ -5,7 +5,9 @@ public class BonoRequest {
 	private Long weekId;
 	
 	private double bono;
-
+	
+	private String moneda;
+	
 	public Long getWeekId() {
 		return weekId;
 	}
@@ -21,6 +23,13 @@ public class BonoRequest {
 	public void setBono(double bono) {
 		this.bono = bono;
 	}
-	
+
+	public String getMoneda() {
+		return moneda;
+	}
+
+	public void setMoneda(String moneda) {
+		this.moneda = moneda;
+	}
 	
 }

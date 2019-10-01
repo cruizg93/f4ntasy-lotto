@@ -16,7 +16,7 @@ import com.devteam.fantasy.message.response.ApuestasActivasResponse;
 import com.devteam.fantasy.message.response.JugadorSorteosResponse;
 import com.devteam.fantasy.message.response.NumeroPlayerEntryResponse;
 import com.devteam.fantasy.message.response.SorteoResponse;
-import com.devteam.fantasy.message.response.SorteosPasadosWeek;
+import com.devteam.fantasy.message.response.SorteosPasadosJugadores;
 import com.devteam.fantasy.model.HistoricoApuestas;
 import com.devteam.fantasy.model.Sorteo;
 import com.devteam.fantasy.model.SorteoDiaria;

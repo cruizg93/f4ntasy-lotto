@@ -2,22 +2,13 @@ package com.devteam.fantasy.message.response;
 
 import java.util.List;
 
-public class SorteosPasadosJugador {
+public class SorteosPasadosDays extends SorteosPasados {
 
-	private SummaryResponse summary;
 	
 	private List<PairDayBalance> sorteosPasados;
 
-	public SorteosPasadosJugador() {
+	public SorteosPasadosDays() {
 		super();
-	}
-	
-	public SummaryResponse getSummary() {
-		return summary;
-	}
-
-	public void setSummary(SummaryResponse summary) {
-		this.summary = summary;
 	}
 
 	public List<PairDayBalance> getSorteosPasados() {

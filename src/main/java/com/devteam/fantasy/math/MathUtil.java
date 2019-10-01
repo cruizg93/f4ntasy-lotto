@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 import com.devteam.fantasy.model.Apuesta;
 import com.devteam.fantasy.model.Asistente;
+import com.devteam.fantasy.model.Cambio;
 import com.devteam.fantasy.model.HistoricoApuestas;
 import com.devteam.fantasy.model.Jugador;
 import com.devteam.fantasy.model.Moneda;
@@ -68,6 +69,7 @@ public class MathUtil {
 	}
 	
 	
+	
 	public static double getDollarChangeRate(Apuesta apuesta, MonedaName currencyRequested) {
 		Jugador jugador;
 		double cambio = 1d;
@@ -93,6 +95,18 @@ public class MathUtil {
             cambio = 1/apuesta.getCambio().getCambio();
         }
         return cambio;
+	}
+
+
+	public static double getDollarChangeRateOriginalMoneda(Cambio cambio, String originalCurrency, String currencyRequested) {
+		double exchange = 1d;
+
+		if(currencyRequested.toString().equalsIgnoreCase("lempira") && MonedaName.DOLAR.toString().equalsIgnoreCase(originalCurrency) ){
+			exchange = cambio.getCambio();
+        }else if(currencyRequested.toString().equalsIgnoreCase("dolar") && MonedaName.LEMPIRA.toString().equalsIgnoreCase(originalCurrency)){
+        	exchange = 1/cambio.getCambio();
+        }
+        return exchange;
 	}
 	
 }

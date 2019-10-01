@@ -6,23 +6,30 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import com.devteam.fantasy.math.MathUtil;
 import com.devteam.fantasy.math.SorteoTotales;
 import com.devteam.fantasy.message.response.HistoricoApuestaDetallesResponse;
+import com.devteam.fantasy.message.response.JugadorBalanceWeek;
 import com.devteam.fantasy.message.response.NumeroGanadorSorteoResponse;
 import com.devteam.fantasy.message.response.PairDayBalance;
 import com.devteam.fantasy.message.response.PairJP;
 import com.devteam.fantasy.message.response.SorteoNumeroGanador;
 import com.devteam.fantasy.message.response.SorteosPasadosApuestas;
-import com.devteam.fantasy.message.response.SorteosPasadosJugador;
-import com.devteam.fantasy.message.response.SorteosPasadosWeek;
+import com.devteam.fantasy.message.response.SorteosPasadosDays;
+import com.devteam.fantasy.message.response.SorteosPasados;
+import com.devteam.fantasy.message.response.SorteosPasadosJugadores;
 import com.devteam.fantasy.message.response.SummaryResponse;
 import com.devteam.fantasy.message.response.WeekResponse;
 import com.devteam.fantasy.model.Asistente;
@@ -118,55 +125,202 @@ public class HistoryServiceImpl implements HistoryService {
 	}
 
 	@Override
-	public SorteosPasadosWeek getSorteosPasadosByWeek(Long weekID, String moneda) throws Exception {
-		SorteosPasadosWeek sorteosPasadosWeek = new SorteosPasadosWeek();
+	@PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+	public SorteosPasadosDays getSorteosPasadosCasaByWeek(Long weekId, String moneda) throws Exception {
+		SorteosPasadosDays sorteosPasadosJugador	= new SorteosPasadosDays();
 		try {
-			logger.debug("getSorteosPasadosByWeek(Long {},String {}): START", weekID,moneda);
-			Week week = weekRepository.findById(weekID).orElseThrow(() -> new NotFoundException("Week not found"));
+			logger.debug("getSorteosPasadosCasaByWeek(Long {},String {}): START", weekId,moneda);
+			Week week 									= weekRepository.findById(weekId).orElseThrow(() -> new NotFoundException("Not Week Found"));
 			
-			MonedaName monedaName 						= Util.getMonedaNameFromString(moneda);
-			List<Sorteo> sorteos 						= sorteoRepository.getAllBetweenTimestamp(week.getMonday(), week.getSunday());
-			List<HistoricoApuestas> historicoApuestas 	= getHistoricoApuestasByWeek(sorteos);
+			List<Sorteo> sorteos 						= sorteoRepository.findAllBySorteoTimeBetweenOrderBySorteoTime(week.getMonday(),week.getSunday());
+			List<PairDayBalance> pairDaysBalance 		= new ArrayList<>();
 			
-			logger.debug("getSorteosPasadosJugadorByWeek");
-//			Set<SorteosPasadosJugador> jugadores 		= getSorteosPasadosJugadorByWeek(historicoApuestas, week);
-//			sorteosPasadosWeek.setJugadores(jugadores);
+			BigDecimal comisionWeek 	= BigDecimal.ZERO;
+			BigDecimal premiosWeek 		= BigDecimal.ZERO;
+			BigDecimal ventasWeek 		= BigDecimal.ZERO;
+			BigDecimal subTotalWeek	 	= BigDecimal.ZERO;
+			BigDecimal comisionDay 		= BigDecimal.ZERO;
+			BigDecimal premiosDay 		= BigDecimal.ZERO;
+			BigDecimal ventasDay 		= BigDecimal.ZERO;
+			BigDecimal subTotalDay		= BigDecimal.ZERO;
+			BigDecimal prevBalance 		= BigDecimal.ZERO;
+
+			SorteoNumeroGanador sorteo11 = new SorteoNumeroGanador();
+			SorteoNumeroGanador sorteo12 = new SorteoNumeroGanador();
+			SorteoNumeroGanador sorteo15 = new SorteoNumeroGanador();
+			SorteoNumeroGanador sorteo21 = new SorteoNumeroGanador();
 			
-			logger.debug("sorteoTotales.processHitoricoApuestas");
-//			sorteoTotales.processHitoricoApuestas(historicoApuestas, sorteosPasadosWeek, monedaName);
+			for(Sorteo sorteo: sorteos) {
+				
+				List<HistoricoBalance> historicoBalanceList = historicoBalanceRepository.findAllBySorteoTime(sorteo.getSorteoTime());
+				BigDecimal historicoBalance = BigDecimal.ZERO;
+				for(HistoricoBalance hb: historicoBalanceList) {
+					historicoBalance = historicoBalance.add(BigDecimal.valueOf(hb.getBalanceSemana()));
+					
+					double currencyExchange = MathUtil.getDollarChangeRateOriginalMoneda(hb.getCambio(),hb.getMoneda().getMonedaName().toString(), moneda);
+					historicoBalance = historicoBalance.multiply(BigDecimal.valueOf(currencyExchange)); 
+				}
+				
+				prevBalance = historicoBalance.compareTo(BigDecimal.ZERO)!=0?historicoBalance:prevBalance;
+				
+				List<HistoricoApuestas> apuestas = historicoApuestaRepository.findAllBySorteo(sorteo);
+				SummaryResponse summarySorteo = sorteoTotales.processHitoricoApuestas(apuestas, moneda);
+
+				comisionWeek	= comisionWeek.add( new BigDecimal(summarySorteo.getComisiones()));
+				premiosWeek		= premiosWeek.add(new BigDecimal(summarySorteo.getPremios()));
+				ventasWeek	 	= ventasWeek.add(new BigDecimal(summarySorteo.getVentas()));
+				subTotalWeek	= subTotalWeek.add(new BigDecimal(summarySorteo.getSubTotal()));
+				comisionDay	= comisionDay.add( new BigDecimal(summarySorteo.getComisiones()));
+				premiosDay	= premiosDay.add(new BigDecimal(summarySorteo.getPremios()));
+				ventasDay	= ventasDay.add(new BigDecimal(summarySorteo.getVentas()));
+				subTotalDay	= subTotalDay.add(new BigDecimal(summarySorteo.getSubTotal()));
+				
+				LocalDateTime sorteoTime = sorteo.getSorteoTime().toLocalDateTime();
+				NumeroGanador numeroGanador = numeroGanadorRepository.getBySorteo(sorteo);
+				
+				if(sorteoTime.getHour() == 11) {
+					sorteo11 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),"11 am");
+				}else if(sorteoTime.getHour() == 12) {
+					sorteo12 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),"12 pm");
+				} else if(sorteoTime.getHour() == 15) {
+					sorteo15 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),"3 pm");
+				}else if(sorteoTime.getHour() == 21) {
+					sorteo21 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),"9 pm");
+					
+					SummaryResponse summaryDay = new SummaryResponse();
+					summaryDay.setComisiones(comisionDay.doubleValue());
+					summaryDay.setCurrency(summarySorteo.getCurrency());
+					summaryDay.setPremios(premiosDay.doubleValue());
+					summaryDay.setVentas(ventasDay.doubleValue());
+					summaryDay.setSubTotal(subTotalDay.doubleValue());
+					
+					PairDayBalance sorteosPasado = new PairDayBalance();
+					sorteosPasado.setSorteoTime(Util.getDayFromTimestamp(sorteo.getSorteoTime()));
+					sorteosPasado.setBalance(historicoBalance.compareTo(BigDecimal.ZERO)==0?historicoBalance.doubleValue():prevBalance.doubleValue());
+					sorteosPasado.setSummary(summaryDay);
+					pairDaysBalance.add(sorteosPasado);
+					
+					List<SorteoNumeroGanador> numerosGanadores = new ArrayList<>();
+					numerosGanadores.add(sorteo11);
+					if(sorteoTime.getDayOfWeek() == DayOfWeek.SUNDAY) {
+						numerosGanadores.add(sorteo12);
+					}
+					numerosGanadores.add(sorteo15);
+					numerosGanadores.add(sorteo21);
+					sorteosPasado.setSorteos(numerosGanadores);
+					
+					prevBalance = BigDecimal.ZERO;
+					sorteo11 	= new SorteoNumeroGanador();
+					sorteo12 	= new SorteoNumeroGanador();
+					sorteo15 	= new SorteoNumeroGanador();
+					sorteo21 	= new SorteoNumeroGanador();
+					comisionDay = BigDecimal.ZERO;
+					premiosDay 	= BigDecimal.ZERO;
+					ventasDay 	= BigDecimal.ZERO;
+					subTotalDay	= BigDecimal.ZERO;
+				}
+				
+			}
+			
+			SummaryResponse summary = new SummaryResponse();
+			List<Bono> bonoList = bonoRepository.findAllByWeek(week);
+			BigDecimal bono = BigDecimal.ZERO;
+			for(Bono b: bonoList) {
+				bono = bono.add(BigDecimal.valueOf(b.getBono()));
+				
+				double currencyExchange = MathUtil.getDollarChangeRateOriginalMoneda(b.getCambio(),b.getMoneda().getMonedaName().toString(), moneda);
+				bono = bono.multiply(BigDecimal.valueOf(currencyExchange));
+			}
+			
+			summary.setBonos(bono.doubleValue());
+			summary.setComisiones(comisionWeek.doubleValue());
+			summary.setPremios(premiosWeek.doubleValue());
+			summary.setVentas(ventasWeek.doubleValue());
+			summary.setSubTotal(subTotalWeek.doubleValue());
+			summary.setCurrency(moneda);
+
+			sorteosPasadosJugador.setSorteosPasados(pairDaysBalance);
+			sorteosPasadosJugador.setSummary(summary);
 			
 		}catch (Exception e) {
-			logger.error("getSorteosPasadosByWeek(Long {},String {}): CATCH", weekID,moneda);
+			logger.error("getSorteosPasadosCasaByWeek(Long {},String {}): CATCH", weekId,moneda);
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}finally {
-			logger.debug("getSorteosPasadosByWeek(Long weekID,String moneda): END");
+			logger.debug("getSorteosPasadosCasaByWeek(Long weekID,String moneda): END");
 		}
-		return sorteosPasadosWeek;
-	}
-	
-	private List<HistoricoApuestas> getHistoricoApuestasByWeek(List<Sorteo> sorteos) {
-		List<HistoricoApuestas> historicoApuestas = new ArrayList<>();  
-		sorteos.forEach(sorteo ->{
-//			historicoApuestas.addAll(historicoApuestaRepository.findAllBySorteo(sorteo));
-		});
-		return historicoApuestas;
+		return sorteosPasadosJugador;
 	}
 	
 	@Override
-	public SorteosPasadosJugador getSorteosPasadosJugadorByWeek(Long weekId, Long jugadorId) throws Exception {
+	@PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+	public SorteosPasadosJugadores getSorteosPasadosJugadoresByWeek(Long weekId, String moneda) throws Exception {
+		SorteosPasadosJugadores result =  new SorteosPasadosJugadores();
+		try {
+			logger.debug("SorteosPasadosJugadores getSorteosPasadosJugadoresByWeek(Long {}, String {}): START", weekId,moneda);
+			Week week 									= weekRepository.findById(weekId).orElseThrow(() -> new NotFoundException("Not Week Found"));
+			List<Jugador> jugadores 					= jugadorRepository.findAllByOrderByIdAsc();
+			Set<JugadorBalanceWeek> jugadoresResponse 	= new HashSet<JugadorBalanceWeek>();
+			
+			logger.debug("Creating Jugadores List...");
+			for(Jugador jugador : jugadores) {
+				JugadorBalanceWeek jugadorWeek = new JugadorBalanceWeek(); 
+				
+				Optional<HistoricoBalance> balance = historicoBalanceRepository.findByBalanceTypeAndJugadorAndWeek(BalanceType.WEEKLY, jugador, week);
+				if( balance.isPresent()) {
+					
+					double currencyExchange = MathUtil.getDollarChangeRateOriginalMoneda(balance.get().getCambio(),balance.get().getMoneda().getMonedaName().toString(), moneda);
+					BigDecimal balanceTotal = BigDecimal.valueOf(balance.get().getBalance()).multiply(BigDecimal.valueOf(currencyExchange));
+					
+					jugadorWeek.setBalance(balanceTotal.doubleValue());
+				}
+				
+				Optional<Bono> bono = bonoRepository.findByWeekAndUser(week, jugador);
+				if(bono.isPresent()) {
+					jugadorWeek.setHaveBono(true);
+				}
+				
+				jugadorWeek.setId(jugador.getId());
+				jugadorWeek.setName(jugador.getName());
+				jugadorWeek.setUsername(jugador.getUsername());
+				jugadorWeek.setMoneda(moneda);
+				
+				jugadoresResponse.add(jugadorWeek);
+			}
+			
+			logger.debug("Creating Week Summary...");
+			List<HistoricoApuestas> apuestas = historicoApuestaRepository.findAllBySorteoSorteoTimeBetween(week.getMonday(),week.getSunday());
+			SummaryResponse summarySorteo = sorteoTotales.processHitoricoApuestas(apuestas, moneda);
+			
+			result.setJugadores(jugadoresResponse);
+			result.setSummary(summarySorteo);
+			
+		} catch (Exception e) {
+			logger.error("SorteosPasadosJugadores getSorteosPasadosJugadoresByWeek(Long {}, String {}): CATCH", weekId,moneda);
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}finally {
+			logger.debug("SorteosPasadosJugadores getSorteosPasadosJugadoresByWeek(Long weekID, String moneda): END");
+		}
+		
+		return result;
+	}
+	
+	@Override
+	@PreAuthorize("hasRole('USER') or hasRole('ASIS')")
+	public SorteosPasadosDays getSorteosPasadosJugadorByWeek(Long weekId, Long jugadorId) throws Exception {
 		User user 									= userService.getById(jugadorId);
 		Jugador jugador 							= Util.getJugadorFromUser(user);
 		return getSorteosPasadosJugadorByWeek(weekId, jugador);
 	}
 	
 	@Override
-	public SorteosPasadosJugador getSorteosPasadosJugadorByWeek(Long weekId, Jugador jugador) throws Exception {
+	public SorteosPasadosDays getSorteosPasadosJugadorByWeek(Long weekId, Jugador jugador) throws Exception {
 		try {
 			logger.debug("getSorteosPasadosJugadorByWeek(Long {},jugador {}): START", weekId,jugador.getId());
 		
 			Week week 									= weekRepository.findById(weekId).orElseThrow(() -> new NotFoundException("Not Week Found"));
-			SorteosPasadosJugador sorteosPasadosJugador = new SorteosPasadosJugador();
+			SorteosPasadosDays sorteosPasadosJugador 	= new SorteosPasadosDays();
 			List<Sorteo> sorteos 						= sorteoRepository.findAllBySorteoTimeBetweenOrderBySorteoTime(week.getMonday(),week.getSunday());
 			List<PairDayBalance> pairDaysBalance 		= new ArrayList<>();
 			
@@ -191,7 +345,7 @@ public class HistoryServiceImpl implements HistoryService {
 				prevBalance = historicoBalance!=null?historicoBalance.getBalanceSemana():prevBalance;
 				
 				List<HistoricoApuestas> apuestas = historicoApuestaRepository.findAllBySorteoAndUser(sorteo, jugador);
-				SummaryResponse summarySorteo = sorteoTotales.processHitoricoApuestas(apuestas);
+				SummaryResponse summarySorteo = sorteoTotales.processHitoricoApuestas(apuestas, jugador.getMoneda().getMonedaName().toString());
 
 				comisionWeek	= comisionWeek.add( new BigDecimal(summarySorteo.getComisiones()));
 				premiosWeek		= premiosWeek.add(new BigDecimal(summarySorteo.getPremios()));
@@ -250,8 +404,9 @@ public class HistoryServiceImpl implements HistoryService {
 			}
 			
 			SummaryResponse summary = new SummaryResponse();
-			Bono bono = bonoRepository.findByWeekAndUser(week, jugador);
-			summary.setBonos(bono != null ?bono.getBono():0d);
+			Optional<Bono> bono = bonoRepository.findByWeekAndUser(week, jugador);
+			summary.setBonos(bono.isPresent()?bono.get().getBono():0d);
+			
 			summary.setComisiones(comisionWeek.doubleValue());
 			summary.setPremios(premiosWeek.doubleValue());
 			summary.setVentas(ventasWeek.doubleValue());
@@ -272,7 +427,8 @@ public class HistoryServiceImpl implements HistoryService {
 			logger.debug("getSorteosPasadosJugadorByWeek(Long weekId,jugador jugadorId): END");
 		}
 	}
-
+	
+	
 	@Override
 	public List<WeekResponse> getAllWeeks() {
 		List<Week> weeks = weekRepository.findAllByOrderByIdDesc();
@@ -325,7 +481,7 @@ public class HistoryServiceImpl implements HistoryService {
 					hasApuestasMadeByAsistente = true;
 				}
 			}
-			SummaryResponse summary = sorteoTotales.processHitoricoApuestas(apuestas);
+			SummaryResponse summary = sorteoTotales.processHitoricoApuestas(apuestas, jugador.getMoneda().getMonedaName().toString());
 			sorteosPasadosApuestas.setxApuestas(hasApuestasMadeByAsistente);
 			sorteosPasadosApuestas.setApuestas(pairs);
 			sorteosPasadosApuestas.setSummary(summary);
@@ -482,7 +638,7 @@ public class HistoryServiceImpl implements HistoryService {
         
         return apuestasDetails;
 	}
-	
+
 }
 
 
