@@ -143,8 +143,8 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public List<JugadorSingleResponse> findAllJugadores() {
         List<JugadorSingleResponse> list=new ArrayList<>();
-        list.add(new JugadorSingleResponse());
-        list.addAll(jugadorRepository.findAll().stream()
+        //list.add(new JugadorSingleResponse());
+        list.addAll(jugadorRepository.findAllByOrderByIdAsc().stream()
                 .map(jugador -> {
                     JugadorSingleResponse obj = new JugadorSingleResponse();
                     obj.setId(jugador.getId());
