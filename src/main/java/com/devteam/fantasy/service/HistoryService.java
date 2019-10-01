@@ -3,6 +3,7 @@ package com.devteam.fantasy.service;
 import java.util.List;
 import java.util.Set;
 
+import com.devteam.fantasy.message.response.NumeroGanadorSorteoResponse;
 import com.devteam.fantasy.message.response.SorteosPasadosApuestas;
 import com.devteam.fantasy.message.response.SorteosPasadosJugador;
 import com.devteam.fantasy.message.response.SorteosPasadosWeek;
@@ -29,5 +30,7 @@ public interface HistoryService {
 	List<WeekResponse> getAllWeeks();
 	boolean isJugadorElegibleForBono(Jugador jugador, Week week);
 	SorteosPasadosApuestas getApuestasPasadasBySorteoAndJugador(Long sorteoId, Jugador jugador) throws Exception;
+
+	List<NumeroGanadorSorteoResponse> getNumerosGanadores(String currency) throws Exception;
 	
 }

@@ -4,8 +4,10 @@ import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -13,8 +15,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.devteam.fantasy.math.MathUtil;
 import com.devteam.fantasy.math.SorteoTotales;
+import com.devteam.fantasy.message.response.NumeroGanadorSorteoResponse;
 import com.devteam.fantasy.message.response.PairDayBalance;
+import com.devteam.fantasy.message.response.PairJP;
 import com.devteam.fantasy.message.response.SorteoNumeroGanador;
 import com.devteam.fantasy.message.response.SorteosPasadosApuestas;
 import com.devteam.fantasy.message.response.SorteosPasadosJugador;
@@ -35,6 +40,7 @@ import com.devteam.fantasy.repository.BonoRepository;
 import com.devteam.fantasy.repository.HistoricoApuestaRepository;
 import com.devteam.fantasy.repository.HistoricoBalanceRepository;
 import com.devteam.fantasy.repository.HistoryEventRepository;
+import com.devteam.fantasy.repository.JugadorRepository;
 import com.devteam.fantasy.repository.NumeroGanadorRepository;
 import com.devteam.fantasy.repository.SorteoRepository;
 import com.devteam.fantasy.repository.UserRepository;
@@ -73,6 +79,9 @@ public class HistoryServiceImpl implements HistoryService {
 	
 	@Autowired 
 	WeekRepository weekRepository;
+	
+	@Autowired
+	JugadorRepository jugadorRepository;
 	
 	@Autowired 
 	NumeroGanadorRepository numeroGanadorRepository;
@@ -346,4 +355,87 @@ public class HistoryServiceImpl implements HistoryService {
 		return pairNVList;
 	}
 
+	@Override
+	public List<NumeroGanadorSorteoResponse> getNumerosGanadores(String currency) throws Exception {
+		List<NumeroGanadorSorteoResponse> numerosGanadoresResponse = new ArrayList<NumeroGanadorSorteoResponse>();
+		try {
+			logger.debug("List<NumeroGanadorSorteoResponse> getNumerosGanadores(): START");
+			List<NumeroGanador> numerosGanadores = numeroGanadorRepository.findAllByOrderBySorteoSorteoTimeDesc();
+			
+			for(NumeroGanador numero: numerosGanadores) {
+				Map<Jugador,BigDecimal> jugadoresPremio 	= new HashMap<>();
+				List<HistoricoApuestas> apuestas 		= historicoApuestaRepository.findAllBySorteoAndNumero(numero.getSorteo(), numero.getNumeroGanador());
+				
+				logger.debug("collecting and calculating premios...");
+				for(HistoricoApuestas apuesta: apuestas){
+					Double currencyExchange = MathUtil.getDollarChangeRateForHistorico(apuesta, MonedaName.DOLAR.toString().equalsIgnoreCase(currency)?MonedaName.DOLAR:MonedaName.LEMPIRA);
+					Jugador jugador 		= Util.getJugadorFromUser(apuesta.getUser());
+					BigDecimal premio 		= BigDecimal.valueOf(apuesta.getCantidad()).multiply(BigDecimal.valueOf(apuesta.getPremioMultiplier()));
+					premio 					= premio.multiply(BigDecimal.valueOf(currencyExchange));
+					
+					if(jugadoresPremio.containsKey(jugador)) {
+						premio = jugadoresPremio.get(jugador).add(premio);
+					}
+					
+					jugadoresPremio.put(jugador, premio);
+				}
+				
+				List<PairJP> premios = new ArrayList<PairJP>();
+				BigDecimal premioSorteoTotal = BigDecimal.ZERO; 
+				
+				for (Map.Entry<Jugador, BigDecimal> jugadorPremio: jugadoresPremio.entrySet()) {
+					PairJP pair = new PairJP();
+					pair.setName(jugadorPremio.getKey().getName());
+					pair.setUsername(jugadorPremio.getKey().getUsername());
+					
+					pair.setPremio(jugadorPremio.getValue().doubleValue());
+					
+					premios.add(pair);
+					premioSorteoTotal = premioSorteoTotal.add(jugadorPremio.getValue());
+				}
+				
+				
+				logger.debug("creating NumeroGanadorSorteoResponse...");
+				NumeroGanadorSorteoResponse numeroResponse = new NumeroGanadorSorteoResponse();
+				numeroResponse.setNumero(numero.getNumeroGanador()<10?"0"+numero.getNumeroGanador():String.valueOf(numero.getNumeroGanador()));
+				numeroResponse.setNumeroGanadorId(numero.getId());
+				numeroResponse.setSorteoType(numero.getSorteo().getSorteoType().getSorteoTypeName().toString());
+				
+				numeroResponse.setJugadores(premios);
+				numeroResponse.setPremio(premioSorteoTotal.doubleValue());
+				numeroResponse.setDay(Util.getDayFromTimestamp(numero.getSorteo().getSorteoTime()));
+				numeroResponse.setHour(Util.getHourFromTimestamp(numero.getSorteo().getSorteoTime()));
+				
+				numerosGanadoresResponse.add(numeroResponse);
+			}
+		} catch (Exception e) {
+			logger.debug("List<NumeroGanadorSorteoResponse> getNumerosGanadores(): CATCH");
+			logger.error(e.getMessage());
+			e.printStackTrace();
+		}finally {
+			logger.debug("List<NumeroGanadorSorteoResponse> getNumerosGanadores(): END");
+		}
+		
+		return numerosGanadoresResponse;
+	}
+	
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

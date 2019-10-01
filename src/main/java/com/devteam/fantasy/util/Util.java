@@ -531,10 +531,10 @@ public class Util {
                 timeValue = "11 am";
                 break;
             case 12:
-            	timeValue = "";
+            	timeValue = "12 pm";
             	break;
             default:
-            	timeValue = "- 0 am";
+            	timeValue = "0 am";
                 break;
         }
         return timeValue;

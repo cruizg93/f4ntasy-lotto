@@ -6,6 +6,7 @@ import com.devteam.fantasy.model.Apuesta;
 import com.devteam.fantasy.model.Asistente;
 import com.devteam.fantasy.model.HistoricoApuestas;
 import com.devteam.fantasy.model.Jugador;
+import com.devteam.fantasy.model.Moneda;
 import com.devteam.fantasy.model.SorteoDiaria;
 import com.devteam.fantasy.util.ApostadorName;
 import com.devteam.fantasy.util.ChicaName;
@@ -58,7 +59,10 @@ public class MathUtil {
         	premio = BigDecimal.valueOf(jugador.getPremioChicaMiles());
         }else if(jugador.getTipoChica().getChicaName().equals(ChicaName.PEDAZOS)){
         	premio = BigDecimal.valueOf(jugador.getPremioChicaPedazos());
+        }else if(jugador.getTipoChica().getChicaName().equals(ChicaName.DIRECTO)){
+        	premio = BigDecimal.valueOf(jugador.getPremioChicaDirecto());
         }
+		
 		
 		return premio;
 	}
@@ -75,6 +79,17 @@ public class MathUtil {
         if(currencyRequested.toString().equalsIgnoreCase("lempira") && jugador.getMoneda().getMonedaName().equals(MonedaName.DOLAR)){
             cambio = apuesta.getCambio().getCambio();
         }else if(currencyRequested.toString().equalsIgnoreCase("dolar") && jugador.getMoneda().getMonedaName().equals(MonedaName.LEMPIRA)){
+            cambio = 1/apuesta.getCambio().getCambio();
+        }
+        return cambio;
+	}
+	
+	public static double getDollarChangeRateForHistorico(HistoricoApuestas apuesta, MonedaName currencyRequested) {
+		double cambio = 1d;
+
+		if(currencyRequested.toString().equalsIgnoreCase("lempira") && MonedaName.DOLAR.toString().equalsIgnoreCase(apuesta.getMoneda()) ){
+            cambio = apuesta.getCambio().getCambio();
+        }else if(currencyRequested.toString().equalsIgnoreCase("dolar") && MonedaName.LEMPIRA.toString().equalsIgnoreCase(apuesta.getMoneda())){
             cambio = 1/apuesta.getCambio().getCambio();
         }
         return cambio;

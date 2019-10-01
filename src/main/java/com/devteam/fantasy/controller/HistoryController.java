@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.devteam.fantasy.message.response.NumeroGanadorSorteoResponse;
 import com.devteam.fantasy.message.response.SorteosPasadosApuestas;
 import com.devteam.fantasy.message.response.SorteosPasadosJugador;
 import com.devteam.fantasy.message.response.SorteosPasadosWeek;
@@ -32,6 +33,17 @@ public class HistoryController {
 	
 	@Autowired
 	UserService userService;
+	
+	@GetMapping("/numeros/ganadores/{currency}")
+	public ResponseEntity<List<NumeroGanadorSorteoResponse>> numerosGanadores(@PathVariable String currency){
+		List<NumeroGanadorSorteoResponse> result = null;
+		try {
+			result = historyService.getNumerosGanadores(currency);
+		} catch (Exception e) {
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);			
+		}
+		return new ResponseEntity<List<NumeroGanadorSorteoResponse>>(result,HttpStatus.OK);
+	}
 	
 	@GetMapping("/weeks")
 	public List<WeekResponse> getWeeksList() {
