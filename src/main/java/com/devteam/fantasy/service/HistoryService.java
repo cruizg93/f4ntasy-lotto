@@ -3,6 +3,7 @@ package com.devteam.fantasy.service;
 import java.util.List;
 import java.util.Set;
 
+import com.devteam.fantasy.message.response.HistoricoApuestaDetallesResponse;
 import com.devteam.fantasy.message.response.NumeroGanadorSorteoResponse;
 import com.devteam.fantasy.message.response.SorteosPasadosApuestas;
 import com.devteam.fantasy.message.response.SorteosPasadosJugador;
@@ -32,5 +33,7 @@ public interface HistoryService {
 	SorteosPasadosApuestas getApuestasPasadasBySorteoAndJugador(Long sorteoId, Jugador jugador) throws Exception;
 
 	List<NumeroGanadorSorteoResponse> getNumerosGanadores(String currency) throws Exception;
+	List<HistoricoApuestaDetallesResponse> getHistoricoApuestaDetallesX(Long id) throws Exception;
+	List<HistoricoApuestaDetallesResponse> getHistoricoApuestaDetallesX(Long id, User user) throws Exception;
 	
 }

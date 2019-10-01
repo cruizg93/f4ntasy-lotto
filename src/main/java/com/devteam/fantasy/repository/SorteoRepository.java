@@ -33,4 +33,7 @@ public interface SorteoRepository extends CrudRepository<Sorteo, Long> {
 	Iterable<Sorteo> findAllByOrderByIdAsc();
 
 	List<Sorteo> findAllBySorteoTimeBetween(Timestamp start, Timestamp end);
+
+	List<Sorteo> findAllBySorteoTimeBetweenOrderBySorteoTime(Timestamp monday, Timestamp sunday);
+
 }

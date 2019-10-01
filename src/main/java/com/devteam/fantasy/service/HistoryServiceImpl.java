@@ -4,12 +4,10 @@ import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import com.devteam.fantasy.math.MathUtil;
 import com.devteam.fantasy.math.SorteoTotales;
+import com.devteam.fantasy.message.response.HistoricoApuestaDetallesResponse;
 import com.devteam.fantasy.message.response.NumeroGanadorSorteoResponse;
 import com.devteam.fantasy.message.response.PairDayBalance;
 import com.devteam.fantasy.message.response.PairJP;
@@ -26,7 +25,7 @@ import com.devteam.fantasy.message.response.SorteosPasadosJugador;
 import com.devteam.fantasy.message.response.SorteosPasadosWeek;
 import com.devteam.fantasy.message.response.SummaryResponse;
 import com.devteam.fantasy.message.response.WeekResponse;
-import com.devteam.fantasy.model.Apuesta;
+import com.devteam.fantasy.model.Asistente;
 import com.devteam.fantasy.model.Bono;
 import com.devteam.fantasy.model.HistoricoApuestas;
 import com.devteam.fantasy.model.HistoricoBalance;
@@ -36,6 +35,7 @@ import com.devteam.fantasy.model.NumeroGanador;
 import com.devteam.fantasy.model.Sorteo;
 import com.devteam.fantasy.model.User;
 import com.devteam.fantasy.model.Week;
+import com.devteam.fantasy.repository.AsistenteRepository;
 import com.devteam.fantasy.repository.BonoRepository;
 import com.devteam.fantasy.repository.HistoricoApuestaRepository;
 import com.devteam.fantasy.repository.HistoricoBalanceRepository;
@@ -43,7 +43,6 @@ import com.devteam.fantasy.repository.HistoryEventRepository;
 import com.devteam.fantasy.repository.JugadorRepository;
 import com.devteam.fantasy.repository.NumeroGanadorRepository;
 import com.devteam.fantasy.repository.SorteoRepository;
-import com.devteam.fantasy.repository.UserRepository;
 import com.devteam.fantasy.repository.WeekRepository;
 import com.devteam.fantasy.util.BalanceType;
 import com.devteam.fantasy.util.HistoryEventType;
@@ -85,6 +84,9 @@ public class HistoryServiceImpl implements HistoryService {
 	
 	@Autowired 
 	NumeroGanadorRepository numeroGanadorRepository;
+
+	@Autowired
+	AsistenteRepository asistenteRepository;
 	
 	private static final Logger logger = LoggerFactory.getLogger(HistoryServiceImpl.class);
 	
@@ -165,7 +167,7 @@ public class HistoryServiceImpl implements HistoryService {
 		
 			Week week 									= weekRepository.findById(weekId).orElseThrow(() -> new NotFoundException("Not Week Found"));
 			SorteosPasadosJugador sorteosPasadosJugador = new SorteosPasadosJugador();
-			List<Sorteo> sorteos 						= sorteoRepository.findAllBySorteoTimeBetween(week.getMonday(),week.getSunday());
+			List<Sorteo> sorteos 						= sorteoRepository.findAllBySorteoTimeBetweenOrderBySorteoTime(week.getMonday(),week.getSunday());
 			List<PairDayBalance> pairDaysBalance 		= new ArrayList<>();
 			
 			BigDecimal comisionWeek 	= BigDecimal.ZERO;
@@ -409,9 +411,10 @@ public class HistoryServiceImpl implements HistoryService {
 				numerosGanadoresResponse.add(numeroResponse);
 			}
 		} catch (Exception e) {
-			logger.debug("List<NumeroGanadorSorteoResponse> getNumerosGanadores(): CATCH");
+			logger.error("List<NumeroGanadorSorteoResponse> getNumerosGanadores(): CATCH");
 			logger.error(e.getMessage());
 			e.printStackTrace();
+			throw e;
 		}finally {
 			logger.debug("List<NumeroGanadorSorteoResponse> getNumerosGanadores(): END");
 		}
@@ -419,7 +422,67 @@ public class HistoryServiceImpl implements HistoryService {
 		return numerosGanadoresResponse;
 	}
 	
-
+	@Override
+	public List<HistoricoApuestaDetallesResponse> getHistoricoApuestaDetallesX(Long id) {
+		User user = userService.getLoggedInUser();
+		return getHistoricoApuestaDetallesX(id, user);
+	}
+	
+	@Override
+	public List<HistoricoApuestaDetallesResponse> getHistoricoApuestaDetallesX(Long id, User user) {
+		List<HistoricoApuestaDetallesResponse> apuestasDetails = new ArrayList<>();
+        try {
+        	logger.debug("List<HistoricoApuestaDetallesResponse> getHistoricoApuestaDetallesX(Long {}, User {}): START",id, user.getId());
+        	Sorteo sorteo=sorteoRepository.getSorteoById(id);
+            List<HistoricoApuestas> apuestas = historicoApuestaRepository.findAllBySorteoAndUserAndAsistenteOrderByNumeroAsc(sorteo, user,null);
+            List<PairNV> pairNVList = new ArrayList<>();
+            Jugador jugador= Util.getJugadorFromUser(user);
+            int totalJugador = 0;
+            
+            for (HistoricoApuestas apuesta : apuestas) {
+                pairNVList.add(new PairNV(apuesta.getNumero(), apuesta.getCantidad()));
+                totalJugador += apuesta.getCantidad();
+            }
+            
+            HistoricoApuestaDetallesResponse detallesJugador = new HistoricoApuestaDetallesResponse();
+            detallesJugador.setApuestas(pairNVList);
+            detallesJugador.setUserId(jugador.getId());
+            detallesJugador.setTitle("Apuestas de - " + user.getUsername());
+            detallesJugador.setTotal(totalJugador);
+            apuestasDetails.add(detallesJugador);
+            
+            List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
+            asistentes.forEach(asistente -> {
+                List<HistoricoApuestas> apuestaList = historicoApuestaRepository.findAllBySorteoAndUserAndAsistenteOrderByNumeroAsc(sorteo, user, asistente);
+                if (apuestaList.size() > 0) {
+                	HistoricoApuestaDetallesResponse detallesAsistente = new HistoricoApuestaDetallesResponse();
+                    List<PairNV> pairNVListAsistente = new ArrayList<>();
+                    int totalAsistente = 0;
+                    for (HistoricoApuestas apuesta : apuestaList) {
+                    	pairNVListAsistente.add(new PairNV(apuesta.getNumero(), apuesta.getCantidad()));
+                    	totalAsistente += apuesta.getCantidad();
+                    }
+                    
+                    Collections.sort(pairNVListAsistente);
+                    detallesAsistente.setApuestas(pairNVListAsistente);
+                    detallesAsistente.setTitle("Apuestas de " + asistente.getUsername());
+                    detallesAsistente.setUserId(asistente.getId());
+                    detallesAsistente.setTotal(totalAsistente);
+                    apuestasDetails.add(detallesAsistente);
+                }
+            });
+		} catch (Exception e) {
+			logger.error("List<HistoricoApuestaDetallesResponse> getHistoricoApuestaDetallesX(Long {}, User {}): CATCH",id, user.getId());
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			throw e;
+		}finally {
+			logger.debug("List<HistoricoApuestaDetallesResponse> getHistoricoApuestaDetallesX(Long id, User user): END");
+		}
+        
+        return apuestasDetails;
+	}
+	
 }
 
 

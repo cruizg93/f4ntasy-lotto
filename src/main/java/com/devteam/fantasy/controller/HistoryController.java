@@ -1,27 +1,44 @@
 package com.devteam.fantasy.controller;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+
+import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.devteam.fantasy.message.response.ApuestaActivaDetallesResponse;
+import com.devteam.fantasy.message.response.HistoricoApuestaDetallesResponse;
 import com.devteam.fantasy.message.response.NumeroGanadorSorteoResponse;
 import com.devteam.fantasy.message.response.SorteosPasadosApuestas;
 import com.devteam.fantasy.message.response.SorteosPasadosJugador;
 import com.devteam.fantasy.message.response.SorteosPasadosWeek;
 import com.devteam.fantasy.message.response.WeekResponse;
+import com.devteam.fantasy.model.Apuesta;
+import com.devteam.fantasy.model.Asistente;
 import com.devteam.fantasy.model.Jugador;
+import com.devteam.fantasy.model.Sorteo;
+import com.devteam.fantasy.model.SorteoDiaria;
 import com.devteam.fantasy.model.User;
 import com.devteam.fantasy.model.Week;
 import com.devteam.fantasy.service.HistoryService;
 import com.devteam.fantasy.service.UserService;
+import com.devteam.fantasy.util.PairNV;
+import com.devteam.fantasy.util.SorteoTypeName;
 import com.devteam.fantasy.util.Util;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
@@ -91,4 +108,16 @@ public class HistoryController {
 		}
 		return new ResponseEntity<SorteosPasadosApuestas>(result,HttpStatus.OK);
 	}
+	
+	@GetMapping("/sorteos/{id}/apuestas/detalles")
+    @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
+    public ResponseEntity<List<HistoricoApuestaDetallesResponse>> getHistoricoApuestaDetallesX(@PathVariable Long id) {
+		List<HistoricoApuestaDetallesResponse> result = null;
+		try {
+        	result = historyService.getHistoricoApuestaDetallesX(id);
+        }catch (Exception e) {
+        	return new ResponseEntity<>(HttpStatus.OK);
+		}
+		return new ResponseEntity<List<HistoricoApuestaDetallesResponse>>(result,HttpStatus.OK);
+    }
 }

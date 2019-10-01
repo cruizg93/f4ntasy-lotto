@@ -10,5 +10,8 @@ import java.util.List;
 public interface HistoricoApuestaRepository extends JpaRepository<HistoricoApuestas, Long> {
 	List<HistoricoApuestas> findAllBySorteo(List<Sorteo> sorteo);
 	List<HistoricoApuestas> findAllBySorteoAndUser(Sorteo sorteo, User user);
-    List<HistoricoApuestas> findAllBySorteoAndNumero(Sorteo sorteo, Integer numero);
+	List<HistoricoApuestas> findAllBySorteoAndUserOrderByNumeroAsc(Sorteo sorteo, User user);
+	
+	List<HistoricoApuestas> findAllBySorteoAndNumero(Sorteo sorteo, Integer numero);
+	List<HistoricoApuestas> findAllBySorteoAndUserAndAsistenteOrderByNumeroAsc(Sorteo sorteo, User user, Object object);
 }
