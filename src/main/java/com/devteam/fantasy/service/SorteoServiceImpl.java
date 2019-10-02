@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.devteam.fantasy.exception.CanNotInsertApuestaException;
 import com.devteam.fantasy.exception.CanNotInsertHistoricoBalanceException;
+import com.devteam.fantasy.exception.CanNotInsertWinningNumberException;
 import com.devteam.fantasy.exception.CanNotRemoveApuestaException;
 import com.devteam.fantasy.exception.InvalidSorteoStateException;
 import com.devteam.fantasy.exception.SorteoEstadoNotValidException;
@@ -140,7 +141,6 @@ public class SorteoServiceImpl implements SorteoService {
 	 * position of [Sorteo] [Chica]
 	 * @throws Exception 
 	 */
-
 	public List<SorteoDiaria> getActiveSorteosList() throws Exception {
 		List<SorteoDiaria> result = null;
 		try {
@@ -245,26 +245,44 @@ public class SorteoServiceImpl implements SorteoService {
 			if(sorteos.size()!=4) {
 				throw new Exception("Sorteos list should contian only 4 sorteos");
 			}
-			LocalDateTime primarySorteoTime = sorteos.get(0).getSorteoTime().toLocalDateTime();
 			
-			int newChicaIndex = 3;
+			int newChicaIndex = 1;
 			int currentChicaIndex = IntStream.range(0, sorteos.size()).filter(
 					i -> SorteoTypeName.CHICA.equals(sorteos.get(i).getSorteo().getSorteoType().getSorteoTypeName()))
 					.findFirst().getAsInt();
 			
-			if(primarySorteoTime.getDayOfWeek()!= sorteos.get(1).getSorteoTime().toLocalDateTime().getDayOfWeek()) {
-				newChicaIndex = 1;
-			} else if(primarySorteoTime.getDayOfWeek()!= sorteos.get(2).getSorteoTime().toLocalDateTime().getDayOfWeek()) {
-				newChicaIndex = 2;
+			SorteoDiaria sorteoChica = sorteos.get(currentChicaIndex);
+			LocalDateTime sorteoTimeChica =  sorteoChica.getSorteoTime().toLocalDateTime();
+			sorteos.remove(currentChicaIndex);
+			
+			boolean fullOfSundaySorteos = true;
+			
+			for(SorteoDiaria sorteo: sorteos) {
+				if(sorteo.getSorteoTime().toLocalDateTime().getDayOfWeek().compareTo(DayOfWeek.SUNDAY) != 0) {
+					fullOfSundaySorteos = false;
+					break;
+				}
 			}
 			
-			SorteoDiaria sorteoChica = sorteos.get(currentChicaIndex);
-			sorteos.remove(currentChicaIndex);
+			if( fullOfSundaySorteos ) {
+				newChicaIndex = 3;
+			}else {
+				
+				LocalDateTime sorteoTimePos0 = sorteos.get(0).getSorteoTime().toLocalDateTime();
+				LocalDateTime sorteoTimePos1 = sorteos.get(1).getSorteoTime().toLocalDateTime();
+				LocalDateTime sorteoTimePos2 = sorteos.get(2).getSorteoTime().toLocalDateTime();
+				
+				if (sorteoTimePos0.getDayOfWeek().compareTo(sorteoTimePos1.getDayOfWeek()) == 0
+						&& sorteoTimePos0.getDayOfMonth() == sorteoTimePos1.getDayOfMonth()) {
+					newChicaIndex++;
+				}
+				if (sorteoTimePos0.getDayOfWeek().compareTo(sorteoTimePos2.getDayOfWeek()) == 0
+						&& sorteoTimePos0.getDayOfMonth() == sorteoTimePos2.getDayOfMonth()) {
+					newChicaIndex++;
+				}
+			}
+			
 			sorteos.add(newChicaIndex,sorteoChica);
-
-//			sorteos.remove(indexChica);
-//			sorteos.sort((sorteo1, sorteo2) -> sorteo1.getId().compareTo(sorteo2.getId()));
-//			sorteos.add(indexChica, sorteoChica);
 
 		} catch (Exception e) {
 			logger.error("sortDiariaList(): CATCH");
@@ -464,7 +482,10 @@ public class SorteoServiceImpl implements SorteoService {
 
 	}
 
-	/*
+	/*PreCondition:
+	 * If sorteotime is Sunday 9pm, all the sorteos that belong to the week must be closed 
+	 * and have a winning number
+	 * 
 	 * Steps
 	 * 1) Set NumeroGanador.
 	 * 2) Create History Event for Winning Number.
@@ -479,13 +500,19 @@ public class SorteoServiceImpl implements SorteoService {
 	 */
 	@Override
 	@Transactional(rollbackFor = Exception.class)
-	public void setNumeroGanador(Long id, int numero) throws Exception {
+	public void setNumeroGanador(Long id, int numero) throws CanNotInsertWinningNumberException, CanNotInsertHistoricoBalanceException  {
 		try {
 			logger.debug("setNumeroGanador(Long {}, int {}): START", id, numero);
+			logger.info("setNumeroGanador(Long {}, int {}): START", id, numero);
 			User loggedUser = userService.getLoggedInUser();
 			Cambio currentCambio = cambioRepository.findFirstByOrderByIdDesc();
 			SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
 			Sorteo sorteo = sorteoDiaria.getSorteo();
+			
+			logger.debug("validateWinningNumberPreCondition()");
+			logger.info("validateWinningNumberPreCondition()");
+			validateWinningNumberPreCondition(sorteo);
+			
 			NumeroGanador numeroGanador = new NumeroGanador();
 			numeroGanador.setNumeroGanador(numero);
 			numeroGanador.setSorteo(sorteo);
@@ -546,14 +573,37 @@ public class SorteoServiceImpl implements SorteoService {
 				logger.debug("Cerrar Semana");
             	cerrarSemana(sorteoDiaria);
 			}
-		} catch (Exception e) {
+		} catch (CanNotInsertWinningNumberException cniwne) {
 			logger.error("setNumeroGanador(Long {}, int {}): CATCH", id, numero);
-			logger.error(e.getMessage());
-			e.printStackTrace();
-			throw e;
+			logger.error(cniwne.getMessage());
+			throw cniwne;
+		} catch (CanNotInsertHistoricoBalanceException cnihbe) {
+			logger.error("setNumeroGanador(Long {}, int {}): CATCH", id, numero);
+			logger.error(cnihbe.getMessage());
+			cnihbe.printStackTrace();
+			throw cnihbe;
 		} finally {
 			logger.debug("setNumeroGanador(Long id, int numero): END");
+			logger.info("setNumeroGanador(Long id, int numero): END");
 		}
+	}
+
+	private void validateWinningNumberPreCondition(Sorteo sorteo) throws CanNotInsertWinningNumberException {
+		LocalDateTime sorteoTime = sorteo.getSorteoTime().toLocalDateTime();
+		
+		if(sorteoTime.getDayOfWeek() == DayOfWeek.SUNDAY && sorteoTime.getHour() == 21) {
+			List<SorteoDiaria> sorteosDiaria = sorteoDiariaRepository.findAllByOrderById();
+			
+			for(SorteoDiaria sorteoDiaria: sorteosDiaria) {
+				
+				if(sorteo.getSorteoTime().compareTo(sorteoDiaria.getSorteoTime())!= 0
+						&& (sorteoDiaria.getSorteoTime().toLocalDateTime().getDayOfWeek() == DayOfWeek.SUNDAY 
+							&& sorteoDiaria.getSorteoTime().toLocalDateTime().getDayOfMonth() == sorteoTime.getDayOfMonth())) {
+					throw new CanNotInsertWinningNumberException("Este es el ultimo sorteo de la semana, verificar que no hay ningun otro sorteo faltante de numero ganador para esta semana.");
+				}
+			}
+		}
+		
 	}
 
 	@Override

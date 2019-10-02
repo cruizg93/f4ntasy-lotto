@@ -7,6 +7,7 @@ import javax.transaction.Transactional;
 
 import com.devteam.fantasy.exception.CanNotInsertApuestaException;
 import com.devteam.fantasy.exception.CanNotInsertHistoricoBalanceException;
+import com.devteam.fantasy.exception.CanNotInsertWinningNumberException;
 import com.devteam.fantasy.exception.CanNotRemoveApuestaException;
 import com.devteam.fantasy.exception.InvalidSorteoStateException;
 import com.devteam.fantasy.exception.SorteoEstadoNotValidException;
@@ -30,7 +31,7 @@ public interface SorteoService {
 	public JugadorSorteosResponse getJugadorList() throws Exception;
 	public List<SorteoResponse> getSorteosResponses(List<SorteoDiaria> sorteos, User user);
 	
-	public void setNumeroGanador(Long id, int numeroGanador) throws Exception;
+	public void setNumeroGanador(Long id, int numeroGanador) throws CanNotInsertWinningNumberException, CanNotInsertHistoricoBalanceException;
 	public List<ApuestasActivasResponse> getSorteosListWithMoneda(String currency) throws Exception;
 	public ApuestaActivaResumenResponse getActiveSorteoDetail(Long id, String currency); 
 	public Sorteo bloquearApuesta(Long id) throws InvalidSorteoStateException;

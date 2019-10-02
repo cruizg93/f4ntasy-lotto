@@ -194,6 +194,10 @@ public class HistoryServiceImpl implements HistoryService {
 					summaryDay.setVentas(ventasDay.doubleValue());
 					summaryDay.setSubTotal(subTotalDay.doubleValue());
 					
+					BigDecimal incomeDay = premiosWeek;
+					BigDecimal expensesDay = subTotalWeek;
+					summaryDay.setPerdidasGanas(incomeDay.subtract(expensesDay).doubleValue());
+					
 					PairDayBalance sorteosPasado = new PairDayBalance();
 					sorteosPasado.setSorteoTime(Util.getDayFromTimestamp(sorteo.getSorteoTime()));
 					sorteosPasado.setBalance(historicoBalance.compareTo(BigDecimal.ZERO)==0?historicoBalance.doubleValue():prevBalance.doubleValue());
@@ -224,20 +228,24 @@ public class HistoryServiceImpl implements HistoryService {
 			
 			SummaryResponse summary = new SummaryResponse();
 			List<Bono> bonoList = bonoRepository.findAllByWeek(week);
-			BigDecimal bono = BigDecimal.ZERO;
+			BigDecimal bonos = BigDecimal.ZERO;
 			for(Bono b: bonoList) {
-				bono = bono.add(BigDecimal.valueOf(b.getBono()));
+				bonos = bonos.add(BigDecimal.valueOf(b.getBono()));
 				
 				double currencyExchange = MathUtil.getDollarChangeRateOriginalMoneda(b.getCambio(),b.getMoneda().getMonedaName().toString(), moneda);
-				bono = bono.multiply(BigDecimal.valueOf(currencyExchange));
+				bonos = bonos.multiply(BigDecimal.valueOf(currencyExchange));
 			}
 			
-			summary.setBonos(bono.doubleValue());
+			summary.setBonos(bonos.doubleValue());
 			summary.setComisiones(comisionWeek.doubleValue());
 			summary.setPremios(premiosWeek.doubleValue());
 			summary.setVentas(ventasWeek.doubleValue());
 			summary.setSubTotal(subTotalWeek.doubleValue());
 			summary.setCurrency(moneda);
+			
+			BigDecimal income = premiosWeek.add(bonos);
+			BigDecimal expenses = subTotalWeek;
+			summary.setPerdidasGanas(income.subtract(expenses).doubleValue());
 
 			sorteosPasadosJugador.setSorteosPasados(pairDaysBalance);
 			sorteosPasadosJugador.setSummary(summary);
@@ -375,6 +383,10 @@ public class HistoryServiceImpl implements HistoryService {
 					summaryDay.setVentas(ventasDay.doubleValue());
 					summaryDay.setSubTotal(subTotalDay.doubleValue());
 					
+					BigDecimal income = premiosDay;
+					BigDecimal expenses = subTotalDay;
+					summaryDay.setPerdidasGanas(income.subtract(expenses).doubleValue());
+					
 					PairDayBalance sorteosPasado = new PairDayBalance();
 					sorteosPasado.setSorteoTime(Util.getDayFromTimestamp(sorteo.getSorteoTime()));
 					sorteosPasado.setBalance(historicoBalance!=null?historicoBalance.getBalanceSemana():prevBalance);
@@ -404,14 +416,18 @@ public class HistoryServiceImpl implements HistoryService {
 			}
 			
 			SummaryResponse summary = new SummaryResponse();
-			Optional<Bono> bono = bonoRepository.findByWeekAndUser(week, jugador);
-			summary.setBonos(bono.isPresent()?bono.get().getBono():0d);
+			Optional<Bono> bonos = bonoRepository.findByWeekAndUser(week, jugador);
+			summary.setBonos(bonos.isPresent()?bonos.get().getBono():0d);
 			
 			summary.setComisiones(comisionWeek.doubleValue());
 			summary.setPremios(premiosWeek.doubleValue());
 			summary.setVentas(ventasWeek.doubleValue());
 			summary.setSubTotal(subTotalWeek.doubleValue());
 			summary.setCurrency(jugador.getMoneda().getMonedaName().toString());
+			
+			BigDecimal income = premiosWeek.add(BigDecimal.valueOf(bonos.isPresent()?bonos.get().getBono():0d));
+			BigDecimal expenses = subTotalWeek;
+			summary.setPerdidasGanas(income.subtract(expenses).doubleValue());
 
 			sorteosPasadosJugador.setSorteosPasados(pairDaysBalance);
 			sorteosPasadosJugador.setSummary(summary);

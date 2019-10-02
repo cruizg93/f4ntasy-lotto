@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.devteam.fantasy.exception.CanNotInsertApuestaException;
+import com.devteam.fantasy.exception.CanNotInsertHistoricoBalanceException;
+import com.devteam.fantasy.exception.CanNotInsertWinningNumberException;
 import com.devteam.fantasy.exception.CanNotRemoveApuestaException;
 import com.devteam.fantasy.exception.InvalidSorteoStateException;
 import com.devteam.fantasy.exception.SorteoEstadoNotValidException;
@@ -197,10 +199,12 @@ public class SorteoController {
         Integer numero = mapper.convertValue(jsonNodes.get("numero"), Integer.class);
         try {
 			sorteoService.setNumeroGanador(id, numero);
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage()+"\n"+e.getStackTrace());
+		} catch (CanNotInsertWinningNumberException cniwne) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(cniwne.getMessage());
+		} catch (CanNotInsertHistoricoBalanceException cnihbe) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(cnihbe.getMessage());
 		}
-    	return ResponseEntity.ok("Numero Asignado correctamente");
+    	return ResponseEntity.ok("Numero Ganador Asignado correctamente");
     }
 }
 
