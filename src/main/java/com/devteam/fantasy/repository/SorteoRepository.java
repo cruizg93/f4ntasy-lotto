@@ -36,4 +36,7 @@ public interface SorteoRepository extends CrudRepository<Sorteo, Long> {
 
 	List<Sorteo> findAllBySorteoTimeBetweenOrderBySorteoTime(Timestamp monday, Timestamp sunday);
 
+	@Query("SELECt s From NumeroGanador ng JOIN ng.sorteo s WHERE s.sorteoTime BETWEEN :monday AND :sunday AND ng.sorteo = s ORDER BY s.sorteoTime")
+	List<Sorteo> findAllBySorteoTimeBetweenOrderBySorteoTimeWithNumeroGanadorNotNull(Timestamp monday, Timestamp sunday);
+	
 }

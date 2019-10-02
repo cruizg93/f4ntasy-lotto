@@ -1,6 +1,7 @@
 package com.devteam.fantasy.service;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -28,12 +29,12 @@ import com.devteam.fantasy.message.response.PairJP;
 import com.devteam.fantasy.message.response.SorteoNumeroGanador;
 import com.devteam.fantasy.message.response.SorteosPasadosApuestas;
 import com.devteam.fantasy.message.response.SorteosPasadosDays;
-import com.devteam.fantasy.message.response.SorteosPasados;
 import com.devteam.fantasy.message.response.SorteosPasadosJugadores;
 import com.devteam.fantasy.message.response.SummaryResponse;
 import com.devteam.fantasy.message.response.WeekResponse;
 import com.devteam.fantasy.model.Asistente;
 import com.devteam.fantasy.model.Bono;
+import com.devteam.fantasy.model.Estado;
 import com.devteam.fantasy.model.HistoricoApuestas;
 import com.devteam.fantasy.model.HistoricoBalance;
 import com.devteam.fantasy.model.HistoryEvent;
@@ -44,6 +45,7 @@ import com.devteam.fantasy.model.User;
 import com.devteam.fantasy.model.Week;
 import com.devteam.fantasy.repository.AsistenteRepository;
 import com.devteam.fantasy.repository.BonoRepository;
+import com.devteam.fantasy.repository.EstadoRepository;
 import com.devteam.fantasy.repository.HistoricoApuestaRepository;
 import com.devteam.fantasy.repository.HistoricoBalanceRepository;
 import com.devteam.fantasy.repository.HistoryEventRepository;
@@ -52,6 +54,7 @@ import com.devteam.fantasy.repository.NumeroGanadorRepository;
 import com.devteam.fantasy.repository.SorteoRepository;
 import com.devteam.fantasy.repository.WeekRepository;
 import com.devteam.fantasy.util.BalanceType;
+import com.devteam.fantasy.util.EstadoName;
 import com.devteam.fantasy.util.HistoryEventType;
 import com.devteam.fantasy.util.MonedaName;
 import com.devteam.fantasy.util.PairNV;
@@ -94,6 +97,10 @@ public class HistoryServiceImpl implements HistoryService {
 
 	@Autowired
 	AsistenteRepository asistenteRepository;
+
+	@Autowired
+	EstadoRepository estadoRepository;
+	
 	
 	private static final Logger logger = LoggerFactory.getLogger(HistoryServiceImpl.class);
 	
@@ -329,7 +336,7 @@ public class HistoryServiceImpl implements HistoryService {
 		
 			Week week 									= weekRepository.findById(weekId).orElseThrow(() -> new NotFoundException("Not Week Found"));
 			SorteosPasadosDays sorteosPasadosJugador 	= new SorteosPasadosDays();
-			List<Sorteo> sorteos 						= sorteoRepository.findAllBySorteoTimeBetweenOrderBySorteoTime(week.getMonday(),week.getSunday());
+			List<Sorteo> sorteos 						= sorteoRepository.findAllBySorteoTimeBetweenOrderBySorteoTimeWithNumeroGanadorNotNull(week.getMonday(),week.getSunday());
 			List<PairDayBalance> pairDaysBalance 		= new ArrayList<>();
 			
 			BigDecimal comisionWeek 	= BigDecimal.ZERO;
@@ -340,17 +347,21 @@ public class HistoryServiceImpl implements HistoryService {
 			BigDecimal premiosDay 		= BigDecimal.ZERO;
 			BigDecimal ventasDay 		= BigDecimal.ZERO;
 			BigDecimal subTotalDay		= BigDecimal.ZERO;
-			double prevBalance 		= 0d; 
+			double prevBalance 			= 0d; 
 
-			SorteoNumeroGanador sorteo11 = new SorteoNumeroGanador();
-			SorteoNumeroGanador sorteo12 = new SorteoNumeroGanador();
-			SorteoNumeroGanador sorteo15 = new SorteoNumeroGanador();
-			SorteoNumeroGanador sorteo21 = new SorteoNumeroGanador();
+			SorteoNumeroGanador sorteo11 = null;
+			SorteoNumeroGanador sorteo12 = null;
+			SorteoNumeroGanador sorteo15 = null;
+			SorteoNumeroGanador sorteo21 = null;
 			
-			for(Sorteo sorteo: sorteos) {
-				
-				HistoricoBalance historicoBalance = historicoBalanceRepository.findBySorteoTimeAndJugador(sorteo.getSorteoTime(), jugador);
-				prevBalance = historicoBalance!=null?historicoBalance.getBalanceSemana():prevBalance;
+			
+			DayOfWeek currentDay = sorteos.get(0).getSorteoTime().toLocalDateTime().getDayOfWeek();
+			
+			for(int i=0; i<sorteos.size(); i++) {
+				Sorteo sorteo						= sorteos.get(i);
+				HistoricoBalance historicoBalance	= historicoBalanceRepository.findBySorteoTimeAndJugador(sorteo.getSorteoTime(), jugador);
+				LocalDateTime sorteoTime			= sorteo.getSorteoTime().toLocalDateTime();
+				prevBalance 						= historicoBalance!=null?historicoBalance.getBalanceSemana():prevBalance;
 				
 				List<HistoricoApuestas> apuestas = historicoApuestaRepository.findAllBySorteoAndUser(sorteo, jugador);
 				SummaryResponse summarySorteo = sorteoTotales.processHitoricoApuestas(apuestas, jugador.getMoneda().getMonedaName().toString());
@@ -363,22 +374,30 @@ public class HistoryServiceImpl implements HistoryService {
 				premiosDay	= premiosDay.add(new BigDecimal(summarySorteo.getPremios()));
 				ventasDay	= ventasDay.add(new BigDecimal(summarySorteo.getVentas()));
 				subTotalDay	= subTotalDay.add(new BigDecimal(summarySorteo.getSubTotal()));
-				
-				LocalDateTime sorteoTime = sorteo.getSorteoTime().toLocalDateTime();
-				NumeroGanador numeroGanador = numeroGanadorRepository.getBySorteo(sorteo);
-				
-				if(sorteoTime.getHour() == 11) {
-					sorteo11 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),"11 am");
-				}else if(sorteoTime.getHour() == 12) {
-					sorteo12 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),"12 pm");
-				} else if(sorteoTime.getHour() == 15) {
-					sorteo15 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),"3 pm");
-				}else if(sorteoTime.getHour() == 21) {
-					sorteo21 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),"9 pm");
+					
+				NumeroGanador numeroGanador 		= numeroGanadorRepository.getBySorteo(sorteo);
+				if(numeroGanador != null) {	
+					if(sorteoTime.getHour() == 11) {
+						sorteo11 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),"11 am");
+					}else if(sorteoTime.getHour() == 12) {
+						sorteo12 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),"12 pm");
+					} else if(sorteoTime.getHour() == 15) {
+						sorteo15 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),"3 pm");
+					}else if(sorteoTime.getHour() == 21) {
+						sorteo21 = buildSorteoNumeroGanador(sorteo,numeroGanador.getNumeroGanador(),"9 pm");
+					}
+				}
+					
+				if( (i+1 != sorteos.size() && currentDay.compareTo(sorteos.get(i+1).getSorteoTime().toLocalDateTime().getDayOfWeek())<0)
+						|| i+1 == sorteos.size()) {
+					
+					currentDay = i+1 == sorteos.size()
+							? null
+							:sorteos.get(i+1).getSorteoTime().toLocalDateTime().getDayOfWeek();
 					
 					SummaryResponse summaryDay = new SummaryResponse();
 					summaryDay.setComisiones(comisionDay.doubleValue());
-					summaryDay.setCurrency(summarySorteo.getCurrency());
+					summaryDay.setCurrency(jugador.getMoneda().getMonedaName().toString());
 					summaryDay.setPremios(premiosDay.doubleValue());
 					summaryDay.setVentas(ventasDay.doubleValue());
 					summaryDay.setSubTotal(subTotalDay.doubleValue());
@@ -394,25 +413,30 @@ public class HistoryServiceImpl implements HistoryService {
 					pairDaysBalance.add(sorteosPasado);
 					
 					List<SorteoNumeroGanador> numerosGanadores = new ArrayList<>();
-					numerosGanadores.add(sorteo11);
-					if(sorteoTime.getDayOfWeek() == DayOfWeek.SUNDAY) {
+					if(sorteo11 != null)
+						numerosGanadores.add(sorteo11);
+					
+					if(sorteoTime.getDayOfWeek() == DayOfWeek.SUNDAY && sorteo12 != null) 
 						numerosGanadores.add(sorteo12);
-					}
-					numerosGanadores.add(sorteo15);
-					numerosGanadores.add(sorteo21);
+					
+					if(sorteo15 != null)
+						numerosGanadores.add(sorteo15);
+					
+					if(sorteo21 != null)
+						numerosGanadores.add(sorteo21);
+					
 					sorteosPasado.setSorteos(numerosGanadores);
 					
 					prevBalance = 0d;
-					sorteo11 	= new SorteoNumeroGanador();
-					sorteo12 	= new SorteoNumeroGanador();
-					sorteo15 	= new SorteoNumeroGanador();
-					sorteo21 	= new SorteoNumeroGanador();
+					sorteo11 	= null;
+					sorteo12 	= null;
+					sorteo15 	= null;
+					sorteo21 	= null;
 					comisionDay = BigDecimal.ZERO;
 					premiosDay 	= BigDecimal.ZERO;
 					ventasDay 	= BigDecimal.ZERO;
 					subTotalDay	= BigDecimal.ZERO;
 				}
-				
 			}
 			
 			SummaryResponse summary = new SummaryResponse();
@@ -449,12 +473,32 @@ public class HistoryServiceImpl implements HistoryService {
 	public List<WeekResponse> getAllWeeks() {
 		List<Week> weeks = weekRepository.findAllByOrderByIdDesc();
 		List<WeekResponse> response = new ArrayList<WeekResponse>();
+		
+		Timestamp currentDate = Timestamp.valueOf(LocalDateTime.now()); 
+		
 		weeks.forEach(week -> {
+			
+			String monday = "";
+			String sunday = "";
+			if( week.getMonday().compareTo(currentDate) >= 0 ) {
+				monday = "Hoy";
+			}else {
+				monday = Util.getShortDayFromTimestamp(week.getMonday());
+			}
+			
+			if(week.getMonday().compareTo(currentDate) == 0) {
+				sunday = "";
+			}else if(week.getSunday().compareTo(currentDate) > 0) {
+				sunday = "Presente";
+			}else {
+				sunday = Util.getShortDayFromTimestamp(week.getSunday());
+			}
+			
 			WeekResponse w = new WeekResponse();
 			w.setId(week.getId());
 			w.setYear(week.getYear());
-			w.setMonday(Util.getShortDayFromTimestamp(week.getMonday()));
-			w.setSunday(Util.getShortDayFromTimestamp(week.getSunday()));
+			w.setMonday(monday);
+			w.setSunday(sunday);
 			response.add(w);
 		});
 		return response;

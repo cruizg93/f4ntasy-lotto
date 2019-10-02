@@ -518,6 +518,9 @@ public class SorteoServiceImpl implements SorteoService {
 			numeroGanador.setSorteo(sorteo);
 			numeroGanadorRepository.save(numeroGanador);
 			historyService.createEvent(HistoryEventType.WINNING_NUMBER, id, "", String.valueOf(numero));
+			
+			Week week = getWeekFromSorteoTime(sorteo.getSorteoTime());
+			
 			logger.debug("numeroGanadorRepository.save({})", numeroGanador);
 			
 			Set<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
@@ -561,7 +564,7 @@ public class SorteoServiceImpl implements SorteoService {
 				BigDecimal newBalance = BigDecimal.valueOf(jugador.getBalance()).add(result);
 				jugador.setBalance(newBalance.doubleValue());
 				jugadorRepository.save(jugador);
-				createHistoricoBalance(loggedUser,currentCambio,jugador, BalanceType.DAILY ,sorteoDiaria.getSorteoTime());
+				createHistoricoBalance(loggedUser,currentCambio,jugador, BalanceType.DAILY ,sorteoDiaria.getSorteoTime(), week);
 			}
 			
 			copyApuestasToHistoricoApuestas(sorteoDiaria);
@@ -571,7 +574,7 @@ public class SorteoServiceImpl implements SorteoService {
 					&& Util.getDayOfWeekFromTimestamp(sorteoDiaria.getSorteo().getSorteoTime()).equals(DayOfWeek.SUNDAY)
 					&& Util.getlocalDateTimeHourFromTimestamp(sorteoDiaria.getSorteo().getSorteoTime()) == 21) {
 				logger.debug("Cerrar Semana");
-            	cerrarSemana(sorteoDiaria);
+            	cerrarSemana(sorteoDiaria, week);
 			}
 		} catch (CanNotInsertWinningNumberException cniwne) {
 			logger.error("setNumeroGanador(Long {}, int {}): CATCH", id, numero);
@@ -608,45 +611,36 @@ public class SorteoServiceImpl implements SorteoService {
 
 	@Override
 	@Transactional(rollbackFor = CanNotInsertHistoricoBalanceException.class)
-	public void cerrarSemana(SorteoDiaria sorteoDiaria) throws CanNotInsertHistoricoBalanceException {
+	public void cerrarSemana(SorteoDiaria sorteoDiaria, Week week) throws CanNotInsertHistoricoBalanceException {
 		try {
 			User loggedUser = userService.getLoggedInUser();
 			Cambio currentCambio = cambioRepository.findFirstByOrderByIdDesc();
 			
-			LocalDateTime mondayFirstSorteo = sorteoDiaria.getSorteoTime().toLocalDateTime();
-			mondayFirstSorteo = mondayFirstSorteo.with(DayOfWeek.MONDAY);
-			mondayFirstSorteo = mondayFirstSorteo.with(LocalTime.of(11, 0, 0));
-
-			Week week = new Week();
-			week.setYear(mondayFirstSorteo.getYear());
-			week.setMonday(Timestamp.valueOf(mondayFirstSorteo));
-			week.setSunday(sorteoDiaria.getSorteoTime());
-			weekRepository.save(week);
-			
 			Set<Jugador> jugadoresWithBalance = jugadorRepository.findAllByBalanceNot(0d);
-	
+			Long weekId = null;
 			for(Jugador jugador:jugadoresWithBalance){
 				try {
-					createHistoricoBalance(loggedUser, currentCambio, jugador, BalanceType.WEEKLY ,sorteoDiaria.getSorteoTime(), week);
+					HistoricoBalance historicoBalance = createHistoricoBalance(loggedUser, currentCambio, jugador, BalanceType.WEEKLY ,sorteoDiaria.getSorteoTime(), week);
 					jugador.setBalance(0);
 					jugadorRepository.save(jugador);
+					
+					if(weekId == null) {
+						weekId = historicoBalance.getWeek().getId();
+					}
 				}catch(CanNotInsertHistoricoBalanceException hbe) {
 					throw new CanNotInsertHistoricoBalanceException(hbe, jugador, sorteoDiaria);
 				}
 			};
-			historyService.createEvent(HistoryEventType.WEEK_CLOSED, week.getId());
+			historyService.createEvent(HistoryEventType.WEEK_CLOSED, weekId);
 		}catch (CanNotInsertHistoricoBalanceException hbe) {
 			throw hbe;
 		}
 	}
-	//BalanceType DAILY
-	private void createHistoricoBalance(User loggedUser, Cambio currentCambio, Jugador jugador, BalanceType balanceType, Timestamp sorteoTime) throws CanNotInsertHistoricoBalanceException {
-		createHistoricoBalance(loggedUser, currentCambio, jugador, balanceType, sorteoTime, null);
-	}
-	//BalanceType WEEKLY
-	private void createHistoricoBalance(User loggedUser, Cambio currentCambio, Jugador jugador, BalanceType balanceType, Timestamp sorteoTime, Week week) throws CanNotInsertHistoricoBalanceException {
+
+	private HistoricoBalance createHistoricoBalance(User loggedUser, Cambio currentCambio, Jugador jugador, BalanceType balanceType, Timestamp sorteoTime, Week week) throws CanNotInsertHistoricoBalanceException {
+		HistoricoBalance historico = null;
 		try {
-			HistoricoBalance historico = new HistoricoBalance();
+			historico = new HistoricoBalance();
 			historico.setBalanceSemana(jugador.getBalance());
 			historico.setJugador(jugador);
 			historico.setCreatedBy(loggedUser);
@@ -659,6 +653,7 @@ public class SorteoServiceImpl implements SorteoService {
 		}catch (Exception e) {
 			throw new CanNotInsertHistoricoBalanceException(e);
 		}
+		return historico;
 	}
 
 	@Transactional(rollbackFor = Exception.class)
@@ -1119,4 +1114,23 @@ public class SorteoServiceImpl implements SorteoService {
 		}
 	}
 
+	private Week getWeekFromSorteoTime(Timestamp sorteoTime) {
+		LocalDateTime mondayFirstSorteo = sorteoTime.toLocalDateTime();
+		mondayFirstSorteo = mondayFirstSorteo.with(DayOfWeek.MONDAY);
+		mondayFirstSorteo = mondayFirstSorteo.with(LocalTime.of(11, 0, 0));
+
+		LocalDateTime sundayLastSorteo = sorteoTime.toLocalDateTime();
+		sundayLastSorteo = sundayLastSorteo.with(DayOfWeek.SUNDAY);
+		sundayLastSorteo = sundayLastSorteo.with(LocalTime.of(21, 0, 0));
+		
+		Week week = weekRepository.findByMondayAndSunday(Timestamp.valueOf(mondayFirstSorteo), Timestamp.valueOf(sundayLastSorteo));
+		if( week == null) {
+			week = new Week();
+			week.setYear(mondayFirstSorteo.getYear());
+			week.setMonday(Timestamp.valueOf(mondayFirstSorteo));
+			week.setSunday(Timestamp.valueOf(sundayLastSorteo));
+			week = weekRepository.save(week);
+		}
+		return week;
+	}
 }
