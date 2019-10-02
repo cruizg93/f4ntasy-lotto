@@ -58,7 +58,7 @@ public class SorteoController {
 	
 	@GetMapping("/activos/{moneda}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
-    public List<ApuestasActivasResponse> getApuestasActivas(@PathVariable String moneda) {
+    public List<ApuestasActivasResponse> getApuestasActivas(@PathVariable String moneda) throws Exception {
     	return sorteoService.getSorteosListWithMoneda(moneda);
     }
 	
@@ -70,7 +70,7 @@ public class SorteoController {
 	
 	@GetMapping("/activos/jugadores/{username}")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
-    public List<SorteoResponse> getSorteosActivosByUsername(@PathVariable String username) {
+    public List<SorteoResponse> getSorteosActivosByUsername(@PathVariable String username) throws Exception {
         User user = userService.getByUsername(username);
     	List<SorteoDiaria> sorteos = sorteoService.getActiveSorteosList(user);
     	List<SorteoResponse> sorteosResponses = sorteoService.getSorteosResponses(sorteos, user);    	
@@ -79,7 +79,7 @@ public class SorteoController {
 	
 	@GetMapping("/activosResumen/judadores/{username}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
-    public JugadorSorteosResponse findTodaySorteobyUsername(@PathVariable String username) {
+    public JugadorSorteosResponse findTodaySorteobyUsername(@PathVariable String username) throws Exception {
 		User user = userService.getByUsername(username);
 		JugadorSorteosResponse jugadorSorteosResponse = new JugadorSorteosResponse();
         jugadorSorteosResponse.setName(user.getName());

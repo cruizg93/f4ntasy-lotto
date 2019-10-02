@@ -138,9 +138,10 @@ public class SorteoServiceImpl implements SorteoService {
 	/**
 	 * Type [Diaria] [Sorteos] must be sort by time, but keeping the original
 	 * position of [Sorteo] [Chica]
+	 * @throws Exception 
 	 */
 
-	public List<SorteoDiaria> getActiveSorteosList() {
+	public List<SorteoDiaria> getActiveSorteosList() throws Exception {
 		List<SorteoDiaria> result = null;
 		try {
 			logger.debug("getActiveSorteosList(): START");
@@ -155,12 +156,11 @@ public class SorteoServiceImpl implements SorteoService {
 		return result;
 	}
 
-	public List<SorteoDiaria> getActiveSorteosList(User user) {
+	public List<SorteoDiaria> getActiveSorteosList(User user) throws Exception {
 		List<SorteoDiaria> sorteos = null;
 		try {
 			logger.debug("getActiveSorteosList(User {}): START", user);
-			Iterable<SorteoDiaria> sorteosDB = sorteoDiariaRepository.findAll();
-			sorteos = sortDiariaList(sorteosDB);
+			sorteos =getSortDiariaList(); 
 
 			for (SorteoDiaria sorteoDiaria : sorteos) {
 				Set<Apuesta> apuestas = null;
@@ -238,32 +238,42 @@ public class SorteoServiceImpl implements SorteoService {
 		return result;
 	}
 
-	private List<SorteoDiaria> sortDiariaList(Iterable<SorteoDiaria> list) {
-		List<SorteoDiaria> result = null;
+	private List<SorteoDiaria> getSortDiariaList() throws Exception {
+		List<SorteoDiaria> sorteos = sorteoDiariaRepository.findAllByOrderBySorteoTime();
 		try {
-			logger.debug("sortDiariaList(Iterable<SorteoDiaria> {}): START", list);
-			List<SorteoDiaria> sorteos = new LinkedList<SorteoDiaria>();
-			list.forEach(sorteos::add);
-
-//			int indexChica = IntStream.range(0, sorteos.size()).filter(
-//					i -> SorteoTypeName.CHICA.equals(sorteos.get(i).getSorteo().getSorteoType().getSorteoTypeName()))
-//					.findFirst().getAsInt();
-//
-//			SorteoDiaria sorteoChica = sorteos.get(indexChica);
+			logger.debug("sortDiariaList(): START", sorteos);
+			if(sorteos.size()!=4) {
+				throw new Exception("Sorteos list should contian only 4 sorteos");
+			}
+			LocalDateTime primarySorteoTime = sorteos.get(0).getSorteoTime().toLocalDateTime();
+			
+			int newChicaIndex = 3;
+			int currentChicaIndex = IntStream.range(0, sorteos.size()).filter(
+					i -> SorteoTypeName.CHICA.equals(sorteos.get(i).getSorteo().getSorteoType().getSorteoTypeName()))
+					.findFirst().getAsInt();
+			
+			if(primarySorteoTime.getDayOfWeek()!= sorteos.get(1).getSorteoTime().toLocalDateTime().getDayOfWeek()) {
+				newChicaIndex = 1;
+			} else if(primarySorteoTime.getDayOfWeek()!= sorteos.get(2).getSorteoTime().toLocalDateTime().getDayOfWeek()) {
+				newChicaIndex = 2;
+			}
+			
+			SorteoDiaria sorteoChica = sorteos.get(currentChicaIndex);
+			sorteos.remove(currentChicaIndex);
+			sorteos.add(newChicaIndex,sorteoChica);
 
 //			sorteos.remove(indexChica);
-			sorteos.sort((sorteo1, sorteo2) -> sorteo1.getSorteoTime().compareTo(sorteo2.getSorteoTime()));
+//			sorteos.sort((sorteo1, sorteo2) -> sorteo1.getId().compareTo(sorteo2.getId()));
 //			sorteos.add(indexChica, sorteoChica);
 
-			result = sorteos;
 		} catch (Exception e) {
-			logger.error("sortDiariaList(Iterable<SorteoDiaria> {}): CATCH", list);
+			logger.error("sortDiariaList(): CATCH");
 			logger.error(e.getMessage());
 			throw e;
 		} finally {
-			logger.debug("sortDiariaList(Iterable<SorteoDiaria> list): END");
+			logger.debug("sortDiariaList(): END");
 		}
-		return result;
+		return sorteos;
 	}
 
 	/**
@@ -373,7 +383,7 @@ public class SorteoServiceImpl implements SorteoService {
 	}
 
 	@Override
-	public List<ApuestasActivasResponse> getSorteosListWithMoneda(String currency) {
+	public List<ApuestasActivasResponse> getSorteosListWithMoneda(String currency) throws Exception {
 		List<ApuestasActivasResponse> apuestasActivasResponses = new ArrayList<>();
 		try {
 			logger.debug("getSorteosListWithMoneda(String {}): START", currency);
@@ -431,7 +441,7 @@ public class SorteoServiceImpl implements SorteoService {
 		return activaResponse;
 	}
 
-	public JugadorSorteosResponse getJugadorList() {
+	public JugadorSorteosResponse getJugadorList() throws Exception {
 		JugadorSorteosResponse jugadorSorteosResponse = new JugadorSorteosResponse();
 
 		try {
@@ -441,8 +451,7 @@ public class SorteoServiceImpl implements SorteoService {
 			jugadorSorteosResponse.setName(user.getName());
 			jugadorSorteosResponse.setMoneda(jugador.getMoneda().getMonedaName().toString());
 
-			Iterable<SorteoDiaria> sorteosDB = sorteoDiariaRepository.findAll();
-			List<SorteoDiaria> sorteos = sortDiariaList(sorteosDB);
+			List<SorteoDiaria> sorteos = getSortDiariaList();
 			jugadorSorteosResponse.setSorteos(getSorteosResponses(sorteos, user));
 
 		} catch (Exception e) {
@@ -473,7 +482,8 @@ public class SorteoServiceImpl implements SorteoService {
 	public void setNumeroGanador(Long id, int numero) throws Exception {
 		try {
 			logger.debug("setNumeroGanador(Long {}, int {}): START", id, numero);
-
+			User loggedUser = userService.getLoggedInUser();
+			Cambio currentCambio = cambioRepository.findFirstByOrderByIdDesc();
 			SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
 			Sorteo sorteo = sorteoDiaria.getSorteo();
 			NumeroGanador numeroGanador = new NumeroGanador();
@@ -510,6 +520,7 @@ public class SorteoServiceImpl implements SorteoService {
 			 */
 			Set<Entry<Long, Integer>> jugadores = map.entrySet();
 			Iterator<Entry<Long, Integer>> jugadoresIterator = jugadores.iterator();
+			
 			while(jugadoresIterator.hasNext()) {
 				Map.Entry<Long, Integer> jugadorApuestasGanadas = (Map.Entry<Long, Integer>)jugadoresIterator.next();
 				Jugador jugador = jugadorRepository.findById(jugadorApuestasGanadas.getKey()).get();
@@ -523,7 +534,7 @@ public class SorteoServiceImpl implements SorteoService {
 				BigDecimal newBalance = BigDecimal.valueOf(jugador.getBalance()).add(result);
 				jugador.setBalance(newBalance.doubleValue());
 				jugadorRepository.save(jugador);
-				createHistoricoBalance(jugador, BalanceType.DAILY ,sorteoDiaria.getSorteoTime());
+				createHistoricoBalance(loggedUser,currentCambio,jugador, BalanceType.DAILY ,sorteoDiaria.getSorteoTime());
 			}
 			
 			copyApuestasToHistoricoApuestas(sorteoDiaria);
@@ -538,6 +549,7 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (Exception e) {
 			logger.error("setNumeroGanador(Long {}, int {}): CATCH", id, numero);
 			logger.error(e.getMessage());
+			e.printStackTrace();
 			throw e;
 		} finally {
 			logger.debug("setNumeroGanador(Long id, int numero): END");
@@ -548,6 +560,9 @@ public class SorteoServiceImpl implements SorteoService {
 	@Transactional(rollbackFor = CanNotInsertHistoricoBalanceException.class)
 	public void cerrarSemana(SorteoDiaria sorteoDiaria) throws CanNotInsertHistoricoBalanceException {
 		try {
+			User loggedUser = userService.getLoggedInUser();
+			Cambio currentCambio = cambioRepository.findFirstByOrderByIdDesc();
+			
 			LocalDateTime mondayFirstSorteo = sorteoDiaria.getSorteoTime().toLocalDateTime();
 			mondayFirstSorteo = mondayFirstSorteo.with(DayOfWeek.MONDAY);
 			mondayFirstSorteo = mondayFirstSorteo.with(LocalTime.of(11, 0, 0));
@@ -562,7 +577,7 @@ public class SorteoServiceImpl implements SorteoService {
 	
 			for(Jugador jugador:jugadoresWithBalance){
 				try {
-					createHistoricoBalance(jugador, BalanceType.WEEKLY ,sorteoDiaria.getSorteoTime(), week);
+					createHistoricoBalance(loggedUser, currentCambio, jugador, BalanceType.WEEKLY ,sorteoDiaria.getSorteoTime(), week);
 					jugador.setBalance(0);
 					jugadorRepository.save(jugador);
 				}catch(CanNotInsertHistoricoBalanceException hbe) {
@@ -575,19 +590,19 @@ public class SorteoServiceImpl implements SorteoService {
 		}
 	}
 	//BalanceType DAILY
-	private void createHistoricoBalance(Jugador jugador, BalanceType balanceType, Timestamp sorteoTime) throws CanNotInsertHistoricoBalanceException {
-		createHistoricoBalance(jugador, balanceType, sorteoTime, null);
+	private void createHistoricoBalance(User loggedUser, Cambio currentCambio, Jugador jugador, BalanceType balanceType, Timestamp sorteoTime) throws CanNotInsertHistoricoBalanceException {
+		createHistoricoBalance(loggedUser, currentCambio, jugador, balanceType, sorteoTime, null);
 	}
 	//BalanceType WEEKLY
-	private void createHistoricoBalance(Jugador jugador, BalanceType balanceType, Timestamp sorteoTime, Week week) throws CanNotInsertHistoricoBalanceException {
+	private void createHistoricoBalance(User loggedUser, Cambio currentCambio, Jugador jugador, BalanceType balanceType, Timestamp sorteoTime, Week week) throws CanNotInsertHistoricoBalanceException {
 		try {
-			User loggedUser = userService.getLoggedInUser();
 			HistoricoBalance historico = new HistoricoBalance();
 			historico.setBalanceSemana(jugador.getBalance());
 			historico.setJugador(jugador);
 			historico.setCreatedBy(loggedUser);
 			historico.setSorteoTime(sorteoTime);
 			historico.setMoneda(jugador.getMoneda());
+			historico.setCambio(currentCambio);
 			historico.setBalanceType(balanceType);
 			historico.setWeek(week);
 			historicoBalanceRepository.save(historico);

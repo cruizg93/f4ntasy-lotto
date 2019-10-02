@@ -1350,7 +1350,7 @@ public class AdminController {
     
     @GetMapping("/jugadores/list")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
-    public List<JugadorResponse> getAllJugadores() {
+    public List<JugadorResponse> getAllJugadores() throws Exception {
         return adminService.getAllJugadores();
     }
 
@@ -1394,7 +1394,7 @@ public class AdminController {
     @Deprecated
     @GetMapping("/apuestas/activas/{moneda}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
-    public List<ApuestasActivasResponse> getApuestasActivas(@PathVariable String moneda) {
+    public List<ApuestasActivasResponse> getApuestasActivas(@PathVariable String moneda) throws Exception {
         List<ApuestasActivasResponse> apuestasActivasResponses = new ArrayList<>();
         List<SorteoDiaria> sorteoDiarias = sorteoService.getActiveSorteosList();
         

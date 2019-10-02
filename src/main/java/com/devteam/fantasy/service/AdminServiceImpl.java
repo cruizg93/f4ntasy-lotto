@@ -89,14 +89,14 @@ public class AdminServiceImpl implements AdminService{
 	
 	private static final Logger logger = LoggerFactory.getLogger(AdminServiceImpl.class);
 	
-	public List<JugadorResponse> getAllJugadores(){
+	public List<JugadorResponse> getAllJugadores() throws Exception{
 		List<JugadorResponse> jugadorResponses = new ArrayList<>();
 
 		try {
 			logger.debug("getAllJugadores(): START");
 			List<Jugador> jugadores = jugadorRepository.findAllByOrderByIdAsc();
 	        
-	        jugadores.forEach(jugador -> {	
+			for(Jugador jugador: jugadores) {
 	        	List<SorteoDiaria> sorteoDiarias = sorteoService.getActiveSorteosList(jugador);
 	        	List<SorteoResponse> sorteosResponse = sorteoService.getSorteosResponses(sorteoDiarias, (User) jugador);
 	        	Map<String, Double> values = processSorteoResponse(sorteosResponse);
@@ -125,7 +125,7 @@ public class AdminServiceImpl implements AdminService{
 	                jugadorResponse.setAsistentes(asistenteResponses);
 	            }
 	            jugadorResponses.add(jugadorResponse);
-	        });
+	        }
 		}catch(Exception e) {
 			logger.debug(e.getMessage());
 			throw e;

@@ -184,7 +184,7 @@ public class PlayerController {
     @Deprecated
     @PostMapping("/apuestas/hoy/list")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
-    public List<SorteoResponse> findTodaySorteobyUsername(@Valid @RequestBody ObjectNode jsonNodes) {
+    public List<SorteoResponse> findTodaySorteobyUsername(@Valid @RequestBody ObjectNode jsonNodes) throws Exception {
     	ObjectMapper mapper = new ObjectMapper();
         String username = mapper.convertValue(jsonNodes.get("username"), String.class);
         User user = userRepository.getByUsername(username);

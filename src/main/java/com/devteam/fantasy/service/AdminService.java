@@ -11,7 +11,7 @@ import javassist.NotFoundException;
 
 public interface AdminService {
 	
-	public List<JugadorResponse> getAllJugadores();
+	public List<JugadorResponse> getAllJugadores() throws Exception;
 
 	public void submitBono(BonoRequest request, Long jugadorId) throws CanNotInsertBonoException, NotFoundException;
 }

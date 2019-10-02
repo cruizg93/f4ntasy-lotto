@@ -18,4 +18,6 @@ public interface SorteoDiariaRepository extends CrudRepository<SorteoDiaria, Lon
     SorteoDiaria getSorteoDiariaById(Long id);
     List<SorteoDiaria> findAllBySorteoTimeLessThan(Timestamp timestamp);
     List<SorteoDiaria> findAllBySorteoEstadoEstadoNot(EstadoName estadoName);
+	List<SorteoDiaria> findAllByOrderById();
+	List<SorteoDiaria> findAllByOrderBySorteoTime();
 }

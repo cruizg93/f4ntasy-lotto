@@ -25,13 +25,13 @@ import com.devteam.fantasy.model.User;
 @Transactional
 public interface SorteoService {
 	
-	public List<SorteoDiaria> getActiveSorteosList(User user);
-	public List<SorteoDiaria> getActiveSorteosList();
-	public JugadorSorteosResponse getJugadorList();
+	public List<SorteoDiaria> getActiveSorteosList(User user) throws Exception;
+	public List<SorteoDiaria> getActiveSorteosList() throws Exception;
+	public JugadorSorteosResponse getJugadorList() throws Exception;
 	public List<SorteoResponse> getSorteosResponses(List<SorteoDiaria> sorteos, User user);
 	
 	public void setNumeroGanador(Long id, int numeroGanador) throws Exception;
-	public List<ApuestasActivasResponse> getSorteosListWithMoneda(String currency);
+	public List<ApuestasActivasResponse> getSorteosListWithMoneda(String currency) throws Exception;
 	public ApuestaActivaResumenResponse getActiveSorteoDetail(Long id, String currency); 
 	public Sorteo bloquearApuesta(Long id) throws InvalidSorteoStateException;
 	public Sorteo desBloquearApuesta(Long id) throws InvalidSorteoStateException;
