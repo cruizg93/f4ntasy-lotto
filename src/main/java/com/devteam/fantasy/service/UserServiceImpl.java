@@ -29,13 +29,16 @@ public class UserServiceImpl implements UserService{
 	@Autowired
 	PasswordEncoder passwordEncoder;
 	
+	private User loggedUser;
+	
 	public User getLoggedInUser(){
-		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-		
-		User loggedUser = null;
-		if (principal instanceof UserDetails) {
-			loggedUser = Optional.of(userRepository.getByUsername(((UserDetails) principal).getUsername()))
-					.orElseThrow(() -> new UsernameNotFoundException("Error getting the logged in user."));
+		if(loggedUser == null) {
+			Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+			
+			if (principal instanceof UserDetails) {
+				loggedUser = Optional.of(userRepository.getByUsername(((UserDetails) principal).getUsername()))
+						.orElseThrow(() -> new UsernameNotFoundException("Error getting the logged in user."));
+			}
 		}
 		return loggedUser;
 	}
