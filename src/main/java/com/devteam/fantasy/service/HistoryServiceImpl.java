@@ -296,13 +296,17 @@ public class HistoryServiceImpl implements HistoryService {
 				JugadorBalanceWeek jugadorWeek = new JugadorBalanceWeek(); 
 				
 				Optional<HistoricoBalance> balance = historicoBalanceRepository.findByBalanceTypeAndJugadorAndWeek(BalanceType.WEEKLY, jugador, week);
+				if( !balance.isPresent()) {
+					balance = historicoBalanceRepository.findFirstByBalanceTypeAndJugadorAndWeekOrderById(BalanceType.BY_SORTEO, jugador, week);
+				}
+				
 				if( balance.isPresent()) {
-					
 					double currencyExchange = MathUtil.getDollarChangeRateOriginalMoneda(balance.get().getCambio(),balance.get().getMoneda().getMonedaName().toString(), moneda);
 					BigDecimal balanceTotal = BigDecimal.valueOf(balance.get().getBalance()).multiply(BigDecimal.valueOf(currencyExchange));
 					
 					jugadorWeek.setBalance(balanceTotal.doubleValue());
 				}
+				
 				
 				Optional<Bono> bono = bonoRepository.findByWeekAndUser(week, jugador);
 				if(bono.isPresent()) {
