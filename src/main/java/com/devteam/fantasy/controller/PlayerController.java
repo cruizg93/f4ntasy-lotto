@@ -8,6 +8,7 @@ import com.devteam.fantasy.model.*;
 import com.devteam.fantasy.repository.*;
 import com.devteam.fantasy.service.SorteoService;
 import com.devteam.fantasy.service.SorteoServiceImpl;
+import com.devteam.fantasy.service.UserService;
 import com.devteam.fantasy.util.EstadoName;
 import com.devteam.fantasy.util.PairNV;
 import com.devteam.fantasy.util.SorteoTypeName;
@@ -83,6 +84,9 @@ public class PlayerController {
 
     @Autowired
     SorteoService sorteoService;
+
+    @Autowired
+	private UserService userService;
     
     
     @PostMapping("/password/update")
@@ -801,6 +805,16 @@ public class PlayerController {
     	node.put("balance", ((Jugador) user).getBalance());
     	node.put("currency", ((Jugador) user).getMoneda().toString().equalsIgnoreCase("lempira")?"L":"$");
         return node;
+    }
+    
+    @GetMapping("/balance")
+    @PreAuthorize("hasRole('USER')")
+    public CurrentJugadorBalance getJugadorBalance() {
+    	User user = userService.getLoggedInUser();
+    	Jugador jugador = Util.getJugadorFromUser(user);
+    	CurrentJugadorBalance result = new CurrentJugadorBalance(jugador.getMoneda().getMonedaName().toString(), jugador.getBalance());
+        
+    	return result;
     }
 
     private void updateDataApuestaAndRestriccion(Restriccion restriccion, int diff, Apuesta apuesta,
