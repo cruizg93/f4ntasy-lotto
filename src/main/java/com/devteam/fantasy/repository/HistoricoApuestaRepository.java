@@ -16,4 +16,5 @@ public interface HistoricoApuestaRepository extends JpaRepository<HistoricoApues
 	List<HistoricoApuestas> findAllBySorteoAndNumero(Sorteo sorteo, Integer numero);
 	List<HistoricoApuestas> findAllBySorteoAndUserAndAsistenteOrderByNumeroAsc(Sorteo sorteo, User user, Object object);
 	List<HistoricoApuestas> findAllBySorteoSorteoTimeBetween(Timestamp monday, Timestamp sunday);
+	List<HistoricoApuestas> findAllBySorteoAndAsistente(Sorteo sorteo, User user);
 }

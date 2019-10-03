@@ -1,6 +1,7 @@
 package com.devteam.fantasy.controller;
 
 
+import com.devteam.fantasy.exception.CanNotInsertBonoException;
 import com.devteam.fantasy.math.MathUtil;
 import com.devteam.fantasy.message.request.*;
 import com.devteam.fantasy.message.response.*;
@@ -15,6 +16,9 @@ import com.devteam.fantasy.service.UserService;
 import com.devteam.fantasy.util.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import javassist.NotFoundException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -130,10 +134,12 @@ public class AdminController {
     @PostMapping("/bono/jugadores/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ResponseEntity<String> submitBono(@PathVariable Long id, @Valid @RequestBody BonoRequest request){
-    	try {
-    		adminService.submitBono(request, id);
-    	}catch (Exception e) {
-    		return new ResponseEntity<String>(e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+		try {
+			adminService.submitBono(request, id);
+		} catch (CanNotInsertBonoException e) {
+			return new ResponseEntity<String>(e.getMessage(),HttpStatus.CONFLICT);
+		} catch (NotFoundException e) {
+			return new ResponseEntity<String>(e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
 		}
     	return new ResponseEntity<String>("success",HttpStatus.OK);
     }

@@ -92,11 +92,7 @@ public class HistoryController {
 		SorteosPasados result = null;
 		try {
 			User user = userService.getLoggedInUser();
-			Jugador jugador = Util.getJugadorFromUser(user);
-			if(jugador != null) {
-				result = historyService.getSorteosPasadosJugadorByWeek(id, jugador);
-			}
-			
+			result = historyService.getSorteosPasadosJugadorByWeek(id, user);
 		} catch (Exception e) {
 			return new ResponseEntity<SorteosPasados>(result,HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -129,6 +125,18 @@ public class HistoryController {
 		SorteosPasadosApuestas result = null;
 		try {
 			User user = userService.getLoggedInUser();
+			result = historyService.getApuestasPasadasBySorteoAndJugador(id, user);
+		} catch (Exception e) {
+			return new ResponseEntity<SorteosPasadosApuestas>(result,HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		return new ResponseEntity<SorteosPasadosApuestas>(result,HttpStatus.OK);
+	}
+	
+	@GetMapping("/weeks/jugador/{jugadorId}/sorteo/{id}")
+	public ResponseEntity<SorteosPasadosApuestas> getApuestasOverviewBySorteoAndJugador(@PathVariable Long jugadorId, @PathVariable Long id){
+		SorteosPasadosApuestas result = null;
+		try {
+			User user = userService.getById(jugadorId);
 			Jugador jugador = Util.getJugadorFromUser(user);
 			if(jugador != null) {
 				result = historyService.getApuestasPasadasBySorteoAndJugador(id, jugador);
@@ -138,6 +146,7 @@ public class HistoryController {
 		}
 		return new ResponseEntity<SorteosPasadosApuestas>(result,HttpStatus.OK);
 	}
+	
 	
 	@GetMapping("/sorteos/{id}/apuestas/detalles")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS')")

@@ -24,6 +24,7 @@ import com.devteam.fantasy.model.Apuesta;
 import com.devteam.fantasy.model.Asistente;
 import com.devteam.fantasy.model.Bono;
 import com.devteam.fantasy.model.Cambio;
+import com.devteam.fantasy.model.HistoricoBalance;
 import com.devteam.fantasy.model.Jugador;
 import com.devteam.fantasy.model.Moneda;
 import com.devteam.fantasy.model.SorteoDiaria;
@@ -34,6 +35,7 @@ import com.devteam.fantasy.repository.AsistenteRepository;
 import com.devteam.fantasy.repository.BonoRepository;
 import com.devteam.fantasy.repository.CambioRepository;
 import com.devteam.fantasy.repository.JugadorRepository;
+import com.devteam.fantasy.repository.MonedaRepository;
 import com.devteam.fantasy.repository.NumeroGanadorRepository;
 import com.devteam.fantasy.repository.ResultadoRepository;
 import com.devteam.fantasy.repository.SorteoDiariaRepository;
@@ -65,6 +67,9 @@ public class AdminServiceImpl implements AdminService{
 	
 	@Autowired
     SorteoDiariaRepository sorteoDiariaRepository;
+	
+	@Autowired
+	MonedaRepository monedaRepository;
 	
 	@Autowired
     NumeroGanadorRepository numeroGanadorRepository;
@@ -167,28 +172,30 @@ public class AdminServiceImpl implements AdminService{
 	@Override
 	public void submitBono(BonoRequest request, Long jugadorId) throws CanNotInsertBonoException, NotFoundException {
 		try {
+			logger.debug("submitBono(BonoRequest [weekid:{}], Long {}): START", request.getWeekId(), jugadorId);
 			Jugador jugador = jugadorRepository.findById(jugadorId).orElseThrow(() -> new NotFoundException("Jugador not found"));
 			Week week = weekRepository.findById(request.getWeekId()).orElseThrow(() -> new NotFoundException("Week not found"));
 			Cambio cambio = cambioRepository.findFirstByOrderByIdDesc();
-			Moneda moneda = new Moneda(Util.getMonedaNameFromString(request.getMoneda()));
+			Moneda moneda = monedaRepository.findByMonedaName(Util.getMonedaNameFromString(request.getMoneda()));
 			
-			if(historyService.isJugadorElegibleForBono(jugador, week)) {
-				User createdBy 	= userService.getLoggedInUser();
-				Bono bono 		= new Bono();
+			User createdBy 	= userService.getLoggedInUser();
+			Bono bono 		= new Bono();
+			bono.setCambio(cambio);
+			bono.setMoneda(moneda);
+			bono.setBono(request.getBono());
+			bono.setWeek(week);
+			bono.setUser(jugador);
+			bono.setCreatedBy(createdBy);
+			
+			historyService.validateIfJugadorIsElegibleForBono(jugador, week, bono);
+			bonoRepository.save(bono);
 				
-				bono.setCambio(cambio);
-				bono.setMoneda(moneda);
-				bono.setBono(request.getBono());
-				bono.setWeek(week);
-				bono.setUser(jugador);
-				bono.setCreatedBy(createdBy);
-				bonoRepository.save(bono);
-			}else {
-				throw new CanNotInsertBonoException(week.getId(), jugador.getId(), "Jugador not elegible for bono");
-			}
 		} catch (CanNotInsertBonoException | NotFoundException e) {
+			logger.error("submitBono(BonoRequest [weekid:{}], Long {}): CATCH", request.getWeekId(), jugadorId);
 			throw e;
-		}	
+		}finally {
+			logger.debug("submitBono(BonoRequest request, Long jugadorId): END");
+		}
 	}
 	
 	

@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import com.devteam.fantasy.exception.CanNotInsertBonoException;
 import com.devteam.fantasy.math.MathUtil;
 import com.devteam.fantasy.math.SorteoTotales;
 import com.devteam.fantasy.message.response.HistoricoApuestaDetallesResponse;
@@ -338,16 +339,15 @@ public class HistoryServiceImpl implements HistoryService {
 	@Override
 	@PreAuthorize("hasRole('USER') or hasRole('ASIS')")
 	public SorteosPasadosDays getSorteosPasadosJugadorByWeek(Long weekId, Long jugadorId) throws Exception {
-		User user 									= userService.getById(jugadorId);
-		Jugador jugador 							= Util.getJugadorFromUser(user);
-		return getSorteosPasadosJugadorByWeek(weekId, jugador);
+		User user = userService.getById(jugadorId);
+		return getSorteosPasadosJugadorByWeek(weekId, user);
 	}
 	
 	@Override
-	public SorteosPasadosDays getSorteosPasadosJugadorByWeek(Long weekId, Jugador jugador) throws Exception {
+	public SorteosPasadosDays getSorteosPasadosJugadorByWeek(Long weekId, User user) throws Exception {
 		try {
-			logger.debug("getSorteosPasadosJugadorByWeek(Long {},jugador {}): START", weekId,jugador.getId());
-		
+			logger.debug("getSorteosPasadosJugadorByWeek(Long {},jugador {}): START", weekId,user.getId());
+			Jugador jugador								= Util.getJugadorFromUser(user);
 			Week week 									= weekRepository.findById(weekId).orElseThrow(() -> new NotFoundException("Not Week Found"));
 			SorteosPasadosDays sorteosPasadosJugador 	= new SorteosPasadosDays();
 			List<Sorteo> sorteos 						= sorteoRepository.findAllBySorteoTimeBetweenOrderBySorteoTimeWithNumeroGanadorNotNull(week.getMonday(),week.getSunday());
@@ -377,7 +377,17 @@ public class HistoryServiceImpl implements HistoryService {
 				LocalDateTime sorteoTime			= sorteo.getSorteoTime().toLocalDateTime();
 				prevBalance 						= historicoBalance!=null?historicoBalance.getBalanceSemana():prevBalance;
 				
-				List<HistoricoApuestas> apuestas = historicoApuestaRepository.findAllBySorteoAndUser(sorteo, jugador);
+				List<HistoricoApuestas> apuestas = new ArrayList<>();
+				if(user instanceof Jugador) {
+					apuestas =  historicoApuestaRepository.findAllBySorteoAndUser(sorteo, user);
+				}if (user instanceof Asistente) {
+					apuestas  = historicoApuestaRepository.findAllBySorteoAndAsistente(sorteo, user);
+				}
+
+				if ( apuestas == null ) {
+					continue;
+				}
+				
 				SummaryResponse summarySorteo = sorteoTotales.processHitoricoApuestas(apuestas, jugador.getMoneda().getMonedaName().toString());
 
 				comisionWeek	= comisionWeek.add( new BigDecimal(summarySorteo.getComisiones()));
@@ -472,7 +482,7 @@ public class HistoryServiceImpl implements HistoryService {
 			
 			return sorteosPasadosJugador;
 		}catch (Exception e) {
-			logger.debug("getSorteosPasadosJugadorByWeek(Long {},jugador {}): CATCH", weekId,jugador.getId());
+			logger.debug("getSorteosPasadosJugadorByWeek(Long {},jugador {}): CATCH", weekId,user.getId());
 			logger.error(e.getMessage());
 			e.printStackTrace();
 			throw e;
@@ -518,11 +528,20 @@ public class HistoryServiceImpl implements HistoryService {
 		return response;
 	}
 	
-	public boolean isJugadorElegibleForBono(Jugador jugador, Week week) {
+	@Override
+	public void validateIfJugadorIsElegibleForBono(Jugador jugador, Week week, Bono bono) throws CanNotInsertBonoException, NotFoundException {
 		HistoricoBalance weekBalance = historicoBalanceRepository
 				.findByBalanceTypeAndJugadorAndWeek(BalanceType.WEEKLY,jugador,week)
-				.orElse(new HistoricoBalance());
-		return weekBalance.getBalanceSemana()<0?true:false;
+				.orElseThrow(() -> new NotFoundException("El jugador no tiene balance de cierre de semana"));
+		
+		if(weekBalance.getBalanceSemana()>=0) {
+			throw new CanNotInsertBonoException(week.getId(), jugador.getId(), "Jugador not elegible for bono");
+		}
+		
+		if(bono.getBono() >= weekBalance.getBalance()) {
+			throw new CanNotInsertBonoException(week.getId(), jugador.getId(), "Bono must be less than weekly balance");
+		}
+		
 	}
 	
 	private SorteoNumeroGanador buildSorteoNumeroGanador(Sorteo sorteo, Integer numeroGanador, String hour) {
@@ -535,13 +554,21 @@ public class HistoryServiceImpl implements HistoryService {
 	}
 
 	@Override
-	public SorteosPasadosApuestas getApuestasPasadasBySorteoAndJugador(Long sorteoId, Jugador jugador) throws Exception {
+	public SorteosPasadosApuestas getApuestasPasadasBySorteoAndJugador(Long sorteoId, User user) throws Exception {
 		SorteosPasadosApuestas sorteosPasadosApuestas = new SorteosPasadosApuestas();
 		Sorteo sorteo;
 		try {
-			logger.debug("getApuestasPasadasBySorteoAndJugador(Long {}, Jugador {}): START", sorteoId, jugador.getId());
+			logger.debug("getApuestasPasadasBySorteoAndJugador(Long {}, Jugador {}): START", sorteoId, user.getId());
+			Jugador jugador = Util.getJugadorFromUser(user);
 			sorteo = sorteoRepository.findById(sorteoId).orElseThrow(() -> new NotFoundException("Sorteo not found with id: "+sorteoId));
-			List<HistoricoApuestas> apuestas = historicoApuestaRepository.findAllBySorteoAndUser(sorteo, jugador);
+			
+			List<HistoricoApuestas> apuestas = new ArrayList<>();
+			if( user instanceof Jugador) {
+				apuestas = historicoApuestaRepository.findAllBySorteoAndUser(sorteo, user);
+			}else if( user instanceof Asistente){
+				apuestas = historicoApuestaRepository.findAllBySorteoAndAsistente(sorteo, user);
+			}
+			
 			List<PairNV> pairs = mergeApuestasIntoPairNVList(apuestas);
 			boolean hasApuestasMadeByAsistente = false;
 			
@@ -560,7 +587,7 @@ public class HistoryServiceImpl implements HistoryService {
 			sorteosPasadosApuestas.setApuestas(pairs);
 			sorteosPasadosApuestas.setSummary(summary);
 		} catch (Exception e) {
-			logger.error("getApuestasPasadasBySorteoAndJugador(Long {}, Jugador {}): CATCH", sorteoId, jugador.getId());
+			logger.error("getApuestasPasadasBySorteoAndJugador(Long {}, Jugador {}): CATCH", sorteoId, user.getId());
 			logger.error(e.getMessage());
 			e.printStackTrace();
 			throw e;
@@ -711,6 +738,12 @@ public class HistoryServiceImpl implements HistoryService {
 		}
         
         return apuestasDetails;
+	}
+
+	@Override
+	public HistoricoBalance getWeekBalanceByJugador(Jugador jugador) {
+		HistoricoBalance result = historicoBalanceRepository.findByJugadorAndBalanceType(jugador, BalanceType.WEEKLY);
+		return result;
 	}
 
 }
