@@ -534,9 +534,9 @@ public class HistoryServiceImpl implements HistoryService {
 				.findByBalanceTypeAndJugadorAndWeek(BalanceType.WEEKLY,jugador,week)
 				.orElseThrow(() -> new NotFoundException("El jugador no tiene balance de cierre de semana"));
 		
-		if(weekBalance.getBalanceSemana()>=0) {
-			throw new CanNotInsertBonoException(week.getId(), jugador.getId(), "Jugador not elegible for bono");
-		}
+//		if(weekBalance.getBalanceSemana()>=0) {
+//			throw new CanNotInsertBonoException(week.getId(), jugador.getId(), "Jugador not elegible for bono");
+//		}
 		
 		if(bono.getBono() >= weekBalance.getBalance()) {
 			throw new CanNotInsertBonoException(week.getId(), jugador.getId(), "Bono must be less than weekly balance");
