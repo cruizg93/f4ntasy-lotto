@@ -1,10 +1,10 @@
 package com.devteam.fantasy.service;
 
-import java.sql.Timestamp;
 import java.util.List;
 
 import javax.transaction.Transactional;
 
+import com.devteam.fantasy.exception.CanNotChangeWinningNumberException;
 import com.devteam.fantasy.exception.CanNotInsertApuestaException;
 import com.devteam.fantasy.exception.CanNotInsertHistoricoBalanceException;
 import com.devteam.fantasy.exception.CanNotInsertWinningNumberException;
@@ -17,12 +17,12 @@ import com.devteam.fantasy.message.response.ApuestasActivasResponse;
 import com.devteam.fantasy.message.response.JugadorSorteosResponse;
 import com.devteam.fantasy.message.response.NumeroPlayerEntryResponse;
 import com.devteam.fantasy.message.response.SorteoResponse;
-import com.devteam.fantasy.message.response.SorteosPasadosJugadores;
-import com.devteam.fantasy.model.HistoricoApuestas;
 import com.devteam.fantasy.model.Sorteo;
 import com.devteam.fantasy.model.SorteoDiaria;
 import com.devteam.fantasy.model.User;
 import com.devteam.fantasy.model.Week;
+
+import javassist.NotFoundException;
 
 @Transactional
 public interface SorteoService {
@@ -46,5 +46,7 @@ public interface SorteoService {
 	public void deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, String username) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
 	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
 	public void cerrarSemana(SorteoDiaria sorteoDiaria, Week week) throws CanNotInsertHistoricoBalanceException;
+	public void changeWinningNumber(int newWinningNumber, Long sorteoId) throws NotFoundException, CanNotChangeWinningNumberException;
+	public void copyApuestasToHistoricoApuestas(SorteoDiaria sorteoDiaria);
 	
 }

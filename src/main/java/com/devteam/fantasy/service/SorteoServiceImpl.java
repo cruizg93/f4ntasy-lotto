@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.devteam.fantasy.exception.CanNotChangeWinningNumberException;
 import com.devteam.fantasy.exception.CanNotInsertApuestaException;
 import com.devteam.fantasy.exception.CanNotInsertHistoricoBalanceException;
 import com.devteam.fantasy.exception.CanNotInsertWinningNumberException;
@@ -44,6 +45,7 @@ import com.devteam.fantasy.message.response.JugadorSorteosResponse;
 import com.devteam.fantasy.message.response.NumeroPlayerEntryResponse;
 import com.devteam.fantasy.message.response.SorteoResponse;
 import com.devteam.fantasy.message.response.SorteosPasadosJugadores;
+import com.devteam.fantasy.message.response.SummaryResponse;
 import com.devteam.fantasy.model.Apuesta;
 import com.devteam.fantasy.model.Asistente;
 import com.devteam.fantasy.model.Cambio;
@@ -79,6 +81,8 @@ import com.devteam.fantasy.util.PairNV;
 import com.devteam.fantasy.util.SorteoTypeName;
 import com.devteam.fantasy.util.TuplaRiesgo;
 import com.devteam.fantasy.util.Util;
+
+import javassist.NotFoundException;
 
 @Service
 public class SorteoServiceImpl implements SorteoService {
@@ -564,7 +568,7 @@ public class SorteoServiceImpl implements SorteoService {
 				BigDecimal newBalance = BigDecimal.valueOf(jugador.getBalance()).add(result);
 				jugador.setBalance(newBalance.doubleValue());
 				jugadorRepository.save(jugador);
-				createHistoricoBalance(loggedUser,currentCambio,jugador, BalanceType.DAILY ,sorteoDiaria.getSorteoTime(), week);
+				createHistoricoBalance(loggedUser,currentCambio,jugador, BalanceType.BY_SORTEO ,sorteoDiaria.getSorteoTime(), week);
 			}
 			
 			copyApuestasToHistoricoApuestas(sorteoDiaria);
@@ -656,8 +660,9 @@ public class SorteoServiceImpl implements SorteoService {
 		return historico;
 	}
 
+	@Override
 	@Transactional(rollbackFor = Exception.class)
-	private void copyApuestasToHistoricoApuestas(SorteoDiaria sorteoDiaria) {
+	public void copyApuestasToHistoricoApuestas(SorteoDiaria sorteoDiaria) {
 		try {
 			logger.debug("copyApuestasToHistoricoApuestas(SorteoDiaria {}): START", sorteoDiaria);
 			Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
@@ -1132,5 +1137,78 @@ public class SorteoServiceImpl implements SorteoService {
 			week = weekRepository.save(week);
 		}
 		return week;
+	}
+	
+	@Override
+	@Transactional(rollbackFor = {NotFoundException.class , CanNotChangeWinningNumberException.class})
+	public void changeWinningNumber(int newWinningNumber, Long sorteoId) throws NotFoundException, CanNotChangeWinningNumberException {
+		try {
+			logger.debug("changeWinningNumber(int {}, Long {}): START", newWinningNumber, sorteoId);
+			Sorteo sorteo 						= sorteoRepository.findById(sorteoId).orElseThrow(() -> new NotFoundException("Sorteo with Id="+sorteoId+" not found"));
+			NumeroGanador currentNumeroGanador	= numeroGanadorRepository.getNumeroGanadorBySorteo(sorteo).orElseThrow(() -> new NotFoundException("Numero Ganador not found for Sorteo with Id="+sorteoId));
+			Week week							= getWeekFromSorteoTime(sorteo.getSorteoTime());
+			
+			if(newWinningNumber == currentNumeroGanador.getNumeroGanador()) {
+				throw new CanNotChangeWinningNumberException("El nuevo numero ganador es igual al actual numero ganador");
+			}
+
+			logger.debug("Deleting currentNumeroGanador for sorteo [{},{}]...",sorteoId,sorteo.getSorteoTime());
+			numeroGanadorRepository.delete(currentNumeroGanador);
+			logger.debug("Creating newNumeroGanador for sorteo [{},{}]...",sorteoId,sorteo.getSorteoTime());
+			NumeroGanador newNumeroGanador = new NumeroGanador();
+			newNumeroGanador.setNumeroGanador(newWinningNumber);
+			newNumeroGanador.setSorteo(sorteo);
+			numeroGanadorRepository.save(newNumeroGanador);
+			
+			logger.debug("Recalculating balance...");
+			Set<Jugador> jugadores	= jugadorRepository.findAllWithHistoricoApuestasOnSorteo(sorteo);
+			BigDecimal balanceAnterior = BigDecimal.ZERO;
+			
+			for(Jugador jugador: jugadores) {
+				List<HistoricoApuestas> apuestas 			= historicoApuestaRepository.findAllBySorteoAndUser(sorteo, jugador);
+				SummaryResponse summary 					= sorteoTotales.processHitoricoApuestas(apuestas, jugador.getMoneda().getMonedaName().toString());
+				List<HistoricoBalance> historicoBalances 	= historicoBalanceRepository.findallByWeekAndJugadorAndBalanceTypeOrderBySorteoTimeAsc(week,jugador, BalanceType.BY_SORTEO);
+				Optional<HistoricoBalance> historicoBalanceWeekly = historicoBalanceRepository.findByBalanceTypeAndJugadorAndWeek(BalanceType.WEEKLY, jugador, week);
+				
+				BigDecimal sorteoBalance = BigDecimal.valueOf(summary.getPremios()).subtract(BigDecimal.valueOf(summary.getSubTotal()));
+				boolean passedSorteo = false;
+				
+				for(HistoricoBalance hb: historicoBalances) {
+					
+					if(hb.getSorteoTime().compareTo(sorteo.getSorteoTime()) == 0 ) {
+						passedSorteo = true;
+						BigDecimal newBalance = balanceAnterior.add(sorteoBalance);
+						hb.setBalance(newBalance.doubleValue());
+						balanceAnterior = newBalance;
+					}else {
+						if ( !passedSorteo) {
+							balanceAnterior = BigDecimal.valueOf(hb.getBalance());
+						}else{
+							BigDecimal newBalance = balanceAnterior.add(BigDecimal.valueOf(hb.getBalance()));
+							hb.setBalance(newBalance.doubleValue());
+							balanceAnterior = newBalance;
+							
+						}
+					}
+				}
+				logger.debug("Updating sorteos balances...");
+				historicoBalanceRepository.saveAll(historicoBalances);
+				
+				if(historicoBalanceWeekly.isPresent()) {
+					logger.debug("Updating weekly balances...");
+					historicoBalanceWeekly.get().setBalance(balanceAnterior.doubleValue());
+					historicoBalanceRepository.save(historicoBalanceWeekly.get());
+				}
+			}
+
+		} catch (NotFoundException | CanNotChangeWinningNumberException e) {
+			logger.error("changeWinningNumber(int newWinningNumber, Long sorteoId): CATCH", newWinningNumber, sorteoId);
+			logger.error(e.getMessage());
+			e.printStackTrace();
+			throw e;
+		}finally {
+			logger.debug("changeWinningNumber(int newWinningNumber, Long sorteoId): END");
+		}
+		
 	}
 }

@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.devteam.fantasy.exception.CanNotChangeWinningNumberException;
 import com.devteam.fantasy.exception.CanNotInsertApuestaException;
 import com.devteam.fantasy.exception.CanNotInsertHistoricoBalanceException;
 import com.devteam.fantasy.exception.CanNotInsertWinningNumberException;
@@ -42,6 +43,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import javassist.NotFoundException;
 
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -205,6 +208,22 @@ public class SorteoController {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(cnihbe.getMessage());
 		}
     	return ResponseEntity.ok("Numero Ganador Asignado correctamente");
+    }
+    
+    
+    @PutMapping("/{id}/numero-ganador")
+    @PreAuthorize("hasRole('MASTER')")
+    public ResponseEntity<?> changeWinningNumber(@PathVariable Long id, @Valid @RequestBody ObjectNode json) {
+		try {
+			ObjectMapper mapper = new ObjectMapper();
+	        Integer numero = mapper.convertValue(json.get("numero"), Integer.class);
+			sorteoService.changeWinningNumber(numero,id);
+		} catch (NotFoundException e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+		} catch (CanNotChangeWinningNumberException e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+		}
+        return ResponseEntity.ok("Numero Ganador Cambiado.");
     }
 }
 
