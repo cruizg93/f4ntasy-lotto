@@ -1167,7 +1167,7 @@ public class SorteoServiceImpl implements SorteoService {
 			for(Jugador jugador: jugadores) {
 				List<HistoricoApuestas> apuestas 			= historicoApuestaRepository.findAllBySorteoAndUser(sorteo, jugador);
 				SummaryResponse summary 					= sorteoTotales.processHitoricoApuestas(apuestas, jugador.getMoneda().getMonedaName().toString());
-				List<HistoricoBalance> historicoBalances 	= historicoBalanceRepository.findallByWeekAndJugadorAndBalanceTypeOrderBySorteoTimeAsc(week,jugador, BalanceType.BY_SORTEO);
+				List<HistoricoBalance> historicoBalances 	= historicoBalanceRepository.findAllByWeekAndJugadorAndBalanceTypeOrderBySorteoTimeAsc(week,jugador, BalanceType.BY_SORTEO);
 				Optional<HistoricoBalance> historicoBalanceWeekly = historicoBalanceRepository.findByBalanceTypeAndJugadorAndWeek(BalanceType.WEEKLY, jugador, week);
 				
 				BigDecimal sorteoBalance = BigDecimal.valueOf(summary.getPremios()).subtract(BigDecimal.valueOf(summary.getSubTotal()));

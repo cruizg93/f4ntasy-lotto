@@ -15,5 +15,5 @@ public interface HistoricoBalanceRepository extends JpaRepository<HistoricoBalan
     List<HistoricoBalance> findAllBySorteoTime(Timestamp sorteoTime);
     HistoricoBalance findBySorteoTimeAndJugador(Timestamp sorteoTime, Jugador jugador);
     Optional<HistoricoBalance> findByBalanceTypeAndJugadorAndWeek(BalanceType balanceType, Jugador jugador, Week week);
-	List<HistoricoBalance> findallByWeekAndJugadorAndBalanceTypeOrderBySorteoTimeAsc(Week week, Jugador jugador,BalanceType daily);
+	List<HistoricoBalance> findAllByWeekAndJugadorAndBalanceTypeOrderBySorteoTimeAsc(Week week, Jugador jugador,BalanceType daily);
 }
