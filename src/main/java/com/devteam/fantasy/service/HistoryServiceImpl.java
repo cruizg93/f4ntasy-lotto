@@ -222,7 +222,7 @@ public class HistoryServiceImpl implements HistoryService {
 					
 					PairDayBalance sorteosPasado = new PairDayBalance();
 					sorteosPasado.setSorteoTime(Util.getDayFromTimestamp(sorteo.getSorteoTime()));
-					sorteosPasado.setBalance(historicoBalance.compareTo(BigDecimal.ZERO)==0?historicoBalance.doubleValue():prevBalance.doubleValue());
+					sorteosPasado.setBalance(historicoBalance.compareTo(BigDecimal.ZERO)!=0?historicoBalance.doubleValue():prevBalance.doubleValue());
 					sorteosPasado.setSummary(summaryDay);
 					pairDaysBalance.add(sorteosPasado);
 					
