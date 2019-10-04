@@ -302,7 +302,7 @@ public class HistoryServiceImpl implements HistoryService {
 				}
 				
 				if( balance.isPresent()) {
-					double currencyExchange = MathUtil.getDollarChangeRateOriginalMoneda(balance.get().getCambio(),balance.get().getMoneda().getMonedaName().toString(), moneda);
+					double currencyExchange = MathUtil.getDollarChangeRateOriginalMoneda(balance.get().getCambio(),balance.get().getMoneda().getMonedaName().toString(), jugador.getMoneda().getMonedaName().toString());
 					BigDecimal balanceTotal = BigDecimal.valueOf(balance.get().getBalance()).multiply(BigDecimal.valueOf(currencyExchange));
 					
 					jugadorWeek.setBalance(balanceTotal.doubleValue());
@@ -317,7 +317,7 @@ public class HistoryServiceImpl implements HistoryService {
 				jugadorWeek.setId(jugador.getId());
 				jugadorWeek.setName(jugador.getName());
 				jugadorWeek.setUsername(jugador.getUsername());
-				jugadorWeek.setMoneda(moneda);
+				jugadorWeek.setMoneda(jugador.getMoneda().getMonedaName().toString());
 				
 				jugadoresResponse.add(jugadorWeek);
 			}
