@@ -1249,7 +1249,7 @@ public class AdminController {
         List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUserOrderByNumeroAsc(sorteoDiaria, user);
         List<PairNV> pairNVList = new ArrayList<>();
         double total = 0;
-        Jugador jugador=null;
+        Jugador jugador;
         if(user instanceof Jugador){
             jugador = (Jugador) user;
         }else{
@@ -1274,7 +1274,7 @@ public class AdminController {
         ApuestaActivaDetallesResponse detallesResponse = new ApuestaActivaDetallesResponse();
         detallesResponse.setApuestas(pairNVList);
         detallesResponse.setTotal(total);
-        detallesResponse.setTitle("Apuestas propias de - " + getUsernameStringFromObjectNode(json));
+        detallesResponse.setTitle(jugador.getUsername() +" - "+Util.getMonedaSymbolFromMonedaName(jugador.getMoneda().getMonedaName())+" ["+jugador.getName()+"]");
         detallesResponse.setMoneda(jugador.getMoneda().getMonedaName().toString());
         apuestasDetails.add(detallesResponse);
         List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
@@ -1285,12 +1285,12 @@ public class AdminController {
                 List<PairNV> pairNVList1 = new ArrayList<>();
                 double total1 = 0;
                 for (Apuesta apuesta : apuestaList) {
-                    total1 += apuesta.getCantidad();
+                    total1 += apuesta.getCantidad() * MathUtil.getCantidadMultiplier(jugador, apuesta, sorteo.getSorteoType().getSorteoTypeName(), jugador.getMoneda().getMonedaName()).doubleValue();
                     pairNVList1.add(new PairNV(apuesta.getNumero(), apuesta.getCantidad()));
                 }
                 detallesResponse1.setApuestas(pairNVList1);
                 detallesResponse1.setTotal(total1);
-                detallesResponse1.setTitle("Apuestas de " + asistente.getUsername());
+                detallesResponse1.setTitle(asistente.getUsername()+" ["+asistente.getName()+"]");
                 apuestasDetails.add(detallesResponse1);
             }
         });

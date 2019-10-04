@@ -278,7 +278,7 @@ public class PlayerController {
         ApuestaActivaDetallesResponse detallesResponse = new ApuestaActivaDetallesResponse();
         detallesResponse.setApuestas(pairNVList);
         detallesResponse.setTotal(total);
-        detallesResponse.setTitle("Apuestas mias - " + getUsernameStringFromObjectNode(json));
+        detallesResponse.setTitle(jugador.getUsername() +" - "+Util.getMonedaSymbolFromMonedaName(jugador.getMoneda().getMonedaName())+" ["+jugador.getName()+"]");
         detallesResponse.setUserId(jugador.getId());
         apuestasDetails.add(detallesResponse);
         List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
@@ -309,7 +309,7 @@ public class PlayerController {
                 Collections.sort(pairNVList1);
                 detallesResponse1.setApuestas(pairNVList1);
                 detallesResponse1.setTotal(total1);
-                detallesResponse1.setTitle("Apuestas de " + asistente.getUsername());
+                detallesResponse1.setTitle(asistente.getUsername()+" ["+asistente.getName()+"]");
                 detallesResponse1.setUserId(asistente.getId());
                 apuestasDetails.add(detallesResponse1);
             }

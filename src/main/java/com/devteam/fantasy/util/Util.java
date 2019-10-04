@@ -605,6 +605,9 @@ public class Util {
 	public static MonedaName getMonedaNameFromString(String monedaType) {
 		return MonedaName.LEMPIRA.toString().equalsIgnoreCase(monedaType)?MonedaName.LEMPIRA:MonedaName.DOLAR;
 	}
+	public static String getMonedaSymbolFromMonedaName(MonedaName moneda) {
+		return MonedaName.LEMPIRA.equals(moneda)?"L":"$";
+	}
 	
 	public static Apuesta mapHistsoricoApuestaToApuesta(HistoricoApuestas apuesta) {
 		Apuesta apuestaTemp = new Apuesta();
