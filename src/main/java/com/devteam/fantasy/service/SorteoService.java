@@ -43,10 +43,15 @@ public interface SorteoService {
 	public void submitApuestas(String username, Long sorteoId, List<NumeroPlayerEntryResponse> apuestasEntry) throws CanNotInsertApuestaException, SorteoEstadoNotValidException;
 	public ApuestaActivaResponse getApuestasActivasBySorteoAndJugador(Long sorteoId, String username);
 	
-	public void deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, String username) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
-	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
+	public void deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, User user) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
+	public void deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
+	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, User user) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
+	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
+	
+	
 	public void cerrarSemana(SorteoDiaria sorteoDiaria, Week week) throws CanNotInsertHistoricoBalanceException;
 	public void changeWinningNumber(int newWinningNumber, Long sorteoId) throws NotFoundException, CanNotChangeWinningNumberException;
 	public void copyApuestasToHistoricoApuestas(SorteoDiaria sorteoDiaria);
+	
 	
 }

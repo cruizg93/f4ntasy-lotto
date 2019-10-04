@@ -166,11 +166,11 @@ public class SorteoController {
         return sorteoService.getApuestasActivasBySorteoAndJugador(id, username);
     }
     
-    @DeleteMapping("/activos/{id}/apuestas/{username}/{numero}")
-    @PreAuthorize("hasRole('USER') or hasRole('ASIS') or hasRole('ADMIN') or hasRole('MASTER')")
-    public ResponseEntity<?> deleteApuestasActivasBySorteoAndNumeroAndJugador(@PathVariable Long id, @PathVariable String username, @PathVariable Integer numero) {
+    @DeleteMapping("/activos/{id}/apuestas/{numero}")
+    @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
+    public ResponseEntity<?> deleteApuestasActivasBySorteoAndNumeroAndJugador(@PathVariable Long id, @PathVariable Integer numero) {
     	try {
-			sorteoService.deleteAllApuestasOnSorteoDiarioByNumeroAndUser(id, numero, username);
+			sorteoService.deleteAllApuestasOnSorteoDiarioByNumeroAndUser(id, numero);
     	} catch (CanNotRemoveApuestaException e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
 		}catch (SorteoEstadoNotValidException e) {
@@ -179,11 +179,39 @@ public class SorteoController {
         return ResponseEntity.ok("Apuesta Eliminada Correctamente.");
     }
     
-    @DeleteMapping("/activos/{id}/apuestas/{username}")
-    @PreAuthorize("hasRole('USER') or hasRole('ASIS') or hasRole('ADMIN') or hasRole('MASTER')")
-    public ResponseEntity<?> deleteApuestasActivasBySorteoAndJugador(@PathVariable Long id, @PathVariable String username) {
+    @DeleteMapping("/activos/{id}/apuestas")
+    @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
+    public ResponseEntity<?> deleteApuestasActivasBySorteoAndJugador(@PathVariable Long id) {
     	try {
-			sorteoService.deleteAllApuestasOnSorteoDiarioByUser(id, username);
+			sorteoService.deleteAllApuestasOnSorteoDiarioByUser(id);
+		} catch (CanNotRemoveApuestaException e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+		}catch (SorteoEstadoNotValidException e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+		}
+    	
+        return ResponseEntity.ok("Apuesta Eliminada Correctamente.");
+    }
+    
+    @DeleteMapping("/activos/{id}/jugadores/{jugadorId}/apuestas/{numero}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    public ResponseEntity<?> deleteApuestasActivasBySorteoAndNumeroAndJugador(@PathVariable Long id, @PathVariable Long jugadorId, @PathVariable Integer numero) {
+    	try {
+    		User user = userService.getById(jugadorId);
+			sorteoService.deleteAllApuestasOnSorteoDiarioByNumeroAndUser(id, numero, user);
+    	} catch (CanNotRemoveApuestaException e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+		}catch (SorteoEstadoNotValidException e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+		}
+        return ResponseEntity.ok("Apuesta Eliminada Correctamente.");
+    }
+    
+    @DeleteMapping("/activos/{id}/jugadores/{jugadorId}/apuestas")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    public ResponseEntity<?> deleteApuestasActivasBySorteoAndJugador(@PathVariable Long id, @PathVariable Long jugadorId) {
+    	try {
+			sorteoService.deleteAllApuestasOnSorteoDiarioByUser(id);
 		} catch (CanNotRemoveApuestaException e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
 		}catch (SorteoEstadoNotValidException e) {
@@ -211,9 +239,15 @@ public class SorteoController {
     
     @PutMapping("/{id}/numero-ganador")
     @PreAuthorize("hasRole('MASTER')")
-    public ResponseEntity<?> changeWinningNumber(@PathVariable Long id, @Valid @RequestBody Integer	numero) {
+    public ResponseEntity<?> changeWinningNumber(@PathVariable Long id, @Valid @RequestBody  ObjectNode jsonNodes) {
 		try {
 			ObjectMapper mapper = new ObjectMapper();
+	        Integer numero = null;
+	        try {
+	        	numero = mapper.convertValue(jsonNodes.get("numero"), Integer.class);
+	        }catch(Exception numberException) {
+	        	return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(numberException.getMessage());
+	        }
 			sorteoService.changeWinningNumber(numero,id);
 		} catch (NotFoundException e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());

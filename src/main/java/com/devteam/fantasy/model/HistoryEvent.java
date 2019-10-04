@@ -64,6 +64,26 @@ public class HistoryEvent {
 	public User getUser() {
 		return user;
 	}
+	
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public void setEventType(HistoryEventType eventType) {
+		this.eventType = eventType;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
+
+	public void setCreatedDate(Timestamp createdDate) {
+		this.createdDate = createdDate;
+	}
 
 	public Timestamp getCreatedDate() {
 		return Timestamp.valueOf(LocalDateTime.now());

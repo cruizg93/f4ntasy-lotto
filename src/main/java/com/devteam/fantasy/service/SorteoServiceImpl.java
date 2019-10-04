@@ -1020,13 +1020,16 @@ public class SorteoServiceImpl implements SorteoService {
 	}
 
 	@Override
-	public void deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, String username)
-			throws CanNotRemoveApuestaException, SorteoEstadoNotValidException {
+	public void deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException {
+		User user = userService.getLoggedInUser();
+		deleteAllApuestasOnSorteoDiarioByNumeroAndUser(sorteoId, numero,user);
+	}
+	
+	@Override
+	public void deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, User user) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException {
 		SorteoDiaria sorteoDiaria = null;
 		try {
-			logger.debug("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long {}, Integer {}, String {}): START",
-					sorteoId, numero, username);
-			User user = userRepository.getByUsername(username);
+			logger.debug("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long {}, Integer {}, User {}): START",sorteoId, numero, user.getUsername());
 			sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
 
 			if (!sorteoDiaria.getSorteo().getEstado().getEstado().equals(EstadoName.ABIERTA)
@@ -1034,8 +1037,7 @@ public class SorteoServiceImpl implements SorteoService {
 				throw new SorteoEstadoNotValidException("No se puede eliminar apuestas de un sorteo cerrado");
 			}
 
-			List<Apuesta> apuestasP = apuestaRepository.findAllBySorteoDiariaAndNumeroAndUser(sorteoDiaria, numero,
-					user);
+			List<Apuesta> apuestasP = apuestaRepository.findAllBySorteoDiariaAndNumeroAndUser(sorteoDiaria, numero, user);
 			deleteApuestas(apuestasP);
 
 			if (user instanceof Jugador) {
@@ -1048,8 +1050,7 @@ public class SorteoServiceImpl implements SorteoService {
 			}
 			historyService.createEvent(HistoryEventType.BET_DELETED,sorteoId,String.valueOf(numero),null);
 		} catch (Exception e) {
-			logger.error("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long {}, Integer {}, String {}): CATCH",
-					sorteoId, numero, username);
+			logger.error("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long {}, Integer {}, User {}): CATCH",sorteoId, numero, user.getUsername());
 			logger.error(e.getMessage(), e);
 
 			if (e instanceof SorteoEstadoNotValidException) {
@@ -1061,7 +1062,7 @@ public class SorteoServiceImpl implements SorteoService {
 						numero.toString(), e.getMessage());
 			}
 		} finally {
-			logger.debug("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, String username): END");
+			logger.debug("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, User user): END");
 		}
 	}
 
@@ -1072,14 +1073,21 @@ public class SorteoServiceImpl implements SorteoService {
 	}
 
 	@Override
-	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username)
+	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException {
+		User user = userService.getLoggedInUser();
+		deleteAllApuestasOnSorteoDiarioByUser(sorteoId, user);
+		
+	}
+	
+	
+	@Override
+	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, User user)
 			throws CanNotRemoveApuestaException, SorteoEstadoNotValidException {
 		SorteoDiaria sorteoDiaria = null;
 		List<Integer> numeros = new ArrayList<>();
 		
 		try {
-			logger.debug("deleteAllApuestasOnSorteoDiarioByUser(Long {}, String {}): END", sorteoId, username);
-			User user = userRepository.getByUsername(username);
+			logger.debug("deleteAllApuestasOnSorteoDiarioByUser(Long {}, User {}): START", sorteoId, user.getUsername());
 			sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
 
 			if (sorteoDiaria.getSorteo().getEstado().getEstado().equals(EstadoName.CERRADA)) {
@@ -1106,11 +1114,11 @@ public class SorteoServiceImpl implements SorteoService {
 			}
 			
 		} catch(CanNotRemoveApuestaException cnrae){
-			logger.error("deleteAllApuestasOnSorteoDiarioByUser(Long {}, String {}): CATCH", sorteoId, username);
+			logger.error("deleteAllApuestasOnSorteoDiarioByUser(Long {}, User {}): CATCH", sorteoId, user.getUsername());
 			logger.error(cnrae.getMessage(), cnrae);
 			throw new CanNotRemoveApuestaException(sorteoDiaria != null ? sorteoDiaria.getSorteo().getSorteoTime().toString(): "Sorteo Id" + sorteoId,cnrae.getMessage());
 		} catch (SorteoEstadoNotValidException e) {
-			logger.error("deleteAllApuestasOnSorteoDiarioByUser(Long {}, String {}): CATCH", sorteoId, username);
+			logger.error("deleteAllApuestasOnSorteoDiarioByUser(Long {}, User {}): CATCH", sorteoId, user.getUsername());
 			logger.error(e.getMessage(), e);
 			throw new SorteoEstadoNotValidException(e.getMessage());
 		}finally {
@@ -1143,6 +1151,7 @@ public class SorteoServiceImpl implements SorteoService {
 	public void changeWinningNumber(int newWinningNumber, Long sorteoId) throws NotFoundException, CanNotChangeWinningNumberException {
 		try {
 			logger.debug("changeWinningNumber(int {}, Long {}): START", newWinningNumber, sorteoId);
+			logger.info("changeWinningNumber(int {}, Long {}): START", newWinningNumber, sorteoId);
 			Sorteo sorteo 						= sorteoRepository.findById(sorteoId).orElseThrow(() -> new NotFoundException("Sorteo with Id="+sorteoId+" not found"));
 			NumeroGanador currentNumeroGanador	= numeroGanadorRepository.getNumeroGanadorBySorteo(sorteo).orElseThrow(() -> new NotFoundException("Numero Ganador not found for Sorteo with Id="+sorteoId));
 			Week week							= getWeekFromSorteoTime(sorteo.getSorteoTime());
@@ -1152,14 +1161,17 @@ public class SorteoServiceImpl implements SorteoService {
 			}
 
 			logger.debug("Deleting currentNumeroGanador for sorteo [{},{}]...",sorteoId,sorteo.getSorteoTime());
+			logger.info("Deleting currentNumeroGanador for sorteo [{},{}]...",sorteoId,sorteo.getSorteoTime());
 			numeroGanadorRepository.delete(currentNumeroGanador);
 			logger.debug("Creating newNumeroGanador for sorteo [{},{}]...",sorteoId,sorteo.getSorteoTime());
+			logger.info("Creating newNumeroGanador for sorteo [{},{}]...",sorteoId,sorteo.getSorteoTime());
 			NumeroGanador newNumeroGanador = new NumeroGanador();
 			newNumeroGanador.setNumeroGanador(newWinningNumber);
 			newNumeroGanador.setSorteo(sorteo);
 			numeroGanadorRepository.save(newNumeroGanador);
 			
 			logger.debug("Recalculating balance...");
+			logger.info("Recalculating balance...");
 			Set<Jugador> jugadores	= jugadorRepository.findAllWithHistoricoApuestasOnSorteo(sorteo);
 			BigDecimal balanceAnterior = BigDecimal.ZERO;
 			
@@ -1191,22 +1203,31 @@ public class SorteoServiceImpl implements SorteoService {
 					}
 				}
 				logger.debug("Updating sorteos balances...");
+				logger.info("Updating sorteos balances...");
 				historicoBalanceRepository.saveAll(historicoBalances);
 				
 				if(historicoBalanceWeekly.isPresent()) {
 					logger.debug("Updating weekly balances...");
+					logger.info("Updating weekly balances...");
 					historicoBalanceWeekly.get().setBalance(balanceAnterior.doubleValue());
 					historicoBalanceRepository.save(historicoBalanceWeekly.get());
 				}
+				jugador.setBalance(balanceAnterior.doubleValue());
 			}
+			logger.debug("Updating balance jugadores...");
+			logger.info("Updating balance jugadores...");
+			jugadorRepository.saveAll(jugadores);
 
 		} catch (NotFoundException | CanNotChangeWinningNumberException e) {
+			logger.info("changeWinningNumber(int newWinningNumber, Long sorteoId): CATCH", newWinningNumber, sorteoId);
 			logger.error("changeWinningNumber(int newWinningNumber, Long sorteoId): CATCH", newWinningNumber, sorteoId);
 			logger.error(e.getMessage(),e);
 			throw e;
 		}finally {
 			logger.debug("changeWinningNumber(int newWinningNumber, Long sorteoId): END");
+			logger.info("changeWinningNumber(int newWinningNumber, Long sorteoId): END");
 		}
 		
 	}
 }
+
