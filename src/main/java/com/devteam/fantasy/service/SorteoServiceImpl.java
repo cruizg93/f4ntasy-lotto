@@ -514,7 +514,6 @@ public class SorteoServiceImpl implements SorteoService {
 			Sorteo sorteo = sorteoDiaria.getSorteo();
 			
 			logger.debug("validateWinningNumberPreCondition()");
-			logger.info("validateWinningNumberPreCondition()");
 			validateWinningNumberPreCondition(sorteo);
 			
 			NumeroGanador numeroGanador = new NumeroGanador();
@@ -578,16 +577,16 @@ public class SorteoServiceImpl implements SorteoService {
 					&& Util.getDayOfWeekFromTimestamp(sorteoDiaria.getSorteo().getSorteoTime()).equals(DayOfWeek.SUNDAY)
 					&& Util.getlocalDateTimeHourFromTimestamp(sorteoDiaria.getSorteo().getSorteoTime()) == 21) {
 				logger.debug("Cerrar Semana");
+				logger.info("Cerrar Semana");
             	cerrarSemana(sorteoDiaria, week);
 			}
 		} catch (CanNotInsertWinningNumberException cniwne) {
 			logger.error("setNumeroGanador(Long {}, int {}): CATCH", id, numero);
-			logger.error(cniwne.getMessage());
+			logger.error(cniwne.getMessage(), cniwne);
 			throw cniwne;
 		} catch (CanNotInsertHistoricoBalanceException cnihbe) {
 			logger.error("setNumeroGanador(Long {}, int {}): CATCH", id, numero);
-			logger.error(cnihbe.getMessage());
-			cnihbe.printStackTrace();
+			logger.error(cnihbe.getMessage(), cnihbe);
 			throw cnihbe;
 		} finally {
 			logger.debug("setNumeroGanador(Long id, int numero): END");
@@ -944,7 +943,6 @@ public class SorteoServiceImpl implements SorteoService {
 					apuesta.setDate(Timestamp.valueOf(LocalDateTime.now()));
 					apuestaRepository.save(apuesta);
 				} catch (Exception e) {
-					e.printStackTrace();
 					throw new CanNotInsertApuestaException(sorteoDiaria.getSorteo().getSorteoTime().toString(),
 							entryResponse.getNumero(), e.getMessage());
 				}
@@ -952,7 +950,7 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (CanNotInsertApuestaException ex) {
 			logger.error("submitApuestas(String {}, Long {}, List<NumeroPlayerEntryResponse> {}): CATCH", username,
 					sorteoId, apuestasEntry);
-			logger.error(ex.getMessage());
+			logger.error(ex.getMessage(), ex);
 			throw ex;
 		} finally {
 			logger.debug(
@@ -1052,7 +1050,7 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (Exception e) {
 			logger.error("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long {}, Integer {}, String {}): CATCH",
 					sorteoId, numero, username);
-			logger.error(e.getMessage());
+			logger.error(e.getMessage(), e);
 
 			if (e instanceof SorteoEstadoNotValidException) {
 				throw new SorteoEstadoNotValidException(e.getMessage());
@@ -1084,37 +1082,38 @@ public class SorteoServiceImpl implements SorteoService {
 			User user = userRepository.getByUsername(username);
 			sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
 
-			if (!sorteoDiaria.getSorteo().getEstado().getEstado().equals(EstadoName.ABIERTA)
-					&& !sorteoDiaria.getSorteo().getEstado().getEstado().equals(EstadoName.BLOQUEADA)) {
+			if (sorteoDiaria.getSorteo().getEstado().getEstado().equals(EstadoName.CERRADA)) {
 				throw new SorteoEstadoNotValidException("No se puede eliminar apuestas de un sorteo cerrado");
 			}
 
-			Set<Apuesta> apuestasP = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
-			apuestasP.forEach(x ->{numeros.add(x.getNumero());});
-			deleteApuestas(apuestasP.stream().collect(Collectors.toList()));
+			try {
+				Set<Apuesta> apuestasP = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
+				apuestasP.forEach(x ->{numeros.add(x.getNumero());});
+				deleteApuestas(apuestasP.stream().collect(Collectors.toList()));
 
-			if (user instanceof Jugador) {
-				List<Asistente> asistentes = asistenteRepository.findAllByJugador((Jugador) user);
-				for (Asistente asistente : asistentes) {
-					Set<Apuesta> apuestasX = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
-					apuestasX.forEach(x ->{numeros.add(x.getNumero());});
-					deleteApuestas(apuestasX.stream().collect(Collectors.toList()));
+				if (user instanceof Jugador) {
+					List<Asistente> asistentes = asistenteRepository.findAllByJugador((Jugador) user);
+					for (Asistente asistente : asistentes) {
+						Set<Apuesta> apuestasX = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
+						apuestasX.forEach(x ->{numeros.add(x.getNumero());});
+						deleteApuestas(apuestasX.stream().collect(Collectors.toList()));
+					}
 				}
+				historyService.createEvent(HistoryEventType.BET_DELETED,sorteoId,numeros.toArray().toString(),null);
+				
+			}catch (Exception e) {
+				throw new CanNotRemoveApuestaException(e);
 			}
-			historyService.createEvent(HistoryEventType.BET_DELETED,sorteoId,numeros.toArray().toString(),null);
-		} catch (Exception e) {
+			
+		} catch(CanNotRemoveApuestaException cnrae){
 			logger.error("deleteAllApuestasOnSorteoDiarioByUser(Long {}, String {}): CATCH", sorteoId, username);
-			logger.error(e.getMessage());
-
-			if (e instanceof SorteoEstadoNotValidException) {
-				throw new SorteoEstadoNotValidException(e.getMessage());
-			} else {
-				throw new CanNotRemoveApuestaException(
-						sorteoDiaria != null ? sorteoDiaria.getSorteo().getSorteoTime().toString()
-								: "Sorteo Id" + sorteoId,
-						e.getMessage());
-			}
-		} finally {
+			logger.error(cnrae.getMessage(), cnrae);
+			throw new CanNotRemoveApuestaException(sorteoDiaria != null ? sorteoDiaria.getSorteo().getSorteoTime().toString(): "Sorteo Id" + sorteoId,cnrae.getMessage());
+		} catch (SorteoEstadoNotValidException e) {
+			logger.error("deleteAllApuestasOnSorteoDiarioByUser(Long {}, String {}): CATCH", sorteoId, username);
+			logger.error(e.getMessage(), e);
+			throw new SorteoEstadoNotValidException(e.getMessage());
+		}finally {
 			logger.debug("deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username): END");
 		}
 	}
@@ -1203,8 +1202,7 @@ public class SorteoServiceImpl implements SorteoService {
 
 		} catch (NotFoundException | CanNotChangeWinningNumberException e) {
 			logger.error("changeWinningNumber(int newWinningNumber, Long sorteoId): CATCH", newWinningNumber, sorteoId);
-			logger.error(e.getMessage());
-			e.printStackTrace();
+			logger.error(e.getMessage(),e);
 			throw e;
 		}finally {
 			logger.debug("changeWinningNumber(int newWinningNumber, Long sorteoId): END");

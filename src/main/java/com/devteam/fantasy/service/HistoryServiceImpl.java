@@ -42,6 +42,7 @@ import com.devteam.fantasy.model.HistoryEvent;
 import com.devteam.fantasy.model.Jugador;
 import com.devteam.fantasy.model.NumeroGanador;
 import com.devteam.fantasy.model.Sorteo;
+import com.devteam.fantasy.model.SorteoType;
 import com.devteam.fantasy.model.User;
 import com.devteam.fantasy.model.Week;
 import com.devteam.fantasy.repository.AsistenteRepository;
@@ -59,6 +60,7 @@ import com.devteam.fantasy.util.EstadoName;
 import com.devteam.fantasy.util.HistoryEventType;
 import com.devteam.fantasy.util.MonedaName;
 import com.devteam.fantasy.util.PairNV;
+import com.devteam.fantasy.util.SorteoTypeName;
 import com.devteam.fantasy.util.Util;
 
 import javassist.NotFoundException;
@@ -140,7 +142,7 @@ public class HistoryServiceImpl implements HistoryService {
 			logger.debug("getSorteosPasadosCasaByWeek(Long {},String {}): START", weekId,moneda);
 			Week week 									= weekRepository.findById(weekId).orElseThrow(() -> new NotFoundException("Not Week Found"));
 			
-			List<Sorteo> sorteos 						= sorteoRepository.findAllBySorteoTimeBetweenOrderBySorteoTime(week.getMonday(),week.getSunday());
+			List<Sorteo> sorteos 						= sorteoRepository.findAllBySorteoTimeBetweenAndEstadoOrderBySorteoTime(week.getMonday(),week.getSunday(), estadoRepository.getEstadoByEstado(EstadoName.CERRADA));
 			List<PairDayBalance> pairDaysBalance 		= new ArrayList<>();
 			
 			BigDecimal comisionWeek 	= BigDecimal.ZERO;
@@ -272,8 +274,7 @@ public class HistoryServiceImpl implements HistoryService {
 			
 		}catch (Exception e) {
 			logger.error("getSorteosPasadosCasaByWeek(Long {},String {}): CATCH", weekId,moneda);
-			logger.error(e.getMessage());
-			e.printStackTrace();
+			logger.error(e.getMessage(),e);
 			throw e;
 		}finally {
 			logger.debug("getSorteosPasadosCasaByWeek(Long weekID,String moneda): END");
@@ -330,8 +331,7 @@ public class HistoryServiceImpl implements HistoryService {
 			
 		} catch (Exception e) {
 			logger.error("SorteosPasadosJugadores getSorteosPasadosJugadoresByWeek(Long {}, String {}): CATCH", weekId,moneda);
-			logger.error(e.getMessage());
-			e.printStackTrace();
+			logger.error(e.getMessage(), e);
 			throw e;
 		}finally {
 			logger.debug("SorteosPasadosJugadores getSorteosPasadosJugadoresByWeek(Long weekID, String moneda): END");
@@ -487,8 +487,7 @@ public class HistoryServiceImpl implements HistoryService {
 			return sorteosPasadosJugador;
 		}catch (Exception e) {
 			logger.debug("getSorteosPasadosJugadorByWeek(Long {},jugador {}): CATCH", weekId,user.getId());
-			logger.error(e.getMessage());
-			e.printStackTrace();
+			logger.error(e.getMessage(), e);
 			throw e;
 		}
 		finally {
@@ -592,8 +591,7 @@ public class HistoryServiceImpl implements HistoryService {
 			sorteosPasadosApuestas.setSummary(summary);
 		} catch (Exception e) {
 			logger.error("getApuestasPasadasBySorteoAndJugador(Long {}, Jugador {}): CATCH", sorteoId, user.getId());
-			logger.error(e.getMessage());
-			e.printStackTrace();
+			logger.error(e.getMessage(), e);
 			throw e;
 		}finally {
 			logger.debug("getApuestasPasadasBySorteoAndJugador(Long sorteoId, Jugador jugador): END");
@@ -673,8 +671,7 @@ public class HistoryServiceImpl implements HistoryService {
 			}
 		} catch (Exception e) {
 			logger.error("List<NumeroGanadorSorteoResponse> getNumerosGanadores(): CATCH");
-			logger.error(e.getMessage());
-			e.printStackTrace();
+			logger.error(e.getMessage(),e);
 			throw e;
 		}finally {
 			logger.debug("List<NumeroGanadorSorteoResponse> getNumerosGanadores(): END");
@@ -734,8 +731,7 @@ public class HistoryServiceImpl implements HistoryService {
             });
 		} catch (Exception e) {
 			logger.error("List<HistoricoApuestaDetallesResponse> getHistoricoApuestaDetallesX(Long {}, User {}): CATCH",id, user.getId());
-			logger.error(e.getMessage());
-			e.printStackTrace();
+			logger.error(e.getMessage(),e);
 			throw e;
 		}finally {
 			logger.debug("List<HistoricoApuestaDetallesResponse> getHistoricoApuestaDetallesX(Long id, User user): END");

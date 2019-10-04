@@ -5,6 +5,8 @@ import com.devteam.fantasy.model.Sorteo;
 import com.devteam.fantasy.model.SorteoDiaria;
 import com.devteam.fantasy.model.SorteoType;
 import com.devteam.fantasy.model.Status;
+import com.devteam.fantasy.util.EstadoName;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -38,5 +40,8 @@ public interface SorteoRepository extends CrudRepository<Sorteo, Long> {
 
 	@Query("SELECt s From NumeroGanador ng JOIN ng.sorteo s WHERE s.sorteoTime BETWEEN :monday AND :sunday AND ng.sorteo = s ORDER BY s.sorteoTime")
 	List<Sorteo> findAllBySorteoTimeBetweenOrderBySorteoTimeWithNumeroGanadorNotNull(Timestamp monday, Timestamp sunday);
+
+	List<Sorteo> findAllBySorteoTimeBetweenAndEstadoOrderBySorteoTime(Timestamp monday, Timestamp sunday,
+			Estado estadoByEstado);
 	
 }

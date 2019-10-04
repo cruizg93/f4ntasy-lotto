@@ -172,7 +172,6 @@ public class SorteoController {
     	try {
 			sorteoService.deleteAllApuestasOnSorteoDiarioByNumeroAndUser(id, numero, username);
     	} catch (CanNotRemoveApuestaException e) {
-			e.printStackTrace();
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
 		}catch (SorteoEstadoNotValidException e) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
@@ -186,7 +185,6 @@ public class SorteoController {
     	try {
 			sorteoService.deleteAllApuestasOnSorteoDiarioByUser(id, username);
 		} catch (CanNotRemoveApuestaException e) {
-			e.printStackTrace();
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
 		}catch (SorteoEstadoNotValidException e) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());

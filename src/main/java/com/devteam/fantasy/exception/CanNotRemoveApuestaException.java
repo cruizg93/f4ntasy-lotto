@@ -7,6 +7,10 @@ public class CanNotRemoveApuestaException extends Exception {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	public CanNotRemoveApuestaException(Throwable t) {
+		super(t);
+	}
+	
 	public CanNotRemoveApuestaException(String sorteoTitle, String message) {
 		super("Error deleting all bets for for the sorteo: "+sorteoTitle+". "+message);
 	}
