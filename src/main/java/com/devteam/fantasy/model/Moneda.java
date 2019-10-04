@@ -43,9 +43,6 @@ public class Moneda {
 
     @Override
     public String toString() {
-        if(monedaName.equals(MonedaName.DOLAR)){
-            return "dolar";
-        }
-        return "lempiras";
+        return monedaName.toString();
     }
 }

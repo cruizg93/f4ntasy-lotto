@@ -10,6 +10,7 @@ import com.devteam.fantasy.service.SorteoService;
 import com.devteam.fantasy.service.SorteoServiceImpl;
 import com.devteam.fantasy.service.UserService;
 import com.devteam.fantasy.util.EstadoName;
+import com.devteam.fantasy.util.MonedaName;
 import com.devteam.fantasy.util.PairNV;
 import com.devteam.fantasy.util.SorteoTypeName;
 import com.devteam.fantasy.util.Util;
@@ -800,10 +801,12 @@ public class PlayerController {
     @PreAuthorize("hasRole('USER')")
     public ObjectNode getJugadorBalance(@Valid @RequestBody ObjectNode json) {
     	User user = getUserFromJsonNode(json);
+    	Jugador jugador = Util.getJugadorFromUser(user);
+    	
     	ObjectMapper mapper = new ObjectMapper();
     	ObjectNode node = mapper.createObjectNode();
-    	node.put("balance", ((Jugador) user).getBalance());
-    	node.put("currency", ((Jugador) user).getMoneda().toString().equalsIgnoreCase("lempira")?"L":"$");
+    	node.put("balance", jugador.getBalance());
+    	node.put("currency", jugador.getMoneda().getMonedaName().compareTo(MonedaName.LEMPIRA)==0?"L":"$");
         return node;
     }
     

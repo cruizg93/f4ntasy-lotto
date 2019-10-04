@@ -211,10 +211,9 @@ public class SorteoController {
     
     @PutMapping("/{id}/numero-ganador")
     @PreAuthorize("hasRole('MASTER')")
-    public ResponseEntity<?> changeWinningNumber(@PathVariable Long id, @Valid @RequestBody ObjectNode json) {
+    public ResponseEntity<?> changeWinningNumber(@PathVariable Long id, @Valid @RequestBody Integer	numero) {
 		try {
 			ObjectMapper mapper = new ObjectMapper();
-	        Integer numero = mapper.convertValue(json.get("numero"), Integer.class);
 			sorteoService.changeWinningNumber(numero,id);
 		} catch (NotFoundException e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
