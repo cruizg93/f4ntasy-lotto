@@ -139,6 +139,7 @@ public class SorteoTotales {
             
             if(numero.getNumeroGanador() == apuesta.getNumero()) {
         		premios = premios.add(BigDecimal.valueOf(apuesta.getCantidad()).multiply(BigDecimal.valueOf(apuesta.getPremioMultiplier())));
+        		premios = premios.multiply(BigDecimal.valueOf(currencyExchange));
             }
         }
 		
