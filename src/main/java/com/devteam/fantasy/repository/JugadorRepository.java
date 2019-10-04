@@ -17,6 +17,6 @@ public interface JugadorRepository extends JpaRepository<Jugador, Long> {
 //	Set<Jugador> findallByBalanceLessThan(double d);
 	Set<Jugador> findAllByBalanceNot(double d);
 	
-	@Query("SELECt DISTINCT(j.id) From HistoricoApuestas ha JOIN ha.user j WHERE ha.sorteo = :sorteo")
+	@Query("SELECt DISTINCT(j) From HistoricoApuestas ha JOIN ha.user j WHERE ha.sorteo = :sorteo")
 	Set<Jugador> findAllWithHistoricoApuestasOnSorteo(Sorteo sorteo);
 }

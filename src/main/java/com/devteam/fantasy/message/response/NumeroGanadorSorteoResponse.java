@@ -8,6 +8,8 @@ public class NumeroGanadorSorteoResponse {
 	
 	private Long numeroGanadorId;
 	
+	private Long sorteoId;
+	
 	private String sorteoType;
 	
 	private String hour;
@@ -17,6 +19,14 @@ public class NumeroGanadorSorteoResponse {
 	private double premio;
 	
 	private List<PairJP> jugadores;
+
+	public Long getSorteoId() {
+		return sorteoId;
+	}
+
+	public void setSorteoId(Long sorteoId) {
+		this.sorteoId = sorteoId;
+	}
 
 	public String getNumero() {
 		return numero;

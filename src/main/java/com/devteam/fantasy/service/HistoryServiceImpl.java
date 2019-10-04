@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,7 @@ import com.devteam.fantasy.message.response.SorteosPasadosDays;
 import com.devteam.fantasy.message.response.SorteosPasadosJugadores;
 import com.devteam.fantasy.message.response.SummaryResponse;
 import com.devteam.fantasy.message.response.WeekResponse;
+import com.devteam.fantasy.model.Apuesta;
 import com.devteam.fantasy.model.Asistente;
 import com.devteam.fantasy.model.Bono;
 import com.devteam.fantasy.model.Estado;
@@ -167,13 +169,13 @@ public class HistoryServiceImpl implements HistoryService {
 				List<HistoricoBalance> historicoBalanceList = historicoBalanceRepository.findAllBySorteoTime(sorteo.getSorteoTime());
 				BigDecimal historicoBalance 				= BigDecimal.ZERO;
 				for(HistoricoBalance hb: historicoBalanceList) {
-					historicoBalance = historicoBalance.add(BigDecimal.valueOf(hb.getBalanceSemana()));
+					historicoBalance = historicoBalance.add(BigDecimal.valueOf(hb.getBalance()));
 					
 					double currencyExchange = MathUtil.getDollarChangeRateOriginalMoneda(hb.getCambio(),hb.getMoneda().getMonedaName().toString(), moneda);
 					historicoBalance = historicoBalance.multiply(BigDecimal.valueOf(currencyExchange)); 
 				}
 				
-				prevBalance = historicoBalance.compareTo(BigDecimal.ZERO)!=0?historicoBalance:prevBalance;
+				prevBalance = historicoBalance.compareTo(BigDecimal.ZERO)!=0?prevBalance.add(historicoBalance):prevBalance;
 				
 				List<HistoricoApuestas> apuestas = historicoApuestaRepository.findAllBySorteo(sorteo);
 				SummaryResponse summarySorteo = sorteoTotales.processHitoricoApuestas(apuestas, moneda);
@@ -222,7 +224,7 @@ public class HistoryServiceImpl implements HistoryService {
 					
 					PairDayBalance sorteosPasado = new PairDayBalance();
 					sorteosPasado.setSorteoTime(Util.getDayFromTimestamp(sorteo.getSorteoTime()));
-					sorteosPasado.setBalance(historicoBalance.compareTo(BigDecimal.ZERO)!=0?historicoBalance.doubleValue():prevBalance.doubleValue());
+					sorteosPasado.setBalance(prevBalance.doubleValue());
 					sorteosPasado.setSummary(summaryDay);
 					pairDaysBalance.add(sorteosPasado);
 					
@@ -297,8 +299,15 @@ public class HistoryServiceImpl implements HistoryService {
 				JugadorBalanceWeek jugadorWeek = new JugadorBalanceWeek(); 
 				
 				Optional<HistoricoBalance> balance = historicoBalanceRepository.findByBalanceTypeAndJugadorAndWeek(BalanceType.WEEKLY, jugador, week);
+				
 				if( !balance.isPresent()) {
-					balance = historicoBalanceRepository.findFirstByBalanceTypeAndJugadorAndWeekOrderById(BalanceType.BY_SORTEO, jugador, week);
+					List<HistoricoBalance> weekBalances = historicoBalanceRepository.findAllByBalanceTypeAndJugadorAndWeekOrderById(BalanceType.BY_SORTEO, jugador, week); 
+					Double weekBalanceTotal = weekBalances.stream().map(HistoricoBalance::getBalance).collect(Collectors.summarizingDouble(d->d)).getSum();
+					
+					if(weekBalances.size() > 0 ) {
+						balance = Optional.of(weekBalances.get(weekBalances.size()-1));
+						balance.get().setBalance(weekBalanceTotal);
+					}
 				}
 				
 				if( balance.isPresent()) {
@@ -307,7 +316,6 @@ public class HistoryServiceImpl implements HistoryService {
 					
 					jugadorWeek.setBalance(balanceTotal.doubleValue());
 				}
-				
 				
 				Optional<Bono> bono = bonoRepository.findByWeekAndUser(week, jugador);
 				if(bono.isPresent()) {
@@ -379,7 +387,7 @@ public class HistoryServiceImpl implements HistoryService {
 				Sorteo sorteo						= sorteos.get(i);
 				HistoricoBalance historicoBalance	= historicoBalanceRepository.findBySorteoTimeAndJugador(sorteo.getSorteoTime(), jugador);
 				LocalDateTime sorteoTime			= sorteo.getSorteoTime().toLocalDateTime();
-				prevBalance 						= historicoBalance!=null?historicoBalance.getBalanceSemana():prevBalance;
+				prevBalance 						= historicoBalance!=null?prevBalance+historicoBalance.getBalance():prevBalance;
 				
 				List<HistoricoApuestas> apuestas = new ArrayList<>();
 				if(user instanceof Jugador) {
@@ -436,7 +444,7 @@ public class HistoryServiceImpl implements HistoryService {
 					
 					PairDayBalance sorteosPasado = new PairDayBalance();
 					sorteosPasado.setSorteoTime(Util.getDayFromTimestamp(sorteo.getSorteoTime()));
-					sorteosPasado.setBalance(historicoBalance!=null?historicoBalance.getBalanceSemana():prevBalance);
+					sorteosPasado.setBalance(prevBalance);
 					sorteosPasado.setSummary(summaryDay);
 					pairDaysBalance.add(sorteosPasado);
 					
@@ -660,6 +668,7 @@ public class HistoryServiceImpl implements HistoryService {
 				NumeroGanadorSorteoResponse numeroResponse = new NumeroGanadorSorteoResponse();
 				numeroResponse.setNumero(numero.getNumeroGanador()<10?"0"+numero.getNumeroGanador():String.valueOf(numero.getNumeroGanador()));
 				numeroResponse.setNumeroGanadorId(numero.getId());
+				numeroResponse.setSorteoId(numero.getSorteo().getId());
 				numeroResponse.setSorteoType(numero.getSorteo().getSorteoType().getSorteoTypeName().toString());
 				
 				numeroResponse.setJugadores(premios);

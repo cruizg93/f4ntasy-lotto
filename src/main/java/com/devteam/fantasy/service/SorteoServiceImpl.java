@@ -562,12 +562,12 @@ public class SorteoServiceImpl implements SorteoService {
 
 				sorteoTotales.processSorteo(jugador, sorteoDiaria);
 				BigDecimal totalApuestas = sorteoTotales.getTotalBD();
-				BigDecimal result = premio.subtract(totalApuestas);
+				BigDecimal balanceSorteo = premio.subtract(totalApuestas);
 				
-				BigDecimal newBalance = BigDecimal.valueOf(jugador.getBalance()).add(result);
+				BigDecimal newBalance = BigDecimal.valueOf(jugador.getBalance()).add(balanceSorteo);
 				jugador.setBalance(newBalance.doubleValue());
 				jugadorRepository.save(jugador);
-				createHistoricoBalance(loggedUser,currentCambio,jugador, BalanceType.BY_SORTEO ,sorteoDiaria.getSorteoTime(), week);
+				createHistoricoBalance(loggedUser,currentCambio,jugador,balanceSorteo.doubleValue(), BalanceType.BY_SORTEO ,sorteoDiaria.getSorteoTime(), week);
 			}
 			
 			copyApuestasToHistoricoApuestas(sorteoDiaria);
@@ -623,7 +623,7 @@ public class SorteoServiceImpl implements SorteoService {
 			Long weekId = null;
 			for(Jugador jugador:jugadoresWithBalance){
 				try {
-					HistoricoBalance historicoBalance = createHistoricoBalance(loggedUser, currentCambio, jugador, BalanceType.WEEKLY ,sorteoDiaria.getSorteoTime(), week);
+					HistoricoBalance historicoBalance = createHistoricoBalance(loggedUser, currentCambio, jugador,null,BalanceType.WEEKLY,sorteoDiaria.getSorteoTime(), week);
 					jugador.setBalance(0);
 					jugadorRepository.save(jugador);
 					
@@ -640,11 +640,10 @@ public class SorteoServiceImpl implements SorteoService {
 		}
 	}
 
-	private HistoricoBalance createHistoricoBalance(User loggedUser, Cambio currentCambio, Jugador jugador, BalanceType balanceType, Timestamp sorteoTime, Week week) throws CanNotInsertHistoricoBalanceException {
+	private HistoricoBalance createHistoricoBalance(User loggedUser, Cambio currentCambio, Jugador jugador, Double balanceSorteo, BalanceType balanceType, Timestamp sorteoTime, Week week) throws CanNotInsertHistoricoBalanceException {
 		HistoricoBalance historico = null;
 		try {
 			historico = new HistoricoBalance();
-			historico.setBalanceSemana(jugador.getBalance());
 			historico.setJugador(jugador);
 			historico.setCreatedBy(loggedUser);
 			historico.setSorteoTime(sorteoTime);
@@ -652,6 +651,13 @@ public class SorteoServiceImpl implements SorteoService {
 			historico.setCambio(currentCambio);
 			historico.setBalanceType(balanceType);
 			historico.setWeek(week);
+			
+			if(balanceType.equals(BalanceType.BY_SORTEO)) {
+				historico.setBalance(balanceSorteo);
+			}else if(balanceType.equals(BalanceType.WEEKLY)) {
+				historico.setBalance(jugador.getBalance());
+			}
+			
 			historicoBalanceRepository.save(historico);
 		}catch (Exception e) {
 			throw new CanNotInsertHistoricoBalanceException(e);
@@ -1026,6 +1032,7 @@ public class SorteoServiceImpl implements SorteoService {
 	}
 	
 	@Override
+	@Transactional(rollbackFor = {CanNotRemoveApuestaException.class , SorteoEstadoNotValidException.class})
 	public void deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, User user) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException {
 		SorteoDiaria sorteoDiaria = null;
 		try {
@@ -1081,6 +1088,7 @@ public class SorteoServiceImpl implements SorteoService {
 	
 	
 	@Override
+	@Transactional(rollbackFor = {SorteoEstadoNotValidException.class , CanNotRemoveApuestaException.class})
 	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, User user)
 			throws CanNotRemoveApuestaException, SorteoEstadoNotValidException {
 		SorteoDiaria sorteoDiaria = null;
@@ -1173,7 +1181,7 @@ public class SorteoServiceImpl implements SorteoService {
 			logger.debug("Recalculating balance...");
 			logger.info("Recalculating balance...");
 			Set<Jugador> jugadores	= jugadorRepository.findAllWithHistoricoApuestasOnSorteo(sorteo);
-			BigDecimal balanceAnterior = BigDecimal.ZERO;
+			
 			
 			for(Jugador jugador: jugadores) {
 				List<HistoricoApuestas> apuestas 			= historicoApuestaRepository.findAllBySorteoAndUser(sorteo, jugador);
@@ -1181,8 +1189,9 @@ public class SorteoServiceImpl implements SorteoService {
 				List<HistoricoBalance> historicoBalances 	= historicoBalanceRepository.findAllByWeekAndJugadorAndBalanceTypeOrderBySorteoTimeAsc(week,jugador, BalanceType.BY_SORTEO);
 				Optional<HistoricoBalance> historicoBalanceWeekly = historicoBalanceRepository.findByBalanceTypeAndJugadorAndWeek(BalanceType.WEEKLY, jugador, week);
 				
-				BigDecimal sorteoBalance = BigDecimal.valueOf(summary.getPremios()).subtract(BigDecimal.valueOf(summary.getSubTotal()));
-				boolean passedSorteo = false;
+				BigDecimal balanceAnterior 	= BigDecimal.ZERO;
+				BigDecimal sorteoBalance 	= BigDecimal.valueOf(summary.getPremios()).subtract(BigDecimal.valueOf(summary.getSubTotal()));
+				boolean passedSorteo 		= false;
 				
 				for(HistoricoBalance hb: historicoBalances) {
 					

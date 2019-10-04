@@ -73,15 +73,6 @@ public class HistoricoBalance {
 		this.createdBy = createdBy;
 	}
 
-	public double getBalanceSemana() {
-		return balance;
-	}
-
-	public void setBalanceSemana(double balanceSemana) {
-		this.balance = balanceSemana;
-	}
-
-
 	public Jugador getJugador() {
 		return jugador;
 	}
