@@ -301,7 +301,7 @@ public class PlayerController {
                             cantidad *= asistente.getJugador().getCostoChicaPedazos();
                         }
                     }
-                    total1 += apuesta.getCantidad();
+                    total1 += cantidad;
 //                    pairNVList1.add(new PairNV(apuesta.getNumero(), cantidad));
                     pairNVList1.add(new PairNV(apuesta.getNumero(), apuesta.getCantidad()));
 
