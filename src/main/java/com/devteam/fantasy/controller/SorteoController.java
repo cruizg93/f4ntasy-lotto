@@ -98,12 +98,11 @@ public class SorteoController {
 	@PutMapping("/bloquear/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ResponseEntity<?> bloquearApuesta(@PathVariable Long id, @Valid @RequestBody ObjectNode json) {
-//		try {
-//			sorteoService.bloquearApuesta(id);
-//		} catch (InvalidSorteoStateException e) {
-//			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-//		}
-		sorteoService.forceCloseStatus(id);
+		try {
+			sorteoService.bloquearApuesta(id);
+		} catch (InvalidSorteoStateException e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+		}
         return ResponseEntity.ok("Sorteo locked");
     }
     
