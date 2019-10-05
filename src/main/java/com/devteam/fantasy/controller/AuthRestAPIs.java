@@ -55,16 +55,19 @@ public class AuthRestAPIs {
     @CrossOrigin(origins = "*")
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginForm loginRequest) {
-
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsername(),
-                        loginRequest.getPassword()
-                )
-        );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtProvider.generateJwtToken(authentication);
-        return ResponseEntity.ok(new JwtResponseCustom(jwt, loginRequest.getUsername()));
+        try {
+        	Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequest.getUsername(),
+                            loginRequest.getPassword()
+                    )
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = jwtProvider.generateJwtToken(authentication);
+            return ResponseEntity.ok(new JwtResponseCustom(jwt, loginRequest.getUsername()));
+        }catch(Exception e) {
+        	return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuario o Contraseña incorrectos");
+        }
     }
 
     @PostMapping("/signup")
