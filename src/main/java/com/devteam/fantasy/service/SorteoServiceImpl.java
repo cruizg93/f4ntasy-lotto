@@ -1164,9 +1164,8 @@ public class SorteoServiceImpl implements SorteoService {
 			NumeroGanador currentNumeroGanador	= numeroGanadorRepository.getNumeroGanadorBySorteo(sorteo).orElseThrow(() -> new NotFoundException("Numero Ganador not found for Sorteo with Id="+sorteoId));
 			Week week							= getWeekFromSorteoTime(sorteo.getSorteoTime());
 			
-			if(newWinningNumber == currentNumeroGanador.getNumeroGanador()) {
-				throw new CanNotChangeWinningNumberException("El nuevo numero ganador es igual al actual numero ganador");
-			}
+			validateIfWinningNumberCanBeChanged(newWinningNumber, currentNumeroGanador, week);
+			
 
 			logger.debug("Deleting currentNumeroGanador for sorteo [{},{}]...",sorteoId,sorteo.getSorteoTime());
 			logger.info("Deleting currentNumeroGanador for sorteo [{},{}]...",sorteoId,sorteo.getSorteoTime());
@@ -1235,6 +1234,21 @@ public class SorteoServiceImpl implements SorteoService {
 		}finally {
 			logger.debug("changeWinningNumber(int newWinningNumber, Long sorteoId): END");
 			logger.info("changeWinningNumber(int newWinningNumber, Long sorteoId): END");
+		}
+		
+	}
+
+	private void validateIfWinningNumberCanBeChanged(int newWinningNumber, NumeroGanador currentNumeroGanador, Week week) throws CanNotChangeWinningNumberException {
+		
+		if(newWinningNumber == currentNumeroGanador.getNumeroGanador()) {
+			throw new CanNotChangeWinningNumberException("El nuevo numero ganador es igual al actual numero ganador.");
+		}
+		
+		//Check if the week is closed the winning number is not allowed to be changed.
+		Optional<HistoricoBalance>  weeklyBalance = historicoBalanceRepository.findByWeekAndBalanceType(week, BalanceType.WEEKLY);
+		
+		if( weeklyBalance.isPresent()) {
+			throw new CanNotChangeWinningNumberException("No se puede cambiar un numero ganador si la semana ya esta cerrada.");
 		}
 		
 	}

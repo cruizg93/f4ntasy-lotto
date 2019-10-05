@@ -95,19 +95,19 @@ public class SorteoController {
         return jugadorSorteosResponse;
 	}
 	
-	@PostMapping("/bloquear/{id}")
+	@PutMapping("/bloquear/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ResponseEntity<?> bloquearApuesta(@PathVariable Long id, @Valid @RequestBody ObjectNode json) {
-		try {
-			sorteoService.bloquearApuesta(id);
-		} catch (InvalidSorteoStateException e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-		}
-		
+//		try {
+//			sorteoService.bloquearApuesta(id);
+//		} catch (InvalidSorteoStateException e) {
+//			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+//		}
+		sorteoService.forceCloseStatus(id);
         return ResponseEntity.ok("Sorteo locked");
     }
     
-    @PostMapping("/desbloquear/{id}")
+    @PutMapping("/desbloquear/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ResponseEntity<?> desbloquearApuesta(@PathVariable Long id, @Valid @RequestBody ObjectNode json) {
     	try {
@@ -120,7 +120,7 @@ public class SorteoController {
     }
     
     @Profile({"uat","dev"})
-    @PostMapping("/forceCloseStatus/{id}")
+    @PutMapping("/forceCloseStatus/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ResponseEntity<?> cerrarApuesta(@PathVariable Long id, @Valid @RequestBody ObjectNode json) {
 		sorteoService.forceCloseStatus(id);
