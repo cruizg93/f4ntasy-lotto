@@ -75,9 +75,6 @@ public class FantasyApplication {
     @Autowired
     SorteoTypeRepository sorteoTypeRepository;
 
-    @Autowired
-    PlayerCountRepository playerCountRepository;
-
     @PostConstruct
     public void init() {
         TimeZone.setDefault(TimeZone.getTimeZone("America/Tegucigalpa"));   // It will set CST timezone
@@ -184,10 +181,10 @@ public class FantasyApplication {
             TipoChica chicaMiles = tipoChicaRepository.findByChicaName(ChicaName.MILES);
             TipoChica chicaPedazos = tipoChicaRepository.findByChicaName(ChicaName.PEDAZOS);
 
-            Jugador p1 = createJugadorP("Usuario 1","P001",lempiras, apuestaMiles,chicaMiles, new double[] {12,1000}, new double[]{11,900} );
+            Jugador p1 = createJugadorP("Usuario 1","P001",lempiras, apuestaMiles,chicaMiles, new double[] {12,1000}, new double[]{11,1000} );
             Jugador p2 = createJugadorP("Usuario 2","P002",lempiras, apuestaMiles,chicaDirecta, new double[] {12,1000}, new double[]{20,66} );
             Jugador p3 = createJugadorP("Usuario 3","P003",lempiras, apuestaMiles,chicaPedazos, new double[] {10,1000}, new double[]{22,0.30,20} );
-            Jugador p4 = createJugadorP("Usuario 4","P004",lempiras, apuestaDirecta,chicaMiles, new double[] {18,66}, new double[]{15,1250} );
+            Jugador p4 = createJugadorP("Usuario 4","P004",lempiras, apuestaDirecta,chicaMiles, new double[] {18,66}, new double[]{15,1000} );
             Jugador p5 = createJugadorP("Usuario 5","P005",lempiras, apuestaDirecta,chicaDirecta, new double[] {20,66}, new double[]{22.5,60} );
             Jugador p6 = createJugadorP("Usuario 6","P006",lempiras, apuestaDirecta,chicaPedazos, new double[] {21,65}, new double[]{20,0.30,68} );
             
@@ -263,129 +260,167 @@ public class FantasyApplication {
             /**
              * Jugador 1 
              */
-            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 0, 25);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 3, 30);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 10, 20);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 11, 46);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 15, 28);
-            insertApuestaDiaria(sorteoDiaria11.getId(), x1, cambio, 0, 33);
-            insertApuestaDiaria(sorteoDiaria11.getId(), x1, cambio, 5, 30);
-            insertApuestaDiaria(sorteoDiaria11.getId(), x1, cambio, 8, 50);
-            insertApuestaDiaria(sorteoDiaria11.getId(), x1, cambio, 10, 18);
-            
-            insertApuestaChica(sorteoChica.getId(),p1, cambio,0,45);
-            insertApuestaChica(sorteoChica.getId(),p1, cambio,3,35);
-            insertApuestaChica(sorteoChica.getId(),p1, cambio,10,26);
-            insertApuestaChica(sorteoChica.getId(),p1, cambio,11,20);
-            insertApuestaChica(sorteoChica.getId(),p1, cambio,15,30);
-            insertApuestaChica(sorteoChica.getId(),x1, cambio,5,40);
-            insertApuestaChica(sorteoChica.getId(),x1, cambio,8,36);
-            insertApuestaChica(sorteoChica.getId(),x1, cambio,10,55);
-            insertApuestaChica(sorteoChica.getId(),x1, cambio,18,1);
-            
-            /**
-             * Jugador 2
-             */
-            insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 0, 15);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 3, 18);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 10, 45);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 11, 48);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 17, 10);
-            insertApuestaDiaria(sorteoDiaria11.getId(), x2, cambio, 5, 50);
-            insertApuestaDiaria(sorteoDiaria11.getId(), x2, cambio, 8, 40);
-            insertApuestaDiaria(sorteoDiaria11.getId(), x2, cambio, 10, 15);
-            
-            insertApuestaChica(sorteoChica.getId(),p2, cambio,0,26);
-            insertApuestaChica(sorteoChica.getId(),p2, cambio,3,58);
-            insertApuestaChica(sorteoChica.getId(),p2, cambio,10,45);
-            insertApuestaChica(sorteoChica.getId(),p2, cambio,11,44);
-            insertApuestaChica(sorteoChica.getId(),p2, cambio,15,88);
-            insertApuestaChica(sorteoChica.getId(),x2, cambio,5,42);
-            insertApuestaChica(sorteoChica.getId(),x2, cambio,8,105);
-            insertApuestaChica(sorteoChica.getId(),x2, cambio,10,48);
-            insertApuestaChica(sorteoChica.getId(),x2, cambio,19,70);
-            
-            /**
-             * Jugador 3
-             */
-            insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 0, 80);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 3, 40);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 10, 59);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 11, 63);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 19, 45);
-            insertApuestaDiaria(sorteoDiaria11.getId(), x3, cambio, 5, 44);
-            insertApuestaDiaria(sorteoDiaria11.getId(), x3, cambio, 8, 40);
-            insertApuestaDiaria(sorteoDiaria11.getId(), x3, cambio, 10, 23);
-           
-            insertApuestaChica(sorteoChica.getId(),p3, cambio,0,160);
-            insertApuestaChica(sorteoChica.getId(),p3, cambio,3,180);
-            insertApuestaChica(sorteoChica.getId(),p3, cambio,10,240);
-            insertApuestaChica(sorteoChica.getId(),p3, cambio,11,340);
-            insertApuestaChica(sorteoChica.getId(),p3, cambio,15,170);
-            insertApuestaChica(sorteoChica.getId(),x3, cambio,5,180);
-            insertApuestaChica(sorteoChica.getId(),x3, cambio,8,160);
-            insertApuestaChica(sorteoChica.getId(),x3, cambio,10,190);
-            insertApuestaChica(sorteoChica.getId(),x3, cambio,14,190);
-            
-            /**
-             * Jugador 4
-             */
-            insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 0, 1200);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 3, 1000);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 10, 800);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 11, 450);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 17, 20);
-            insertApuestaDiaria(sorteoDiaria11.getId(), x4, cambio, 5, 1000);
-            insertApuestaDiaria(sorteoDiaria11.getId(), x4, cambio, 8, 1450);
-            insertApuestaDiaria(sorteoDiaria11.getId(), x4, cambio, 10, 1800);
-            
-            insertApuestaChica(sorteoChica.getId(),p4, cambio,0,20);
-            insertApuestaChica(sorteoChica.getId(),p4, cambio,3,20);
-            insertApuestaChica(sorteoChica.getId(),p4, cambio,10,20);
-            insertApuestaChica(sorteoChica.getId(),p4, cambio,11,20);
-            insertApuestaChica(sorteoChica.getId(),p4, cambio,15,20);
-            insertApuestaChica(sorteoChica.getId(),x4, cambio,5,20);
-            insertApuestaChica(sorteoChica.getId(),x4, cambio,8,20);
-            insertApuestaChica(sorteoChica.getId(),x4, cambio,10,20);
-            insertApuestaChica(sorteoChica.getId(),x4, cambio,12,20);
-            
-            /**
-             * Jugador 5
-             */
-            insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 0, 120);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 3, 100);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 10, 145);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 11, 160);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 17, 5);
-            insertApuestaDiaria(sorteoDiaria11.getId(), x5, cambio, 5, 120);
-            insertApuestaDiaria(sorteoDiaria11.getId(), x5, cambio, 8, 90);
-            insertApuestaDiaria(sorteoDiaria11.getId(), x5, cambio, 10, 49);
-            
-            insertApuestaChica(sorteoChica.getId(),p5, cambio,0,156);
-            insertApuestaChica(sorteoChica.getId(),p5, cambio,3,147);
-            insertApuestaChica(sorteoChica.getId(),p5, cambio,10,110);
-            insertApuestaChica(sorteoChica.getId(),p5, cambio,11,210);
-            insertApuestaChica(sorteoChica.getId(),p5, cambio,15,41);
-            insertApuestaChica(sorteoChica.getId(),x5, cambio,5,100);
-            insertApuestaChica(sorteoChica.getId(),x5, cambio,8,250);
-            insertApuestaChica(sorteoChica.getId(),x5, cambio,10,200);
-            insertApuestaChica(sorteoChica.getId(),x5, cambio,18,40);
-
-            /**
-             * Jugador 6
-             */
-            
-            insertApuestaDiaria(sorteoDiaria11.getId(), p6, cambio, 0, 210);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p6, cambio, 3, 250);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p6, cambio, 10, 180);
-            insertApuestaDiaria(sorteoDiaria11.getId(), p6, cambio, 11, 350);
-            
-            insertApuestaChica(sorteoChica.getId(),p6, cambio,0,50);
-            insertApuestaChica(sorteoChica.getId(),p6, cambio,3,120);
-            insertApuestaChica(sorteoChica.getId(),p6, cambio,10,240);
-            insertApuestaChica(sorteoChica.getId(),p6, cambio,11,45);
-            insertApuestaChica(sorteoChica.getId(),p6, cambio,15,160);
-            insertApuestaChica(sorteoChica.getId(),p6, cambio,18,10);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 0, 25);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 3, 30);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 10, 20);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 11, 46);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 15, 28);
+////            insertApuestaDiaria(sorteoDiaria11.getId(), x1, cambio, 0, 33);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), x1, cambio, 5, 30);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), x1, cambio, 8, 50);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), x1, cambio, 10, 18);
+//            
+//            insertApuestaDiaria(sorteoDiaria15.getId(), p1, cambio, 0, 25);
+//            insertApuestaDiaria(sorteoDiaria15.getId(), p1, cambio, 3, 30);
+//            insertApuestaDiaria(sorteoDiaria15.getId(), p1, cambio, 10, 20);
+//            insertApuestaDiaria(sorteoDiaria15.getId(), p1, cambio, 11, 46);
+//            insertApuestaDiaria(sorteoDiaria15.getId(), p1, cambio, 15, 28);
+////            insertApuestaDiaria(sorteoDiaria11.getId(), x1, cambio, 0, 33);
+//            insertApuestaDiaria(sorteoDiaria15.getId(), x1, cambio, 5, 30);
+//            insertApuestaDiaria(sorteoDiaria15.getId(), x1, cambio, 8, 50);
+//            insertApuestaDiaria(sorteoDiaria15.getId(), x1, cambio, 10, 18);
+//            
+//            insertApuestaDiaria(sorteoDiaria21.getId(), p1, cambio, 0, 25);
+//            insertApuestaDiaria(sorteoDiaria21.getId(), p1, cambio, 3, 30);
+//            insertApuestaDiaria(sorteoDiaria21.getId(), p1, cambio, 10, 20);
+//            insertApuestaDiaria(sorteoDiaria21.getId(), p1, cambio, 11, 46);
+//            insertApuestaDiaria(sorteoDiaria21.getId(), p1, cambio, 15, 28);
+////            insertApuestaDiaria(sorteoDiaria11.getId(), x1, cambio, 0, 33);
+//            insertApuestaDiaria(sorteoDiaria21.getId(), x1, cambio, 5, 30);
+//            insertApuestaDiaria(sorteoDiaria21.getId(), x1, cambio, 8, 50);
+//            insertApuestaDiaria(sorteoDiaria21.getId(), x1, cambio, 10, 18);
+//            
+//            insertApuestaChica(sorteoChica.getId(),p1, cambio,0,45);
+//            insertApuestaChica(sorteoChica.getId(),p1, cambio,3,35);
+//            insertApuestaChica(sorteoChica.getId(),p1, cambio,10,26);
+//            insertApuestaChica(sorteoChica.getId(),p1, cambio,11,20);
+//            insertApuestaChica(sorteoChica.getId(),p1, cambio,15,30);
+//            insertApuestaChica(sorteoChica.getId(),x1, cambio,5,40);
+//            insertApuestaChica(sorteoChica.getId(),x1, cambio,8,36);
+//            insertApuestaChica(sorteoChica.getId(),x1, cambio,10,55);
+//            insertApuestaChica(sorteoChica.getId(),x1, cambio,18,1);
+//            
+//            /**
+//             * Jugador 2
+//             */
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 0, 15);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 3, 18);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 10, 45);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 11, 48);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p2, cambio, 17, 10);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), x2, cambio, 5, 50);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), x2, cambio, 8, 40);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), x2, cambio, 10, 15);
+//            
+//            insertApuestaDiaria(sorteoDiaria15.getId(), p2, cambio, 0, 15);
+//            insertApuestaDiaria(sorteoDiaria15.getId(), p2, cambio, 3, 18);
+//            insertApuestaDiaria(sorteoDiaria15.getId(), p2, cambio, 10, 45);
+//            insertApuestaDiaria(sorteoDiaria15.getId(), p2, cambio, 11, 48);
+//            insertApuestaDiaria(sorteoDiaria15.getId(), p2, cambio, 17, 10);
+//            insertApuestaDiaria(sorteoDiaria15.getId(), x2, cambio, 5, 50);
+//            insertApuestaDiaria(sorteoDiaria15.getId(), x2, cambio, 8, 40);
+//            insertApuestaDiaria(sorteoDiaria15.getId(), x2, cambio, 10, 15);
+//            
+//            insertApuestaDiaria(sorteoDiaria21.getId(), p2, cambio, 0, 15);
+//            insertApuestaDiaria(sorteoDiaria21.getId(), p2, cambio, 3, 18);
+//            insertApuestaDiaria(sorteoDiaria21.getId(), p2, cambio, 10, 45);
+//            insertApuestaDiaria(sorteoDiaria21.getId(), p2, cambio, 11, 48);
+//            insertApuestaDiaria(sorteoDiaria21.getId(), p2, cambio, 17, 10);
+//            insertApuestaDiaria(sorteoDiaria21.getId(), x2, cambio, 5, 50);
+//            insertApuestaDiaria(sorteoDiaria21.getId(), x2, cambio, 8, 40);
+//            insertApuestaDiaria(sorteoDiaria21.getId(), x2, cambio, 10, 15);
+//            
+//            insertApuestaChica(sorteoChica.getId(),p2, cambio,0,26);
+//            insertApuestaChica(sorteoChica.getId(),p2, cambio,3,58);
+//            insertApuestaChica(sorteoChica.getId(),p2, cambio,10,45);
+//            insertApuestaChica(sorteoChica.getId(),p2, cambio,11,44);
+//            insertApuestaChica(sorteoChica.getId(),p2, cambio,15,88);
+//            insertApuestaChica(sorteoChica.getId(),x2, cambio,5,42);
+//            insertApuestaChica(sorteoChica.getId(),x2, cambio,8,105);
+//            insertApuestaChica(sorteoChica.getId(),x2, cambio,10,48);
+//            insertApuestaChica(sorteoChica.getId(),x2, cambio,19,70);
+//            
+//            /**
+//             * Jugador 3
+//             */
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 0, 80);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 3, 40);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 10, 59);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 11, 63);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p3, cambio, 19, 45);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), x3, cambio, 5, 44);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), x3, cambio, 8, 40);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), x3, cambio, 10, 23);
+//           
+//            insertApuestaChica(sorteoChica.getId(),p3, cambio,0,160);
+//            insertApuestaChica(sorteoChica.getId(),p3, cambio,3,180);
+//            insertApuestaChica(sorteoChica.getId(),p3, cambio,10,240);
+//            insertApuestaChica(sorteoChica.getId(),p3, cambio,11,340);
+//            insertApuestaChica(sorteoChica.getId(),p3, cambio,15,170);
+//            insertApuestaChica(sorteoChica.getId(),x3, cambio,5,180);
+//            insertApuestaChica(sorteoChica.getId(),x3, cambio,8,160);
+//            insertApuestaChica(sorteoChica.getId(),x3, cambio,10,190);
+//            insertApuestaChica(sorteoChica.getId(),x3, cambio,14,190);
+//            
+//            /**
+//             * Jugador 4
+//             */
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 0, 1200);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 3, 1000);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 10, 800);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 11, 450);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p4, cambio, 17, 20);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), x4, cambio, 5, 1000);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), x4, cambio, 8, 1450);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), x4, cambio, 10, 1800);
+//            
+//            insertApuestaChica(sorteoChica.getId(),p4, cambio,0,20);
+//            insertApuestaChica(sorteoChica.getId(),p4, cambio,3,20);
+//            insertApuestaChica(sorteoChica.getId(),p4, cambio,10,20);
+//            insertApuestaChica(sorteoChica.getId(),p4, cambio,11,20);
+//            insertApuestaChica(sorteoChica.getId(),p4, cambio,15,20);
+//            insertApuestaChica(sorteoChica.getId(),x4, cambio,5,20);
+//            insertApuestaChica(sorteoChica.getId(),x4, cambio,8,20);
+//            insertApuestaChica(sorteoChica.getId(),x4, cambio,10,20);
+//            insertApuestaChica(sorteoChica.getId(),x4, cambio,12,20);
+//            
+//            /**
+//             * Jugador 5
+//             */
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 0, 120);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 3, 100);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 10, 145);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 11, 160);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p5, cambio, 17, 5);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), x5, cambio, 5, 120);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), x5, cambio, 8, 90);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), x5, cambio, 10, 49);
+//            
+//            insertApuestaChica(sorteoChica.getId(),p5, cambio,0,156);
+//            insertApuestaChica(sorteoChica.getId(),p5, cambio,3,147);
+//            insertApuestaChica(sorteoChica.getId(),p5, cambio,10,110);
+//            insertApuestaChica(sorteoChica.getId(),p5, cambio,11,210);
+//            insertApuestaChica(sorteoChica.getId(),p5, cambio,15,41);
+//            insertApuestaChica(sorteoChica.getId(),x5, cambio,5,100);
+//            insertApuestaChica(sorteoChica.getId(),x5, cambio,8,250);
+//            insertApuestaChica(sorteoChica.getId(),x5, cambio,10,200);
+//            insertApuestaChica(sorteoChica.getId(),x5, cambio,18,40);
+//
+//            /**
+//             * Jugador 6
+//             */
+//            
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p6, cambio, 0, 210);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p6, cambio, 3, 250);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p6, cambio, 10, 180);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p6, cambio, 11, 350);
+//            
+//            insertApuestaChica(sorteoChica.getId(),p6, cambio,0,50);
+//            insertApuestaChica(sorteoChica.getId(),p6, cambio,3,120);
+//            insertApuestaChica(sorteoChica.getId(),p6, cambio,10,240);
+//            insertApuestaChica(sorteoChica.getId(),p6, cambio,11,45);
+//            insertApuestaChica(sorteoChica.getId(),p6, cambio,15,160);
+//            insertApuestaChica(sorteoChica.getId(),p6, cambio,18,10);
 
 
             List<SorteoDiaria> sorteoDiarias = sorteoDiariaRepository

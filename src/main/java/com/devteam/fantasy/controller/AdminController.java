@@ -102,9 +102,6 @@ public class AdminController {
     HistoricoApuestaRepository historicoApuestaRepository;
 
     @Autowired
-    PlayerCountRepository playerCountRepository;
-
-    @Autowired
     private SorteoTypeRepository sorteoTypeRepository;
 
     @Autowired
@@ -265,8 +262,8 @@ public class AdminController {
 
     @GetMapping("/jugadores/count")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
-    public Long countJugadores() {
-        return playerCountRepository.findAll().get(0).getCount() + 1;
+    public Long nextJugadorId() {
+        return jugadorRepository.count() + 1;
     }
 
     @GetMapping("/jugadores/delete/{id}")
@@ -378,18 +375,6 @@ public class AdminController {
             jugador = jugadorRepository.save(jugador);
             historyService.createEvent(HistoryEventType.PLAYER_CREATED,jugador.getId());
             
-            List<PlayerCount> playerCounts = playerCountRepository.findAll();
-            if (!playerCounts.isEmpty()) {
-                PlayerCount playerCount = playerCounts.get(0);
-                Long count = playerCount.getCount() + 1L;
-                playerCount.setCount(count);
-                playerCountRepository.save(playerCount);
-            } else {
-                PlayerCount playerCount = new PlayerCount();
-                playerCount.setCount(1L);
-                playerCountRepository.save(playerCount);
-            }
-
         }
         return ResponseEntity.ok().body("User registered successfully!");
     }
