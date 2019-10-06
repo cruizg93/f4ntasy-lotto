@@ -582,18 +582,6 @@ public class Util {
     	return null;
     }
     
-    public static BigDecimal getApuestaCambio(String currency, Apuesta apuesta ) {
-    	BigDecimal cambio= BigDecimal.ONE;
-
-        Jugador jugador = Util.getJugadorFromApuesta(apuesta);
-        if(currency.equalsIgnoreCase("lempira") && jugador.getMoneda().getMonedaName().equals(MonedaName.DOLAR)){
-            cambio = new BigDecimal(apuesta.getCambio().getCambio());
-        }else if(currency.equalsIgnoreCase("dolar") && jugador.getMoneda().getMonedaName().equals(MonedaName.LEMPIRA)){
-            cambio = new BigDecimal(1/apuesta.getCambio().getCambio());
-        }
-        return cambio;
-    }
-    
     public static boolean isSorteoTypeDiaria(Sorteo sorteo) {
     	return sorteo.getSorteoType().getSorteoTypeName().equals(SorteoTypeName.DIARIA);
     }

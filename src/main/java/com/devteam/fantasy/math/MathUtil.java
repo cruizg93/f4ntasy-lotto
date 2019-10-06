@@ -44,9 +44,9 @@ public class MathUtil {
         	cantidad= BigDecimal.valueOf(jugador.getCostoChicaPedazos());
         }
 		
-		double cambioRate = getDollarChangeRate(apuesta, currencyRequested);
+		BigDecimal cambioRate = getDollarChangeRate(apuesta, currencyRequested);
 		
-		return cantidad.multiply(BigDecimal.valueOf(cambioRate));
+		return cantidad.multiply(cambioRate);
 	}
 	
 	public static BigDecimal getPremioMultiplier(Jugador jugador, SorteoTypeName sorteoType) {
@@ -70,7 +70,7 @@ public class MathUtil {
 	
 	
 	
-	public static double getDollarChangeRate(Apuesta apuesta, MonedaName currencyRequested) {
+	public static BigDecimal getDollarChangeRate(Apuesta apuesta, MonedaName currencyRequested) {
 		Jugador jugador;
 		double cambio = 1d;
 		if(apuesta.getUser() instanceof Jugador){
@@ -83,7 +83,7 @@ public class MathUtil {
         }else if(currencyRequested.toString().equalsIgnoreCase("dolar") && jugador.getMoneda().getMonedaName().equals(MonedaName.LEMPIRA)){
             cambio = 1/apuesta.getCambio().getCambio();
         }
-        return cambio;
+        return BigDecimal.valueOf(cambio);
 	}
 	
 	public static double getDollarChangeRateForHistorico(HistoricoApuestas apuesta, MonedaName currencyRequested) {
@@ -107,6 +107,26 @@ public class MathUtil {
         	exchange = 1/cambio.getCambio();
         }
         return exchange;
+	}
+	
+	public static BigDecimal getPremioFromApuesta(Jugador jugador, Apuesta apuesta, SorteoTypeName sorteoType) {
+		BigDecimal premio = BigDecimal.ZERO;
+		if (sorteoType.equals(SorteoTypeName.DIARIA)) {
+			if (jugador.getTipoApostador().getApostadorName().equals(ApostadorName.DIRECTO)) {
+				premio = BigDecimal.valueOf(jugador.getPremioDirecto());
+			} else if (jugador.getTipoApostador().getApostadorName().equals(ApostadorName.MILES)) {
+				premio = BigDecimal.valueOf(jugador.getPremioMil());
+			}
+		} else if (sorteoType.equals(SorteoTypeName.CHICA)) {
+			if (jugador.getTipoChica().getChicaName().equals(ChicaName.DIRECTO)) {
+				premio = BigDecimal.valueOf(jugador.getPremioChicaDirecto());
+			} else if (jugador.getTipoChica().getChicaName().equals(ChicaName.MILES)) {
+				premio = BigDecimal.valueOf(jugador.getPremioChicaMiles());
+			} else if (jugador.getTipoChica().getChicaName().equals(ChicaName.PEDAZOS)) {
+				premio = BigDecimal.valueOf(jugador.getPremioChicaPedazos());
+			}
+		}
+		return premio.multiply(BigDecimal.valueOf(apuesta.getCantidad()));
 	}
 	
 }

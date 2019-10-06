@@ -55,7 +55,7 @@ public class SorteoTotales {
 	
 	private BigDecimal ventas;
 	private BigDecimal comisiones;
-	
+	private BigDecimal premios;
 	
 	private MonedaName monedaName;
 	private User user;
@@ -80,6 +80,7 @@ public class SorteoTotales {
 		this.sorteoDiaria = sorteoDiaria;
 		this.ventas = BigDecimal.ZERO;
 		this.comisiones = BigDecimal.ZERO;
+		this.setPremio(BigDecimal.ZERO);
 		
 		Jugador jugador = Util.getJugadorFromUser(user);
 		Set<Apuesta> apuestas; 
@@ -95,7 +96,13 @@ public class SorteoTotales {
         	BigDecimal cantidad = MathUtil.getCantidadMultiplier(jugador, apuesta, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName(), this.monedaName);
 			cantidad = cantidad.multiply(BigDecimal.valueOf(apuesta.getCantidad()));
             ventas = ventas.add(cantidad);
-            comisiones = comisiones.add(BigDecimal.valueOf(apuesta.getComision()));
+
+            BigDecimal currencyExchange = MathUtil.getDollarChangeRate(apuesta, monedaName);
+            BigDecimal comision = BigDecimal.valueOf(apuesta.getComision()).multiply(currencyExchange);
+            comisiones = comisiones.add(comision);
+            
+            BigDecimal premio = MathUtil.getPremioFromApuesta(jugador, apuesta,sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
+			premio = premio.multiply(currencyExchange);
         }
 
         if (!skipAsistentes && user instanceof Jugador) {
@@ -130,18 +137,18 @@ public class SorteoTotales {
 		for (HistoricoApuestas apuesta: apuestas) {
 			NumeroGanador numero = numeroGanadorRepository.getBySorteo(apuesta.getSorteo());
 
-			double currencyExchange = MathUtil.getDollarChangeRate(Util.mapHistsoricoApuestaToApuesta(apuesta), moneda);
+			BigDecimal currencyExchange = MathUtil.getDollarChangeRate(Util.mapHistsoricoApuestaToApuesta(apuesta), moneda);
         	
 			BigDecimal costo = BigDecimal.valueOf(apuesta.getCantidad()).multiply(BigDecimal.valueOf(apuesta.getCantidadMultiplier()));
-            costo = costo.multiply(BigDecimal.valueOf(currencyExchange));
+            costo = costo.multiply(currencyExchange);
         	ventas = ventas.add(costo);
             
-        	BigDecimal comision = BigDecimal.valueOf(apuesta.getComision()).multiply(BigDecimal.valueOf(currencyExchange));
+        	BigDecimal comision = BigDecimal.valueOf(apuesta.getComision()).multiply(currencyExchange);
             comisiones = comisiones.add(comision);
             
             if(numero.getNumeroGanador() == apuesta.getNumero()) {
         		premios = premios.add(BigDecimal.valueOf(apuesta.getCantidad()).multiply(BigDecimal.valueOf(apuesta.getPremioMultiplier())));
-        		premios = premios.multiply(BigDecimal.valueOf(currencyExchange));
+        		premios = premios.multiply( currencyExchange);
             }
         }
 		
@@ -200,6 +207,14 @@ public class SorteoTotales {
 
 	public MonedaName getMonedaName() {
 		return monedaName;
+	}
+
+	public BigDecimal getPremio() {
+		return premios;
+	}
+
+	public void setPremio(BigDecimal premio) {
+		this.premios = premio;
 	}
 	
 }

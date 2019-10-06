@@ -340,7 +340,7 @@ public class SorteoServiceImpl implements SorteoService {
 		// costomultiplier and comisionRate
 		try {
 			logger.debug("calcularCantRiesgo(...): START");
-			BigDecimal cambio = Util.getApuestaCambio(currency, apuesta);
+			BigDecimal cambio = MathUtil.getDollarChangeRate(apuesta, Util.getMonedaNameFromString(currency));
 			BigDecimal premio = BigDecimal.ZERO;
 
 			BigDecimal costoMilChica = BigDecimal.ONE;
@@ -441,9 +441,9 @@ public class SorteoServiceImpl implements SorteoService {
 			sorteoTotales.processSorteo(null, sorteoDiaria, moneda, true);
 			total = total.add(sorteoTotales.getVentasBD());
 			comision = comision.add(sorteoTotales.getComisionesBD());
-
 			neta = total.subtract(comision);
-
+			premio = sorteoTotales.getPremio();
+			
 			activaResponse.setTotal(total.doubleValue());
 			activaResponse.setComision(comision.doubleValue());
 			activaResponse.setNeta(neta.doubleValue());
@@ -812,8 +812,9 @@ public class SorteoServiceImpl implements SorteoService {
 		ApuestaActivaResumenResponse result = null;
 		try {
 			logger.debug("getDetalleApuestasBySorteo(Long {}, String {}): START", id, monedaType);
+			MonedaName currency = Util.getMonedaNameFromString(monedaType);
 			SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
-			sorteoTotales.processSorteo(null, sorteoDiaria, Util.getMonedaNameFromString(monedaType), true);
+			sorteoTotales.processSorteo(null, sorteoDiaria, currency , true);
 
 			int indexTopRiesgo = -1;
 			double topRiesgo = 0d;
@@ -830,20 +831,21 @@ public class SorteoServiceImpl implements SorteoService {
 				//Cabio for cantidad is already calculated in MathUtil.getCantidadMultiplier(...)
 				BigDecimal cantidadTotal = BigDecimal.valueOf(apuesta.getCantidad()).multiply(costoUnidad);
 
-				BigDecimal cambio = Util.getApuestaCambio(monedaType, apuesta);
+				BigDecimal cambio = MathUtil.getDollarChangeRate(apuesta, currency);
 				BigDecimal comisionTotal = apuesta.getComision().doubleValue() == 0
 						? BigDecimal.valueOf(apuesta.getComision())
 						: BigDecimal.valueOf(apuesta.getComision()).multiply(cambio);
 
-				BigDecimal premio = getPremioFromApuesta(jugador, apuesta,sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
+				BigDecimal premio = MathUtil.getPremioFromApuesta(jugador, apuesta,sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
 				premio = premio.multiply(cambio);
-
+						
 				TuplaRiesgo tupla = tuplas.get(numero);
 				if (tupla == null) {
 					tupla = new TuplaRiesgo();
 					tupla.setNumero(numero);
 				}
 
+				
 				BigDecimal dineroApostado = BigDecimal.valueOf(tupla.getDineroApostado()).add(cantidadTotal);
 				tupla.setDineroApostado(dineroApostado.doubleValue());
 
@@ -879,32 +881,6 @@ public class SorteoServiceImpl implements SorteoService {
 		return result;
 	}
 
-	private BigDecimal getPremioFromApuesta(Jugador jugador, Apuesta apuesta, SorteoTypeName sorteoType) {
-		BigDecimal premio = BigDecimal.ZERO;
-		try {
-			if (sorteoType.equals(SorteoTypeName.DIARIA)) {
-				if (jugador.getTipoApostador().getApostadorName().equals(ApostadorName.DIRECTO)) {
-					premio = BigDecimal.valueOf(jugador.getPremioDirecto());
-				} else if (jugador.getTipoApostador().getApostadorName().equals(ApostadorName.MILES)) {
-					premio = BigDecimal.valueOf(jugador.getPremioMil());
-				}
-			} else if (sorteoType.equals(SorteoTypeName.CHICA)) {
-				if (jugador.getTipoChica().getChicaName().equals(ChicaName.DIRECTO)) {
-					premio = BigDecimal.valueOf(jugador.getPremioChicaDirecto());
-				} else if (jugador.getTipoChica().getChicaName().equals(ChicaName.MILES)) {
-					premio = BigDecimal.valueOf(jugador.getPremioChicaMiles());
-				} else if (jugador.getTipoChica().getChicaName().equals(ChicaName.PEDAZOS)) {
-					premio = BigDecimal.valueOf(jugador.getPremioChicaPedazos());
-				}
-			}
-		} catch (Exception e) {
-			logger.error("getPremioFromApuesta(Jugador {}, Apuesta {}, SorteoTypeName {}): CATCH", jugador, apuesta,
-					sorteoType);
-			logger.error(e.getMessage());
-			throw e;
-		}
-		return premio.multiply(BigDecimal.valueOf(apuesta.getCantidad()));
-	}
 
 	@Override
 	@Transactional(rollbackFor = { CanNotInsertApuestaException.class, SorteoEstadoNotValidException.class,
