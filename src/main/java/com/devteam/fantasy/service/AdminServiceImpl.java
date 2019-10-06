@@ -41,6 +41,7 @@ import com.devteam.fantasy.repository.ResultadoRepository;
 import com.devteam.fantasy.repository.SorteoDiariaRepository;
 import com.devteam.fantasy.repository.SorteoRepository;
 import com.devteam.fantasy.repository.WeekRepository;
+import com.devteam.fantasy.util.HistoryEventType;
 import com.devteam.fantasy.util.MonedaName;
 import com.devteam.fantasy.util.SorteoTypeName;
 import com.devteam.fantasy.util.Util;
@@ -189,7 +190,7 @@ public class AdminServiceImpl implements AdminService{
 			
 			historyService.validateIfJugadorIsElegibleForBono(jugador, week, bono);
 			bonoRepository.save(bono);
-				
+			historyService.createEvent(HistoryEventType.BONO_CREATED, jugador.getId());
 		} catch (CanNotInsertBonoException | NotFoundException e) {
 			logger.error("submitBono(BonoRequest [weekid:{}], Long {}): CATCH", request.getWeekId(), jugadorId);
 			throw e;

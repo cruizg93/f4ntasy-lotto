@@ -1,14 +1,20 @@
 package com.devteam.fantasy.util;
 
 public enum HistoryEventType {
+	BET_SUBMITTED("Apuesta"),
+    BET_ALL_DELETED("Todas las Apuestas Eliminadas"),
+    BET_DELETED("Apuesta Eliminadas"),
+	BONO_CREATED("Bono"),
 	PLAYER_CREATED("Vendedor Creado"),
 	PLAYER_DELETED("Vendedor Eliminidao"),
     PLAYER_EDITED("Vendedor Editado"),
     PLAYER_PASSWORD_CHANGED("Constrasena Cambiada"),
-    BET_DELETED("Apuestas Eliminadas"),
     SORTEO_LOCKED("Sorteo Bloqueado"),
+    SORTEO_UNLOCKED("Sorteo Desbloqueado"),
+    WEEK_CLOSED("Semana Cerrada"),
     WINNING_NUMBER("Numero Ganador"),
-    WEEK_CLOSED("Semana Cerrada");
+    WINNING_NUMBER_CHANGED("Cambio de Numero Ganador"),
+    ;
 	
     
     private String label;

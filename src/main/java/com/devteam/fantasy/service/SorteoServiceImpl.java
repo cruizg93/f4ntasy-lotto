@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -573,6 +574,8 @@ public class SorteoServiceImpl implements SorteoService {
 			copyApuestasToHistoricoApuestas(sorteoDiaria);
 			deleteAndCreateSorteoDiaria(sorteoDiaria);
 
+			historyService.createEvent(HistoryEventType.WINNING_NUMBER, sorteoDiaria.getId(),null,String.valueOf(numero));
+			
 			if (Util.isSorteoTypeDiaria(sorteoDiaria.getSorteo())
 					&& Util.getDayOfWeekFromTimestamp(sorteoDiaria.getSorteo().getSorteoTime()).equals(DayOfWeek.SUNDAY)
 					&& Util.getlocalDateTimeHourFromTimestamp(sorteoDiaria.getSorteo().getSorteoTime()) == 21) {
@@ -748,7 +751,7 @@ public class SorteoServiceImpl implements SorteoService {
 			if (sorteo.getEstado().getEstado().equals(EstadoName.ABIERTA)) {
 				sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.BLOQUEADA));
 				sorteoRepository.save(sorteo);
-				historyService.createEvent(HistoryEventType.SORTEO_LOCKED);
+				historyService.createEvent(HistoryEventType.SORTEO_LOCKED, sorteo.getId());
 			} else {
 				logger.debug("InvalidSorteoStateException({}):", sorteo);
 				throw new InvalidSorteoStateException(sorteo);
@@ -772,7 +775,7 @@ public class SorteoServiceImpl implements SorteoService {
 			if (sorteo.getEstado().getEstado().equals(EstadoName.BLOQUEADA)) {
 				sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.ABIERTA));
 				sorteoRepository.save(sorteo);
-				historyService.createEvent(HistoryEventType.SORTEO_LOCKED);
+				historyService.createEvent(HistoryEventType.SORTEO_UNLOCKED, sorteo.getId());
 			} else {
 				throw new InvalidSorteoStateException(sorteo);
 			}
@@ -822,17 +825,17 @@ public class SorteoServiceImpl implements SorteoService {
 				int numero = apuesta.getNumero();
 				Jugador jugador = Util.getJugadorFromApuesta(apuesta);
 
-				BigDecimal cambio = Util.getApuestaCambio(monedaType, apuesta);
 				BigDecimal costoUnidad = MathUtil.getCantidadMultiplier(jugador, apuesta,sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName(), sorteoTotales.getMonedaName());
-				BigDecimal cantidadTotal = BigDecimal.valueOf(apuesta.getCantidad()).multiply(cambio)
-						.multiply(costoUnidad);
+				
+				//Cabio for cantidad is already calculated in MathUtil.getCantidadMultiplier(...)
+				BigDecimal cantidadTotal = BigDecimal.valueOf(apuesta.getCantidad()).multiply(costoUnidad);
 
+				BigDecimal cambio = Util.getApuestaCambio(monedaType, apuesta);
 				BigDecimal comisionTotal = apuesta.getComision().doubleValue() == 0
 						? BigDecimal.valueOf(apuesta.getComision())
 						: BigDecimal.valueOf(apuesta.getComision()).multiply(cambio);
 
-				BigDecimal premio = getPremioFromApuesta(jugador, apuesta,
-						sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
+				BigDecimal premio = getPremioFromApuesta(jugador, apuesta,sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
 				premio = premio.multiply(cambio);
 
 				TuplaRiesgo tupla = tuplas.get(numero);
@@ -846,13 +849,11 @@ public class SorteoServiceImpl implements SorteoService {
 
 				BigDecimal totalPremio = BigDecimal.valueOf(tupla.getPosiblePremio()).add(premio);
 				tupla.setPosiblePremio(totalPremio.doubleValue());
-				if (topRiesgo < totalPremio.doubleValue()) {
+				if (topRiesgo < premio.doubleValue()) {
 					indexTopRiesgo = numero;
 				}
 
-				BigDecimal total = cantidadTotal.subtract(comisionTotal);
 				BigDecimal riesgo = premio.divide(sorteoTotales.getTotalBD(), 2, RoundingMode.HALF_EVEN);
-				// riesgo = BigDecimal.valueOf(tupla.getTotalRiesgo()).add(riesgo);
 				tupla.setTotalRiesgo(BigDecimal.valueOf(tupla.getTotalRiesgo()).add(riesgo).doubleValue());
 
 				tuplas.put(numero, tupla);
@@ -924,7 +925,9 @@ public class SorteoServiceImpl implements SorteoService {
 			}
 
 			Set<Apuesta> apuestasExistentes = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
-
+			
+			Map<String, Double> historyApuestasList = new LinkedHashMap<>();
+			
 			for (NumeroPlayerEntryResponse entryResponse : apuestasEntry) {
 				try {
 					Apuesta apuesta = apuestasExistentes.stream()
@@ -948,11 +951,21 @@ public class SorteoServiceImpl implements SorteoService {
 					apuesta.setComision(comision.doubleValue());
 					apuesta.setDate(Timestamp.valueOf(LocalDateTime.now()));
 					apuestaRepository.save(apuesta);
+					
+					//History event
+					Double cantidadApostada = entryResponse.getCurrent();
+					if( historyApuestasList.containsKey(entryResponse.getNumero()) ){
+						cantidadApostada += historyApuestasList.get(entryResponse.getNumero());  
+					}
+					historyApuestasList.put(entryResponse.getNumero(), cantidadApostada);
+					
 				} catch (Exception e) {
 					throw new CanNotInsertApuestaException(sorteoDiaria.getSorteo().getSorteoTime().toString(),
 							entryResponse.getNumero(), e.getMessage());
 				}
 			}
+			historyService.createEvent(HistoryEventType.BET_SUBMITTED, sorteoDiaria.getSorteo().getId(), historyApuestasList.keySet().toString(), historyApuestasList.values().toString());
+			
 		} catch (CanNotInsertApuestaException ex) {
 			logger.error("submitApuestas(String {}, Long {}, List<NumeroPlayerEntryResponse> {}): CATCH", username,
 					sorteoId, apuestasEntry);
@@ -1115,7 +1128,7 @@ public class SorteoServiceImpl implements SorteoService {
 						deleteApuestas(apuestasX.stream().collect(Collectors.toList()));
 					}
 				}
-				historyService.createEvent(HistoryEventType.BET_DELETED,sorteoId,numeros.toArray().toString(),null);
+				historyService.createEvent(HistoryEventType.BET_ALL_DELETED,sorteoId);
 				
 			}catch (Exception e) {
 				throw new CanNotRemoveApuestaException(e);
@@ -1225,6 +1238,8 @@ public class SorteoServiceImpl implements SorteoService {
 			logger.debug("Updating balance jugadores...");
 			logger.info("Updating balance jugadores...");
 			jugadorRepository.saveAll(jugadores);
+			
+			historyService.createEvent(HistoryEventType.WINNING_NUMBER_CHANGED, sorteo.getId());
 
 		} catch (NotFoundException | CanNotChangeWinningNumberException e) {
 			logger.info("changeWinningNumber(int newWinningNumber, Long sorteoId): CATCH", newWinningNumber, sorteoId);

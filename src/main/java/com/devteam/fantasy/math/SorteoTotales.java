@@ -82,9 +82,11 @@ public class SorteoTotales {
 		this.comisiones = BigDecimal.ZERO;
 		
 		Jugador jugador = Util.getJugadorFromUser(user);
-		Set<Apuesta> apuestas =  apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
+		Set<Apuesta> apuestas; 
 		if(user == null) {
 			apuestas = sorteoDiaria.getApuestas();
+		}else {
+			apuestas =  apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
 		}
 		
         for (Apuesta apuesta : apuestas) {

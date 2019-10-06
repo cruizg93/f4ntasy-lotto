@@ -9,6 +9,7 @@ public class ApuestaActivaResumenResponse {
     private List<TuplaRiesgo> tuplaRiesgos;
     private double comision;
     private double total;
+    private double subTotal;
 
     public ApuestaActivaResumenResponse() {
     }
@@ -59,4 +60,12 @@ public class ApuestaActivaResumenResponse {
     public void setTotal(double total) {
         this.total = total;
     }
+
+	public double getSubTotal() {
+		return this.total-this.comision;
+	}
+
+	public void setSubTotal(double subTotal) {
+		this.subTotal = subTotal;
+	}
 }

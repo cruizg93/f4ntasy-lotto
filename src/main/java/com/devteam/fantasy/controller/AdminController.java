@@ -116,6 +116,9 @@ public class AdminController {
     @Autowired
     private UserService userService;
     
+    @Autowired
+    HistoryService historyService;
+    
     @PostMapping("/validateAdminPassword")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ResponseEntity<String> verifyAdming(@Valid @RequestBody ObjectNode json){
@@ -352,7 +355,7 @@ public class AdminController {
             Set<Role> roles2 = new HashSet<>();
             Role userRole = roleRepository.findByName(RoleName.ROLE_USER)
                     .orElseThrow(() -> new RuntimeException(
-                            "Fail! -> Cause: Master Role not find."));
+                            "Fail! -> Cause: USER Role not find."));
             roles2.add(userRole);
             jugador.setRoles(roles2);
 
@@ -372,8 +375,9 @@ public class AdminController {
             jugador.setCostoChicaPedazos(costoChicaPedazos);
             jugador.setPremioChicaPedazos(premioChicaPedazos);
 
-            jugadorRepository.save(jugador);
-
+            jugador = jugadorRepository.save(jugador);
+            historyService.createEvent(HistoryEventType.PLAYER_CREATED,jugador.getId());
+            
             List<PlayerCount> playerCounts = playerCountRepository.findAll();
             if (!playerCounts.isEmpty()) {
                 PlayerCount playerCount = playerCounts.get(0);
@@ -468,6 +472,7 @@ public class AdminController {
         jugador.setPremioChicaPedazos(premioChicaPedazos);
         jugadorRepository.save(jugador);
 
+        historyService.createEvent(HistoryEventType.PLAYER_EDITED,jugador.getId());
         return ResponseEntity.ok().body("User updated successfully!");
     }
 
