@@ -210,7 +210,8 @@ public class SorteoController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ResponseEntity<?> deleteApuestasActivasBySorteoAndJugador(@PathVariable Long id, @PathVariable Long jugadorId) {
     	try {
-			sorteoService.deleteAllApuestasOnSorteoDiarioByUser(id);
+    		User user = userService.getById(jugadorId);
+			sorteoService.deleteAllApuestasOnSorteoDiarioByUser(id,user);
 		} catch (CanNotRemoveApuestaException e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
 		}catch (SorteoEstadoNotValidException e) {
