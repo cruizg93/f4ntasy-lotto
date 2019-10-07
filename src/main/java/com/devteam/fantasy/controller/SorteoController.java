@@ -220,6 +220,22 @@ public class SorteoController {
         return ResponseEntity.ok("Apuesta Eliminada Correctamente.");
     }
     
+    @DeleteMapping("/activos/{id}/usuarios/{userId}/apuestas/detallesx/{numero}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('USER') or hasRole('ASIS')")
+    public ResponseEntity<?> deleteApuestasActivasDetallesXBySorteoAndNumeroAndJugador(@PathVariable Long id, @PathVariable Long userId, @PathVariable Integer numero) {
+    	try {
+    		
+    		User user = userService.getById(userId);
+			sorteoService.deleteAllApuestasDetallesXOnSorteoDiarioByNumeroAndUser(id, numero, user);
+			
+    	} catch (CanNotRemoveApuestaException e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+		}catch (SorteoEstadoNotValidException e) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+		}
+        return ResponseEntity.ok("Apuesta Eliminada Correctamente.");
+    }
+    
     @PostMapping("/activos/{id}/numero-ganador")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ResponseEntity<?> setNumeroGanadarByApuestaId( @PathVariable Long id, @Valid @RequestBody ObjectNode jsonNodes) {

@@ -52,6 +52,8 @@ public interface SorteoService {
 	public void cerrarSemana(SorteoDiaria sorteoDiaria, Week week) throws CanNotInsertHistoricoBalanceException;
 	public void changeWinningNumber(int newWinningNumber, Long sorteoId) throws NotFoundException, CanNotChangeWinningNumberException;
 	public void copyApuestasToHistoricoApuestas(SorteoDiaria sorteoDiaria);
+	public void deleteAllApuestasDetallesXOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, User user)
+			throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
 	
 	
 }

@@ -1061,6 +1061,40 @@ public class SorteoServiceImpl implements SorteoService {
 			logger.debug("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, User user): END");
 		}
 	}
+	
+	@Override
+	@Transactional(rollbackFor = {CanNotRemoveApuestaException.class , SorteoEstadoNotValidException.class})
+	public void deleteAllApuestasDetallesXOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, User user) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException {
+		SorteoDiaria sorteoDiaria = null;
+		try {
+			logger.debug("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long {}, Integer {}, User {}): START",sorteoId, numero, user.getUsername());
+			sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
+
+			if (!sorteoDiaria.getSorteo().getEstado().getEstado().equals(EstadoName.ABIERTA)
+					&& !sorteoDiaria.getSorteo().getEstado().getEstado().equals(EstadoName.BLOQUEADA)) {
+				throw new SorteoEstadoNotValidException("No se puede eliminar apuestas de un sorteo cerrado");
+			}
+
+			List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndNumeroAndUser(sorteoDiaria, numero, user);
+			deleteApuestas(apuestas);
+
+			historyService.createEvent(HistoryEventType.BET_DELETED,sorteoId,String.valueOf(numero),null);
+		} catch (Exception e) {
+			logger.error("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long {}, Integer {}, User {}): CATCH",sorteoId, numero, user.getUsername());
+			logger.error(e.getMessage(), e);
+
+			if (e instanceof SorteoEstadoNotValidException) {
+				throw new SorteoEstadoNotValidException(e.getMessage());
+			} else {
+				throw new CanNotRemoveApuestaException(
+						sorteoDiaria != null ? sorteoDiaria.getSorteo().getSorteoTime().toString()
+								: "Sorteo Id" + sorteoId,
+						numero.toString(), e.getMessage());
+			}
+		} finally {
+			logger.debug("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, User user): END");
+		}
+	}
 
 	private void deleteApuestas(List<Apuesta> apuestas) {
 		for (Apuesta apuesta : apuestas) {
