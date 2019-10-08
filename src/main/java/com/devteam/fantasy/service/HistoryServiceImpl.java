@@ -168,14 +168,18 @@ public class HistoryServiceImpl implements HistoryService {
 				Sorteo sorteo								= sorteos.get(i);
 				List<HistoricoBalance> historicoBalanceList = historicoBalanceRepository.findAllBySorteoTime(sorteo.getSorteoTime());
 				BigDecimal historicoBalance 				= BigDecimal.ZERO;
-				for(HistoricoBalance hb: historicoBalanceList) {
-					historicoBalance = historicoBalance.add(BigDecimal.valueOf(hb.getBalance()));
-					
-					double currencyExchange = MathUtil.getDollarChangeRateOriginalMoneda(hb.getCambio(),hb.getMoneda().getMonedaName().toString(), moneda);
-					historicoBalance = historicoBalance.multiply(BigDecimal.valueOf(currencyExchange)); 
-				}
 				
+				for(HistoricoBalance hb: historicoBalanceList) {
+					double currencyExchange = MathUtil.getDollarChangeRateOriginalMoneda(hb.getCambio(),hb.getMoneda().getMonedaName().toString(), moneda);
+					BigDecimal balanceExchanged = BigDecimal.valueOf(hb.getBalance()).multiply(BigDecimal.valueOf(currencyExchange));
+					historicoBalance = historicoBalance.add(balanceExchanged);
+					
+					logger.debug(hb.getJugador().getUsername()+" - "+hb.getBalance());
+					logger.debug("historicoBalance: "+historicoBalance.doubleValue());
+				}
+				logger.debug(sorteo.getSorteoTime()+" - "+prevBalance.doubleValue() );
 				prevBalance = historicoBalance.compareTo(BigDecimal.ZERO)!=0?prevBalance.add(historicoBalance):prevBalance;
+				logger.debug("PrevBalance - "+prevBalance.doubleValue() );
 				
 				List<HistoricoApuestas> apuestas = historicoApuestaRepository.findAllBySorteo(sorteo);
 				SummaryResponse summarySorteo = sorteoTotales.processHitoricoApuestas(apuestas, moneda);
