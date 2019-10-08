@@ -1190,6 +1190,7 @@ public class AdminController {
             pairNVList.add(new PairNV(apuesta.getNumero(), cantidad));
         }
         ApuestaActivaDetallesResponse detallesResponse = new ApuestaActivaDetallesResponse();
+        detallesResponse.setUserId(user.getId());
         detallesResponse.setApuestas(pairNVList);
         detallesResponse.setTotal(total);
         detallesResponse.setTitle("Apuestas propias de - " + getUsernameStringFromObjectNode(json));
@@ -1218,6 +1219,7 @@ public class AdminController {
                     total1 += cantidad;
                     pairNVList1.add(new PairNV(apuesta.getNumero(), cantidad));
                 }
+                detallesResponse1.setUserId(asistente.getId());
                 detallesResponse1.setApuestas(pairNVList1);
                 detallesResponse1.setTotal(total1);
                 detallesResponse1.setTitle("Apuestas de " + asistente.getUsername());
@@ -1262,6 +1264,7 @@ public class AdminController {
             pairNVList.add(new PairNV(apuesta.getNumero(), apuesta.getCantidad()));
         }
         ApuestaActivaDetallesResponse detallesResponse = new ApuestaActivaDetallesResponse();
+        detallesResponse.setUserId(user.getId());
         detallesResponse.setApuestas(pairNVList);
         detallesResponse.setTotal(total);
         detallesResponse.setTitle(jugador.getUsername() +" - "+Util.getMonedaSymbolFromMonedaName(jugador.getMoneda().getMonedaName())+" ["+jugador.getName()+"]");
@@ -1278,6 +1281,7 @@ public class AdminController {
                     total1 += apuesta.getCantidad() * MathUtil.getCantidadMultiplier(jugador, apuesta, sorteo.getSorteoType().getSorteoTypeName(), jugador.getMoneda().getMonedaName()).doubleValue();
                     pairNVList1.add(new PairNV(apuesta.getNumero(), apuesta.getCantidad()));
                 }
+                detallesResponse1.setUserId(asistente.getId());
                 detallesResponse1.setApuestas(pairNVList1);
                 detallesResponse1.setTotal(total1);
                 detallesResponse1.setTitle(asistente.getUsername()+" ["+asistente.getName()+"]");
