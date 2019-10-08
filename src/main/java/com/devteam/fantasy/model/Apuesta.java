@@ -102,8 +102,8 @@ public class Apuesta {
 
 	@Override
 	public String toString() {
-		return "Apuesta [id=" + id + ", sorteo=" + sorteoDiaria.getSorteoTime().toString() + ", user=" + user + ", cambio=" + cambio
-				+ ", date=" + date + ", numero=" + numero + ", cantidad=" + cantidad + ", comision=" + comision + "]";
+		return "Apuesta [id=" + id + ", cantidad=" + cantidad + ", comision=" + comision + ", numero=" + numero
+				+ ", sorteoDiaria=" + sorteoDiaria + "]";
 	}
 
 }

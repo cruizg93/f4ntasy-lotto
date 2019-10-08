@@ -861,9 +861,10 @@ public class SorteoServiceImpl implements SorteoService {
 				BigDecimal totalPremio = BigDecimal.valueOf(tupla.getPosiblePremio()).add(premio);
 				tupla.setPosiblePremio(totalPremio.doubleValue());
 				if (topRiesgo < premio.doubleValue()) {
+					topRiesgo = premio.doubleValue();
 					indexTopRiesgo = numero;
 				}
-
+				logger.debug("topRiesgo: "+topRiesgo);
 				BigDecimal riesgo = premio.divide(sorteoTotales.getTotalBD(), 2, RoundingMode.HALF_EVEN);
 				tupla.setTotalRiesgo(BigDecimal.valueOf(tupla.getTotalRiesgo()).add(riesgo).doubleValue());
 
@@ -930,10 +931,14 @@ public class SorteoServiceImpl implements SorteoService {
 					apuesta.setCantidad(apuesta.getCantidad() + entryResponse.getCurrent());
 					apuesta.setCambio(cambio);
 
+					BigDecimal costo = MathUtil.getCantidadMultiplier(jugador, apuesta, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName(), jugador.getMoneda().getMonedaName());
+					costo = costo.multiply(BigDecimal.valueOf(apuesta.getCantidad()));
+					
 					BigDecimal comisionRate = MathUtil.getComisionRate(jugador, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
 					comisionRate = comisionRate.divide(BigDecimal.valueOf(100));
-					BigDecimal comision = comisionRate.multiply(BigDecimal.valueOf(apuesta.getCantidad()));
+					BigDecimal comision = comisionRate.multiply(costo);
 					apuesta.setComision(comision.doubleValue());
+					
 					apuesta.setDate(Timestamp.valueOf(LocalDateTime.now()));
 					apuestaRepository.save(apuesta);
 					
