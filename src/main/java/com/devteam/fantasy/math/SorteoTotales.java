@@ -56,7 +56,16 @@ public class SorteoTotales {
 	private BigDecimal ventas;
 	private BigDecimal comisiones;
 	private BigDecimal premios;
+	private BigDecimal cantidades;
 	
+	public BigDecimal getCantidades() {
+		return cantidades;
+	}
+
+	public void setCantidades(BigDecimal cantidades) {
+		this.cantidades = cantidades;
+	}
+
 	private MonedaName monedaName;
 	private User user;
 	private SorteoDiaria sorteoDiaria;
@@ -80,7 +89,8 @@ public class SorteoTotales {
 		this.sorteoDiaria = sorteoDiaria;
 		this.ventas = BigDecimal.ZERO;
 		this.comisiones = BigDecimal.ZERO;
-		this.setPremio(BigDecimal.ZERO);
+		this.premios = BigDecimal.ZERO;
+		this.cantidades = BigDecimal.ZERO;
 		
 		Jugador jugador = Util.getJugadorFromUser(user);
 		Set<Apuesta> apuestas; 
@@ -92,6 +102,7 @@ public class SorteoTotales {
 		
         for (Apuesta apuesta : apuestas) {
         	if(user == null ) { jugador = Util.getJugadorFromUser(apuesta.getUser()); }
+        	cantidades = cantidades.add(BigDecimal.valueOf(apuesta.getCantidad()));
         	
         	BigDecimal cantidad = MathUtil.getCantidadMultiplier(jugador, apuesta, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName(), this.monedaName);
 			cantidad = cantidad.multiply(BigDecimal.valueOf(apuesta.getCantidad()));
@@ -113,6 +124,7 @@ public class SorteoTotales {
             for(Asistente asistente: asistentes) {
             	Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
     			for(Apuesta apuesta : apuestaList) {
+    				cantidades = cantidades.add(BigDecimal.valueOf(apuesta.getCantidad()));
     				BigDecimal multiplier = MathUtil.getCantidadMultiplier(jugador, apuesta,sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName(), this.monedaName);
     				cantidadAsistentesVentas = multiplier.multiply(BigDecimal.valueOf(apuesta.getCantidad())).add(cantidadAsistentesVentas);
     				comisionAsistentesVentas = comisionAsistentesVentas.add(BigDecimal.valueOf(apuesta.getComision()));

@@ -313,15 +313,24 @@ public class SorteoServiceImpl implements SorteoService {
 			MonedaName moneda = jugador.getMoneda().getMonedaName();
 
 			for (SorteoDiaria sorteoDiaria : sorteos) {
-				sorteoTotales.processSorteo(jugador, sorteoDiaria);
+				sorteoTotales.processSorteo(user, sorteoDiaria);
 
 				String estado = sorteoDiaria.getSorteo().getEstado().getEstado().toString();
-				sorteoResponses.add(new SorteoResponse(sorteoDiaria.getId(),
+				SorteoResponse response = new SorteoResponse(sorteoDiaria.getId(),
 						Util.formatTimestamp2String(sorteoDiaria.getSorteoTime()),
 						Util.getDayFromTimestamp(sorteoDiaria.getSorteoTime()),
 						Util.getHourFromTimestamp(sorteoDiaria.getSorteoTime()), sorteoTotales.getVentas(),
 						sorteoTotales.getComisiones(), sorteoTotales.getTotal(), estado, moneda.toString(),
-						sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString()));
+						sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString());
+				
+				//IF user is Asistent the total must be the sum of cantidades instead of sorteoTotales.getTotal()
+				if( user instanceof Asistente)
+				{
+					response.setTotal(sorteoTotales.getCantidades().doubleValue());
+				}
+				
+				
+				sorteoResponses.add(response);
 			}
 		} catch (Exception e) {
 			logger.error("getSorteosResponses(List<SorteoDiaria> {}, User {}): CATCH", sorteos, user);
