@@ -27,6 +27,7 @@ import com.devteam.fantasy.exception.CanNotInsertWinningNumberException;
 import com.devteam.fantasy.exception.CanNotRemoveApuestaException;
 import com.devteam.fantasy.exception.InvalidSorteoStateException;
 import com.devteam.fantasy.exception.SorteoEstadoNotValidException;
+import com.devteam.fantasy.message.response.ApuestaActivaDetallesResponse;
 import com.devteam.fantasy.message.response.ApuestaActivaResponse;
 import com.devteam.fantasy.message.response.ApuestaActivaResumenResponse;
 import com.devteam.fantasy.message.response.ApuestasActivasResponse;
@@ -163,6 +164,12 @@ public class SorteoController {
     @PreAuthorize("hasRole('USER') or hasRole('ASIS') or hasRole('ADMIN') or hasRole('MASTER')")
     public ApuestaActivaResponse getApuestasActivasBySorteoAndJugador(@PathVariable Long id, @PathVariable String username) {
         return sorteoService.getApuestasActivasBySorteoAndJugador(id, username);
+    }
+    
+    @GetMapping("/activos/{id}/apuestas/detalles/{username}")
+    @PreAuthorize("hasRole('USER') or hasRole('ASIS') or hasRole('ADMIN') or hasRole('MASTER')")
+    public List<ApuestaActivaDetallesResponse> getApuestasActivasDetallesBySorteoAndJugador(@PathVariable Long id, @PathVariable String username) {
+        return sorteoService.getApuestasActivasDetallesBySorteoAndJugador(id, username);
     }
     
     @DeleteMapping("/activos/{id}/apuestas/{numero}")

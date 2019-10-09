@@ -39,6 +39,7 @@ import com.devteam.fantasy.exception.InvalidSorteoStateException;
 import com.devteam.fantasy.exception.SorteoEstadoNotValidException;
 import com.devteam.fantasy.math.MathUtil;
 import com.devteam.fantasy.math.SorteoTotales;
+import com.devteam.fantasy.message.response.ApuestaActivaDetallesResponse;
 import com.devteam.fantasy.message.response.ApuestaActivaResponse;
 import com.devteam.fantasy.message.response.ApuestaActivaResumenResponse;
 import com.devteam.fantasy.message.response.ApuestasActivasResponse;
@@ -1013,6 +1014,48 @@ public class SorteoServiceImpl implements SorteoService {
 		}
 		return apuestaActivaResponse;
 
+	}
+	
+	
+
+	@Override
+	public List<ApuestaActivaDetallesResponse> getApuestasActivasDetallesBySorteoAndJugador(Long sorteoId, String username) {
+		List<ApuestaActivaDetallesResponse> apuestasDetails = new ArrayList<>();
+        User user = userService.getByUsername(username);
+        Jugador jugador = Util.getJugadorFromUser(user);
+        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
+        Sorteo sorteo= sorteoDiaria.getSorteo();
+        List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUserOrderByNumeroAsc(sorteoDiaria, user);
+        List<PairNV> pairNVList = new ArrayList<>();
+        mergeApuestasIntoPairNVList(pairNVList, apuestas);
+
+        sorteoTotales.processSorteo(user, sorteoDiaria, jugador.getMoneda().getMonedaName(), true);
+        
+        ApuestaActivaDetallesResponse detallesResponse = new ApuestaActivaDetallesResponse();
+        detallesResponse.setApuestas(pairNVList);
+        detallesResponse.setTotal(sorteoTotales.getTotal());
+        detallesResponse.setTitle(jugador.getUsername() +" - "+Util.getMonedaSymbolFromMonedaName(jugador.getMoneda().getMonedaName())+" ["+jugador.getName()+"]");
+        detallesResponse.setUserId(jugador.getId());
+        apuestasDetails.add(detallesResponse);
+        
+        List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
+        asistentes.forEach(asistente -> {
+            List<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUserOrderByNumeroAsc(sorteoDiaria, asistente);
+            if (apuestaList.size() > 0) {
+                ApuestaActivaDetallesResponse detallesResponse1 = new ApuestaActivaDetallesResponse();
+                List<PairNV> pairNVList1 = new ArrayList<>();
+                mergeApuestasIntoPairNVList(pairNVList1, apuestaList);
+                sorteoTotales.processSorteo(asistente, sorteoDiaria);
+
+                Collections.sort(pairNVList1);
+                detallesResponse1.setApuestas(pairNVList1);
+                detallesResponse1.setTotal(sorteoTotales.getTotal());
+                detallesResponse1.setTitle(asistente.getUsername()+" ["+asistente.getName()+"]");
+                detallesResponse1.setUserId(asistente.getId());
+                apuestasDetails.add(detallesResponse1);
+            }
+        });
+        return apuestasDetails;
 	}
 
 	private void mergeApuestasIntoPairNVList(List<PairNV> pairNVList, List<Apuesta> apuestas) {

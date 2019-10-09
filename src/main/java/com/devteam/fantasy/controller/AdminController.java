@@ -1153,6 +1153,8 @@ public class AdminController {
         return ResponseEntity.ok("Numero fijado");
     }
 
+    //Replaced by SorteoController.getApuestasActivasBySorteoAndJugador [sorteos/activos/{id}/apuestas/{username}]
+    @Deprecated
     @PostMapping("/jugador/apuestas/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ApuestaActivaResponse getApuestasActivas(@Valid @RequestBody ObjectNode json,
