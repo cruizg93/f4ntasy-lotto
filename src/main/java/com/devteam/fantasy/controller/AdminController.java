@@ -116,6 +116,9 @@ public class AdminController {
     @Autowired
     HistoryService historyService;
     
+    @Autowired
+    JugadorSequenceRepository jugadorSequenceRepository;
+    
     @PostMapping("/validateAdminPassword")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ResponseEntity<String> verifyAdming(@Valid @RequestBody ObjectNode json){
@@ -263,7 +266,8 @@ public class AdminController {
     @GetMapping("/jugadores/count")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public Long nextJugadorId() {
-        return jugadorRepository.count() + 1;
+    	Long nextId = jugadorSequenceRepository.getCurrentValue();
+        return nextId + 1;
     }
 
     @GetMapping("/jugadores/delete/{id}")
@@ -373,6 +377,7 @@ public class AdminController {
             jugador.setPremioChicaPedazos(premioChicaPedazos);
 
             jugador = jugadorRepository.save(jugador);
+            jugadorSequenceRepository.getNextValue();
             historyService.createEvent(HistoryEventType.PLAYER_CREATED,jugador.getId());
             
         }
