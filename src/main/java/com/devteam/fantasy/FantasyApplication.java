@@ -74,6 +74,9 @@ public class FantasyApplication {
 
     @Autowired
     SorteoTypeRepository sorteoTypeRepository;
+    
+    @Autowired
+    JugadorSequenceRepository jugadorSequenceRepository;
 
     @PostConstruct
     public void init() {
@@ -182,11 +185,17 @@ public class FantasyApplication {
             TipoChica chicaPedazos = tipoChicaRepository.findByChicaName(ChicaName.PEDAZOS);
 
             Jugador p1 = createJugadorP("Usuario 1","P001",lempiras, apuestaMiles,chicaMiles, new double[] {12,1000}, new double[]{11,1000} );
+            jugadorSequenceRepository.getNextValue();
             Jugador p2 = createJugadorP("Usuario 2","P002",lempiras, apuestaMiles,chicaDirecta, new double[] {12,1000}, new double[]{20,66} );
+            jugadorSequenceRepository.getNextValue();
             Jugador p3 = createJugadorP("Usuario 3","P003",lempiras, apuestaMiles,chicaPedazos, new double[] {10,1000}, new double[]{22,0.30,20} );
+            jugadorSequenceRepository.getNextValue();
             Jugador p4 = createJugadorP("Usuario 4","P004",lempiras, apuestaDirecta,chicaMiles, new double[] {18,66}, new double[]{15,1000} );
+            jugadorSequenceRepository.getNextValue();
             Jugador p5 = createJugadorP("Usuario 5","P005",lempiras, apuestaDirecta,chicaDirecta, new double[] {20,66}, new double[]{22.5,60} );
+            jugadorSequenceRepository.getNextValue();
             Jugador p6 = createJugadorP("Usuario 6","P006",lempiras, apuestaDirecta,chicaPedazos, new double[] {21,65}, new double[]{20,0.30,68} );
+            jugadorSequenceRepository.getNextValue();
             
             Asistente x1 = createJugadorX("Asistente 1", "P001x1", p1);
             Asistente x2 = createJugadorX("Asistente 2", "P002x1", p2);

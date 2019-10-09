@@ -23,8 +23,4 @@ public class JugadorSequence {
     @GeneratedValue(generator = "jugadores_sequence")
     private Long id;
 
-	public Long getId() {
-		return id;
-	}
-
 }
