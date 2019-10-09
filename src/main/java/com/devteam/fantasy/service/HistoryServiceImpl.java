@@ -572,16 +572,23 @@ public class HistoryServiceImpl implements HistoryService {
 	public SorteosPasadosApuestas getApuestasPasadasBySorteoAndJugador(Long sorteoId, User user) throws Exception {
 		SorteosPasadosApuestas sorteosPasadosApuestas = new SorteosPasadosApuestas();
 		Sorteo sorteo;
+		
 		try {
 			logger.debug("getApuestasPasadasBySorteoAndJugador(Long {}, Jugador {}): START", sorteoId, user.getId());
 			Jugador jugador = Util.getJugadorFromUser(user);
+			MonedaName currencyRequested =null;
 			sorteo = sorteoRepository.findById(sorteoId).orElseThrow(() -> new NotFoundException("Sorteo not found with id: "+sorteoId));
 			
 			List<HistoricoApuestas> apuestas = new ArrayList<>();
 			if( user instanceof Jugador) {
 				apuestas = historicoApuestaRepository.findAllBySorteoAndUser(sorteo, user);
+				currencyRequested = jugador.getMoneda().getMonedaName();
 			}else if( user instanceof Asistente){
 				apuestas = historicoApuestaRepository.findAllBySorteoAndAsistente(sorteo, user);
+				currencyRequested = jugador.getMoneda().getMonedaName();
+			}else {
+				apuestas = historicoApuestaRepository.findAllBySorteo(sorteo);
+				currencyRequested = MonedaName.LEMPIRA;
 			}
 			
 			List<PairNV> pairs = mergeApuestasIntoPairNVList(apuestas);
@@ -597,7 +604,7 @@ public class HistoryServiceImpl implements HistoryService {
 					hasApuestasMadeByAsistente = true;
 				}
 			}
-			SummaryResponse summary = sorteoTotales.processHitoricoApuestas(apuestas, jugador.getMoneda().getMonedaName().toString());
+			SummaryResponse summary = sorteoTotales.processHitoricoApuestas(apuestas, currencyRequested.toString());
 			sorteosPasadosApuestas.setxApuestas(hasApuestasMadeByAsistente);
 			sorteosPasadosApuestas.setApuestas(pairs);
 			sorteosPasadosApuestas.setSummary(summary);
