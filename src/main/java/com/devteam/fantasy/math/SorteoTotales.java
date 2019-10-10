@@ -159,8 +159,9 @@ public class SorteoTotales {
             comisiones = comisiones.add(comision);
             
             if(numero.getNumeroGanador() == apuesta.getNumero()) {
-        		premios = premios.add(BigDecimal.valueOf(apuesta.getCantidad()).multiply(BigDecimal.valueOf(apuesta.getPremioMultiplier())));
-        		premios = premios.multiply( currencyExchange);
+        		BigDecimal premio = BigDecimal.valueOf(apuesta.getCantidad()).multiply(BigDecimal.valueOf(apuesta.getPremioMultiplier()));
+        		premio = premio.multiply( currencyExchange);
+        		premios = premios.add(premio);
             }
         }
 		

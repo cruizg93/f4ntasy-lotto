@@ -255,12 +255,14 @@ public class HistoryServiceImpl implements HistoryService {
 			SummaryResponse summary = new SummaryResponse();
 			List<Bono> bonoList = bonoRepository.findAllByWeek(week);
 			BigDecimal bonos = BigDecimal.ZERO;
-			for(Bono b: bonoList) {
-				bonos = bonos.add(BigDecimal.valueOf(b.getBono()));
+			for(Bono bono: bonoList) {
+				double currencyExchange = MathUtil.getDollarChangeRateOriginalMoneda(bono.getCambio(),bono.getMoneda().getMonedaName().toString(), moneda);
+				BigDecimal b= BigDecimal.valueOf(bono.getBono());
+				b = b.multiply(BigDecimal.valueOf(currencyExchange));
 				
-				double currencyExchange = MathUtil.getDollarChangeRateOriginalMoneda(b.getCambio(),b.getMoneda().getMonedaName().toString(), moneda);
-				bonos = bonos.multiply(BigDecimal.valueOf(currencyExchange));
+				bonos = bonos.add(b);
 			}
+			
 			
 			summary.setBonos(bonos.doubleValue());
 			summary.setComisiones(comisionWeek.doubleValue());
@@ -291,6 +293,7 @@ public class HistoryServiceImpl implements HistoryService {
 			Week week 									= weekRepository.findById(weekId).orElseThrow(() -> new NotFoundException("Not Week Found"));
 			List<Jugador> jugadores 					= jugadorRepository.findAllByOrderByIdAsc();
 			List<JugadorBalanceWeek> jugadoresResponse 	= new ArrayList<JugadorBalanceWeek>();
+			List<Bono> bonos 							= new ArrayList<>();
 			
 			logger.debug("Creating Jugadores List...");
 			for(Jugador jugador : jugadores) {
@@ -318,6 +321,8 @@ public class HistoryServiceImpl implements HistoryService {
 				Optional<Bono> bono = bonoRepository.findByWeekAndUser(week, jugador);
 				if(bono.isPresent()) {
 					jugadorWeek.setHaveBono(true);
+					jugadorWeek.setBalance(jugadorWeek.getBalance()+bono.get().getBono());
+					bonos.add(bono.get());
 				}
 				
 				jugadorWeek.setId(jugador.getId());
@@ -336,6 +341,16 @@ public class HistoryServiceImpl implements HistoryService {
 			List<HistoricoApuestas> apuestas = historicoApuestaRepository.findAllBySorteoSorteoTimeBetween(week.getMonday(),week.getSunday());
 			SummaryResponse summarySorteo = sorteoTotales.processHitoricoApuestas(apuestas, moneda);
 			
+			BigDecimal bonoTotal = BigDecimal.ZERO;
+			for(Bono bono: bonos) {
+				double currencyExchange = MathUtil.getDollarChangeRateOriginalMoneda(bono.getCambio(),bono.getMoneda().getMonedaName().toString(), moneda);
+				BigDecimal b= BigDecimal.valueOf(bono.getBono());
+				b = b.multiply(BigDecimal.valueOf(currencyExchange));
+				
+				bonoTotal = bonoTotal.add(b);
+			}
+			
+			summarySorteo.setBonos(bonoTotal.doubleValue());
 			result.setJugadores(jugadoresResponse);
 			result.setSummary(summarySorteo);
 			
@@ -541,9 +556,7 @@ public class HistoryServiceImpl implements HistoryService {
 		
 		if(weekBalance.getBalance()>=0) {
 			throw new CanNotInsertBonoException(week.getId(), jugador.getId(), "Jugador not elegible for bono");
-		}
-		
-		if(bono.getBono() >= weekBalance.getBalance()) {
+		}else if(bono.getBono() >= (weekBalance.getBalance() * (-1))) {
 			throw new CanNotInsertBonoException(week.getId(), jugador.getId(), "Bono must be less than weekly balance");
 		}
 		
