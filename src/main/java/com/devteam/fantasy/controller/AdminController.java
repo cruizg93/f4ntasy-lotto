@@ -1357,7 +1357,7 @@ public class AdminController {
     
     @GetMapping("/jugadores/list")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
-    public List<JugadorResponse> getAllJugadores() throws Exception {
+    public JugadoresResponse getAllJugadores() throws Exception {
         return adminService.getAllJugadores();
     }
 

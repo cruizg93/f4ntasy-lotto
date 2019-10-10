@@ -57,11 +57,11 @@ public class SummaryResponse {
 	}
 
 	public double getPerdidasGanas() {
+		if( perdidasGanas == 0) {
+			perdidasGanas = subTotal - (comisiones+bonos);
+		}
+		
 		return perdidasGanas;
-	}
-
-	public void setPerdidasGanas(double perdidasGanas) {
-		this.perdidasGanas = perdidasGanas;
 	}
 
 	public String getCurrency() {

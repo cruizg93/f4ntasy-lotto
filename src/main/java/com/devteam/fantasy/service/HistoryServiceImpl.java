@@ -222,10 +222,6 @@ public class HistoryServiceImpl implements HistoryService {
 					summaryDay.setVentas(ventasDay.doubleValue());
 					summaryDay.setSubTotal(subTotalDay.doubleValue());
 					
-					BigDecimal incomeDay = premiosWeek;
-					BigDecimal expensesDay = subTotalWeek;
-					summaryDay.setPerdidasGanas(incomeDay.subtract(expensesDay).doubleValue());
-					
 					PairDayBalance sorteosPasado = new PairDayBalance();
 					sorteosPasado.setSorteoTime(Util.getDayFromTimestamp(sorteo.getSorteoTime()));
 					sorteosPasado.setBalance(prevBalance.doubleValue());
@@ -271,10 +267,6 @@ public class HistoryServiceImpl implements HistoryService {
 			summary.setSubTotal(subTotalWeek.doubleValue());
 			summary.setCurrency(moneda);
 			
-			BigDecimal income = premiosWeek.add(bonos);
-			BigDecimal expenses = subTotalWeek;
-			summary.setPerdidasGanas(income.subtract(expenses).doubleValue());
-
 			sorteosPasadosJugador.setSorteosPasados(pairDaysBalance);
 			sorteosPasadosJugador.setSummary(summary);
 			
@@ -442,10 +434,6 @@ public class HistoryServiceImpl implements HistoryService {
 					summaryDay.setVentas(ventasDay.doubleValue());
 					summaryDay.setSubTotal(subTotalDay.doubleValue());
 					
-					BigDecimal income = premiosDay;
-					BigDecimal expenses = subTotalDay;
-					summaryDay.setPerdidasGanas(income.subtract(expenses).doubleValue());
-					
 					PairDayBalance sorteosPasado = new PairDayBalance();
 					sorteosPasado.setSorteoTime(Util.getDayFromTimestamp(sorteo.getSorteoTime()));
 					sorteosPasado.setBalance(prevBalance);
@@ -489,10 +477,6 @@ public class HistoryServiceImpl implements HistoryService {
 			summary.setSubTotal(subTotalWeek.doubleValue());
 			summary.setCurrency(jugador.getMoneda().getMonedaName().toString());
 			
-			BigDecimal income = premiosWeek.add(BigDecimal.valueOf(bonos.isPresent()?bonos.get().getBono():0d));
-			BigDecimal expenses = subTotalWeek;
-			summary.setPerdidasGanas(income.subtract(expenses).doubleValue());
-
 			sorteosPasadosJugador.setSorteosPasados(pairDaysBalance);
 			sorteosPasadosJugador.setSummary(summary);
 			

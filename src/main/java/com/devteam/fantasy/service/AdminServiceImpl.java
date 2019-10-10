@@ -19,6 +19,7 @@ import com.devteam.fantasy.message.request.BonoRequest;
 import com.devteam.fantasy.message.response.ApuestasActivasResponse;
 import com.devteam.fantasy.message.response.AsistenteResponse;
 import com.devteam.fantasy.message.response.JugadorResponse;
+import com.devteam.fantasy.message.response.JugadoresResponse;
 import com.devteam.fantasy.message.response.SorteoResponse;
 import com.devteam.fantasy.model.Apuesta;
 import com.devteam.fantasy.model.Asistente;
@@ -95,13 +96,16 @@ public class AdminServiceImpl implements AdminService{
 	
 	private static final Logger logger = LoggerFactory.getLogger(AdminServiceImpl.class);
 	
-	public List<JugadorResponse> getAllJugadores() throws Exception{
-		List<JugadorResponse> jugadorResponses = new ArrayList<>();
-
+	public JugadoresResponse getAllJugadores() throws Exception{
+		JugadoresResponse response = new JugadoresResponse();
 		try {
 			logger.debug("getAllJugadores(): START");
+			List<JugadorResponse> jugadorResponses = new ArrayList<>();
 			List<Jugador> jugadores = jugadorRepository.findAllByOrderByIdAsc();
 	        
+			BigDecimal totalDolar = BigDecimal.ZERO;
+			BigDecimal totalLempira = BigDecimal.ZERO;
+			
 			for(Jugador jugador: jugadores) {
 	        	List<SorteoDiaria> sorteoDiarias = sorteoService.getActiveSorteosList(jugador);
 	        	List<SorteoResponse> sorteosResponse = sorteoService.getSorteosResponses(sorteoDiarias, (User) jugador);
@@ -131,14 +135,23 @@ public class AdminServiceImpl implements AdminService{
 	                jugadorResponse.setAsistentes(asistenteResponses);
 	            }
 	            jugadorResponses.add(jugadorResponse);
+	            
+	            if ( jugador.getMoneda().getMonedaName().equals(MonedaName.LEMPIRA)) {
+	            	totalLempira = totalLempira.add(BigDecimal.valueOf(values.get("total")));
+	            }else if ( jugador.getMoneda().getMonedaName().equals(MonedaName.DOLAR)) {
+	            	totalDolar = totalDolar.add(BigDecimal.valueOf(values.get("total")));
+	            }
 	        }
+			response.setJugadores(jugadorResponses);
+			response.setTotalDolar(totalDolar.doubleValue());
+			response.setTotalLempira(totalLempira.doubleValue());
 		}catch(Exception e) {
 			logger.debug(e.getMessage());
 			throw e;
 		}finally {
 			logger.debug("getAllJugadores(): END");
 		}
-        return jugadorResponses;
+        return response;
 	}
 	
 	public Map<String, Double> processSorteoResponse(List<SorteoResponse> sorteosResponse){
