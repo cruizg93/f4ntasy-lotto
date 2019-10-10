@@ -300,9 +300,10 @@ public class AdminController {
 		List<HistoricoApuestas> historicoApuestas =null;
 		if ( user instanceof Jugador) {
 			historicoApuestas = historicoApuestaRepository.findAllByUser(user);
-		} if (user instanceof Asistente) {
+		}else if (user instanceof Asistente) {
 			historicoApuestas = historicoApuestaRepository.findAllByAsistente(user);
 		}
+		
 		if (historicoApuestas != null && historicoApuestas.size() > 0) {
 			inactiveUser(user);
 			return ResponseEntity.ok("Usuario eliminado");
@@ -314,17 +315,22 @@ public class AdminController {
 				inactiveUser(user);
 				return ResponseEntity.ok("Usuario eliminado");
 			}
-		} 
-    		
-		Jugador lastJugadorCreated = jugadorRepository.findFirstByOrderByIdDesc();
-		if( user.getId() == lastJugadorCreated.getId()) {
-			String jugadorNumber = user.getUsername().substring(1,user.getUsername().length());
-			jugadorSequenceRepository.setCurrentValue(Integer.parseInt(jugadorNumber)-1);
-			userRepository.delete(user);
 			
+			Jugador lastJugadorCreated = jugadorRepository.findFirstByOrderByIdDesc();
+			if( user.getId() == lastJugadorCreated.getId()) {
+				String jugadorNumber = user.getUsername().substring(1,user.getUsername().length());
+				jugadorSequenceRepository.setCurrentValue(Integer.parseInt(jugadorNumber)-1);
+				userRepository.delete(user);
+				
+			}
+		}else if (user instanceof Asistente) {
+			Jugador jugador = Util.getJugadorFromUser(user);
+			Asistente lastJugadorCreated = asistenteRepository.findFirstByJugadorOrderByIdDesc(jugador);
+			if( user.getId() == lastJugadorCreated.getId()) {
+				userRepository.delete(user);
+			}
 		}
-    	
-    	
+    		
         return ResponseEntity.ok("Usuario eliminado");
     }
     
@@ -521,7 +527,7 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public Integer countJugadorAsistente(@Valid @RequestBody UserIdForm userIdForm) {
     	Jugador jugador = jugadorRepository.getById(userIdForm.getId());
-        return asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE).size();
+        return asistenteRepository.findAllByJugador(jugador).size();
     }
 
     @PostMapping("/asistente/add")
