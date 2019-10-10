@@ -607,6 +607,26 @@ public class Util {
 		apuestaTemp.setUser(apuesta.getUser());
 		return apuestaTemp;
 	}
+
+	public static String getFormatName(User user) {
+		
+		if( user instanceof Jugador) {
+			Jugador jugador = getJugadorFromUser(user);
+			String moneda = getMonedaSymbolFromMonedaName(jugador.getMoneda().getMonedaName());
+			return jugador.getUsername()+ " - " + moneda +" ["+jugador.getName()+"]";
+			
+		}else if(user instanceof Asistente) {
+			Jugador jugador = getJugadorFromUser(user);
+			String moneda = getMonedaSymbolFromMonedaName(jugador.getMoneda().getMonedaName());
+			Asistente asistente = (Asistente)user;
+			return asistente.getUsername()+ " - " + moneda +" ["+asistente.getName()+"]";
+			
+		}else {
+			return user.getUsername() + " ["+user.getName()+"]";
+		}
+		
+		
+	}
 	
 }
 

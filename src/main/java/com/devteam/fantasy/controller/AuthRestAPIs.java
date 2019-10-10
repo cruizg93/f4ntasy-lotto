@@ -8,9 +8,12 @@ import com.devteam.fantasy.message.response.JwtResponseCustom;
 import com.devteam.fantasy.model.Role;
 import com.devteam.fantasy.util.RoleName;
 import com.devteam.fantasy.model.User;
+import com.devteam.fantasy.model.UserState;
 import com.devteam.fantasy.repository.RoleRepository;
 import com.devteam.fantasy.repository.UserRepository;
 import com.devteam.fantasy.security.jwt.JwtProvider;
+import com.devteam.fantasy.service.UserService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -56,6 +59,11 @@ public class AuthRestAPIs {
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginForm loginRequest) {
         try {
+        	User user = userRepository.getByUsername(loginRequest.getUsername());
+        	if(user != null && !user.getUserState().equals(UserState.ACTIVE)) {
+        		throw new Exception("Usuario not active"); 
+        	}
+        	
         	Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequest.getUsername(),

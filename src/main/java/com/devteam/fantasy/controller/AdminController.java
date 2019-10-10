@@ -157,8 +157,7 @@ public class AdminController {
                 .map(jugador -> {
                     JugadorSingleResponse obj = new JugadorSingleResponse();
                     obj.setId(jugador.getId());
-                    String moneda = jugador.getMoneda().getMonedaName().equals(MonedaName.LEMPIRA) ? " L " : " $ ";
-                    obj.setUsername(jugador.getUsername()+ " - " + moneda +" "+jugador.getName() );
+                    obj.setUsername(Util.getFormatName(jugador));
                     return obj;
                 }).collect(Collectors.toList()));
         return list;
@@ -630,11 +629,22 @@ public class AdminController {
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public List<String> getAllUsers() {
-        List<User> users = userRepository.findByOrderByIdAsc();
-        List<String> userShortResponses = new ArrayList<>();
+    	List<String> userShortResponses = new ArrayList<>();
+    	
+    	List<User> users = userRepository.getAllAdmin();
         for (User user : users) {
-            userShortResponses.add(user.getUsername());
+            userShortResponses.add(Util.getFormatName(user));
         }
+
+        List<Jugador> jugadores = jugadorRepository.findAllByUserStateOrderByIdAsc(UserState.ACTIVE);
+        for(Jugador jugador: jugadores) {
+        	userShortResponses.add(Util.getFormatName(jugador));
+        	List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
+        	for(Asistente asistente: asistentes) {
+        		userShortResponses.add(Util.getFormatName(asistente));	
+        	}
+        }
+        
         return userShortResponses;
     }
 
@@ -1334,7 +1344,7 @@ public class AdminController {
         detallesResponse.setUserId(user.getId());
         detallesResponse.setApuestas(pairNVList);
         detallesResponse.setTotal(total);
-        detallesResponse.setTitle(jugador.getUsername() +" - "+Util.getMonedaSymbolFromMonedaName(jugador.getMoneda().getMonedaName())+" ["+jugador.getName()+"]");
+        detallesResponse.setTitle(Util.getFormatName(jugador));
         detallesResponse.setMoneda(jugador.getMoneda().getMonedaName().toString());
         apuestasDetails.add(detallesResponse);
         List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
