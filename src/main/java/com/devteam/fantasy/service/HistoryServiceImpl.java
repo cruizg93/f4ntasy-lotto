@@ -46,6 +46,7 @@ import com.devteam.fantasy.model.NumeroGanador;
 import com.devteam.fantasy.model.Sorteo;
 import com.devteam.fantasy.model.SorteoType;
 import com.devteam.fantasy.model.User;
+import com.devteam.fantasy.model.UserState;
 import com.devteam.fantasy.model.Week;
 import com.devteam.fantasy.repository.AsistenteRepository;
 import com.devteam.fantasy.repository.BonoRepository;
@@ -323,7 +324,11 @@ public class HistoryServiceImpl implements HistoryService {
 				jugadorWeek.setUsername(jugador.getUsername());
 				jugadorWeek.setMoneda(jugador.getMoneda().getMonedaName().toString());
 				
-				jugadoresResponse.add(jugadorWeek);
+				
+				if (jugador.getUserState().equals(UserState.ACTIVE) || jugadorWeek.getBalance() != 0) {
+					jugadoresResponse.add(jugadorWeek);
+				}
+				
 			}
 			
 			logger.debug("Creating Week Summary...");
@@ -713,7 +718,7 @@ public class HistoryServiceImpl implements HistoryService {
             detallesJugador.setTotal(totalJugador);
             apuestasDetails.add(detallesJugador);
             
-            List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
+            List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
             asistentes.forEach(asistente -> {
                 List<HistoricoApuestas> apuestaList = historicoApuestaRepository.findAllBySorteoAndUserAndAsistenteOrderByNumeroAsc(sorteo, user, asistente);
                 if (apuestaList.size() > 0) {

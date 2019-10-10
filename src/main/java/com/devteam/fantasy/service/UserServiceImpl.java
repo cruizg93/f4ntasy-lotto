@@ -14,6 +14,7 @@ import com.devteam.fantasy.model.Asistente;
 import com.devteam.fantasy.model.Jugador;
 import com.devteam.fantasy.model.Role;
 import com.devteam.fantasy.model.User;
+import com.devteam.fantasy.model.UserState;
 import com.devteam.fantasy.repository.AsistenteRepository;
 import com.devteam.fantasy.repository.UserRepository;
 
@@ -56,7 +57,7 @@ public class UserServiceImpl implements UserService{
 	}
 	
 	public List<Asistente> getJugadorAsistentes(Jugador jugador){
-		return asistenteRepository.findAllByJugador(jugador);
+		return asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
 	}
 
 	@Override

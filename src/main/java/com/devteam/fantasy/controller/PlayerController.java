@@ -281,7 +281,7 @@ public class PlayerController {
         detallesResponse.setTitle(jugador.getUsername() +" - "+Util.getMonedaSymbolFromMonedaName(jugador.getMoneda().getMonedaName())+" ["+jugador.getName()+"]");
         detallesResponse.setUserId(jugador.getId());
         apuestasDetails.add(detallesResponse);
-        List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
+        List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
         asistentes.forEach(asistente -> {
             Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
             if (apuestaList.size() > 0) {
@@ -672,7 +672,7 @@ public class PlayerController {
             });
 
             if (user instanceof Jugador) {
-                List<Asistente> asistentes = asistenteRepository.findAllByJugador((Jugador) user);
+                List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState((Jugador) user, UserState.ACTIVE);
                 asistentes.forEach(asistente -> {
                     Set<Apuesta> apuestaList1 = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
                     apuestaList1.forEach(apuesta -> {
@@ -686,7 +686,7 @@ public class PlayerController {
                 apuestas[historico.getNumero()] += historico.getCantidad();
             });
             if (user instanceof Jugador) {
-                List<Asistente> asistentes = asistenteRepository.findAllByJugador((Jugador) user);
+                List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState((Jugador) user, UserState.ACTIVE);
                 asistentes.forEach(asistente -> {
                     List<HistoricoApuestas> apuestaList1 = historicoApuestaRepository.findAllBySorteoAndUser(sorteo, asistente);
                     apuestaList1.forEach(apuesta -> {
@@ -744,7 +744,7 @@ public class PlayerController {
             detallesResponse.setTotal(total);
             detallesResponse.setTitle("Apuestas mias - " + getUsernameStringFromObjectNode(json));
             apuestasDetails.add(detallesResponse);
-            List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
+            List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
             asistentes.forEach(asistente -> {
                 Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
                 if (apuestaList.size() > 0) {
@@ -774,7 +774,7 @@ public class PlayerController {
             detallesResponse.setTotal(total);
             detallesResponse.setTitle("Apuestas mias - " + getUsernameStringFromObjectNode(json));
             apuestasDetails.add(detallesResponse);
-            List<Asistente> asistentes = asistenteRepository.findAllByJugador((Jugador) user);
+            List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState((Jugador) user, UserState.ACTIVE);
             asistentes.forEach(asistente -> {
                 List<HistoricoApuestas> apuestaList = historicoApuestaRepository.findAllBySorteoAndUser(sorteo, asistente);
                 if (apuestaList.size() > 0) {
@@ -910,7 +910,7 @@ public class PlayerController {
             pairNVList.add(new PairNV(apuesta.getNumero(), apuesta.getCantidad()));
         }
         if (user instanceof Jugador) {
-            List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
+            List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
             asistentes.forEach(asistente -> {
                 Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
                 if (!apuestaList.isEmpty()) {

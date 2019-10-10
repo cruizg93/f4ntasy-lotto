@@ -14,4 +14,7 @@ public interface JugadorSequenceRepository extends JpaRepository<JugadorSequence
 	
 	@Query(value = "SELECT nextval('jugadores_sequence')", nativeQuery = true)
     Long getNextValue();
+	
+	@Query(value = "SELECT setval('jugadores_sequence', :value)", nativeQuery = true)
+	void setCurrentValue(long value);
 }

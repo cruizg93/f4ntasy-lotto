@@ -1,11 +1,13 @@
 package com.devteam.fantasy.model;
 
-import org.hibernate.annotations.NaturalId;
-
 import javax.persistence.*;
-import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+
+import org.hibernate.annotations.NaturalId;
+
+import com.devteam.fantasy.util.ApostadorName;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -42,6 +44,10 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private Set<Apuesta> apuestas;
+    
+    @Enumerated(EnumType.ORDINAL)
+    @Column( nullable = false)
+    private UserState userState;
 
     private boolean noFirstConnection;
 
@@ -109,6 +115,14 @@ public class User {
     public void setNoFirstConnection(boolean noFirstConnection) {
         this.noFirstConnection = noFirstConnection;
     }
+    
+	public UserState getUserState() {
+		return userState;
+	}
+
+	public void setUserState(UserState userState) {
+		this.userState = userState;
+	}
 
 	@Override
 	public String toString() {

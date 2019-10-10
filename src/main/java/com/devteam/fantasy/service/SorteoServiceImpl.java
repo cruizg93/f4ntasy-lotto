@@ -58,6 +58,7 @@ import com.devteam.fantasy.model.NumeroGanador;
 import com.devteam.fantasy.model.Sorteo;
 import com.devteam.fantasy.model.SorteoDiaria;
 import com.devteam.fantasy.model.User;
+import com.devteam.fantasy.model.UserState;
 import com.devteam.fantasy.model.Week;
 import com.devteam.fantasy.repository.ApuestaRepository;
 import com.devteam.fantasy.repository.AsistenteRepository;
@@ -984,7 +985,7 @@ public class SorteoServiceImpl implements SorteoService {
 			mergeApuestasIntoPairNVList(pairNVList, apuestas);
 
 			if (user instanceof Jugador) {
-				List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
+				List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
 				asistentes.forEach(asistente -> {
 					List<Apuesta> asistenteApuestasList = apuestaRepository
 							.findAllBySorteoDiariaAndUserOrderByNumeroAsc(sorteoDiaria, asistente);
@@ -1038,7 +1039,7 @@ public class SorteoServiceImpl implements SorteoService {
         detallesResponse.setUserId(jugador.getId());
         apuestasDetails.add(detallesResponse);
         
-        List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
+        List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
         asistentes.forEach(asistente -> {
             List<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUserOrderByNumeroAsc(sorteoDiaria, asistente);
             if (apuestaList.size() > 0) {
@@ -1094,7 +1095,7 @@ public class SorteoServiceImpl implements SorteoService {
 			deleteApuestas(apuestasP);
 
 			if (user instanceof Jugador) {
-				List<Asistente> asistentes = asistenteRepository.findAllByJugador((Jugador) user);
+				List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState((Jugador) user, UserState.ACTIVE);
 				for (Asistente asistente : asistentes) {
 					List<Apuesta> apuestasX = apuestaRepository.findAllBySorteoDiariaAndNumeroAndUser(sorteoDiaria,
 							numero, asistente);
@@ -1188,7 +1189,7 @@ public class SorteoServiceImpl implements SorteoService {
 				deleteApuestas(apuestasP.stream().collect(Collectors.toList()));
 
 				if (user instanceof Jugador) {
-					List<Asistente> asistentes = asistenteRepository.findAllByJugador((Jugador) user);
+					List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState((Jugador) user, UserState.ACTIVE);
 					for (Asistente asistente : asistentes) {
 						Set<Apuesta> apuestasX = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
 						apuestasX.forEach(x ->{numeros.add(x.getNumero());});

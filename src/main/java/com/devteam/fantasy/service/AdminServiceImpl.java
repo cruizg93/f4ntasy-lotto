@@ -30,6 +30,7 @@ import com.devteam.fantasy.model.Jugador;
 import com.devteam.fantasy.model.Moneda;
 import com.devteam.fantasy.model.SorteoDiaria;
 import com.devteam.fantasy.model.User;
+import com.devteam.fantasy.model.UserState;
 import com.devteam.fantasy.model.Week;
 import com.devteam.fantasy.repository.ApuestaRepository;
 import com.devteam.fantasy.repository.AsistenteRepository;
@@ -96,12 +97,12 @@ public class AdminServiceImpl implements AdminService{
 	
 	private static final Logger logger = LoggerFactory.getLogger(AdminServiceImpl.class);
 	
-	public JugadoresResponse getAllJugadores() throws Exception{
+	public JugadoresResponse getAllActiveJugadores() throws Exception{
 		JugadoresResponse response = new JugadoresResponse();
 		try {
 			logger.debug("getAllJugadores(): START");
 			List<JugadorResponse> jugadorResponses = new ArrayList<>();
-			List<Jugador> jugadores = jugadorRepository.findAllByOrderByIdAsc();
+			List<Jugador> jugadores = jugadorRepository.findAllByUserStateOrderByIdAsc(UserState.ACTIVE);
 	        
 			BigDecimal totalDolar = BigDecimal.ZERO;
 			BigDecimal totalLempira = BigDecimal.ZERO;
@@ -122,7 +123,7 @@ public class AdminServiceImpl implements AdminService{
 	            jugadorResponse.setBalance(jugador.getBalance());
 	            jugadorResponse.setUsername(jugador.getUsername());
 	            jugadorResponse.setName(jugador.getName());
-	            List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
+	            List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
 	            if (asistentes.size() > 0) {
 	                List<AsistenteResponse> asistenteResponses = new ArrayList<>();
 	                asistentes.forEach(asistente -> {

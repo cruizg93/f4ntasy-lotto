@@ -153,7 +153,7 @@ public class AdminController {
     public List<JugadorSingleResponse> findAllJugadores() {
         List<JugadorSingleResponse> list=new ArrayList<>();
         //list.add(new JugadorSingleResponse());
-        list.addAll(jugadorRepository.findAllByOrderByIdAsc().stream()
+        list.addAll(jugadorRepository.findAllByUserStateOrderByIdAsc(UserState.ACTIVE).stream()
                 .map(jugador -> {
                     JugadorSingleResponse obj = new JugadorSingleResponse();
                     obj.setId(jugador.getId());
@@ -194,7 +194,7 @@ public class AdminController {
         if(!apuestaRepository.findAllByUser(userRepository.getById(id)).isEmpty())
             jugadorDataResponse.setEditable(false);
         else {
-            List<Asistente> asistentes=asistenteRepository.findAllByJugador(jugadorRepository.getById(id));
+            List<Asistente> asistentes=asistenteRepository.findAllByJugadorAndUserState(jugadorRepository.getById(id), UserState.ACTIVE);
             for (Asistente asistente: asistentes) {
                 if(!apuestaRepository.findAllByUser(userRepository.getById(asistente.getId())).isEmpty()){
                     jugadorDataResponse.setEditable(false);
@@ -273,13 +273,11 @@ public class AdminController {
     @GetMapping("/jugadores/delete/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ResponseEntity<String> deleteJugador(@PathVariable Long id) {
-        User user = userRepository.getById(id);
-
-        if (apuestaRepository.findAllByUser(user).size() > 0) {
+        /*if (apuestaRepository.findAllByUser(user).size() > 0) {
             return ResponseEntity.ok("Apuestas");
         } else {
             if (user instanceof Jugador) {
-                List<Asistente> asistentes = asistenteRepository.findAllByJugador((Jugador) user);
+                List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState((Jugador) user, UserState.ACTIVE);
                 if (asistentes.stream().anyMatch(asistente ->
                         apuestaRepository.findAllByUser(asistente).size() > 0))
                     return ResponseEntity.ok("Apuestas");
@@ -287,8 +285,59 @@ public class AdminController {
                     userRepository.deleteAll(asistentes);
             }
         }
-        userRepository.delete(user);
+        userRepository.delete(user);*/
+        
+    	User user = userRepository.getById(id);
+    	
+		//If have apuestas activas, inactive user
+		List<Apuesta> apuestaActivas = apuestaRepository.findAllByUser(user);
+		if(apuestaActivas != null && apuestaActivas.size() > 0 ) {
+			inactiveUser(user);
+			return ResponseEntity.ok("Usuario eliminado");
+		}
+
+		//If have apuestas pasadas, inactive user
+		List<HistoricoApuestas> historicoApuestas =null;
+		if ( user instanceof Jugador) {
+			historicoApuestas = historicoApuestaRepository.findAllByUser(user);
+		} if (user instanceof Asistente) {
+			historicoApuestas = historicoApuestaRepository.findAllByAsistente(user);
+		}
+		if (historicoApuestas != null && historicoApuestas.size() > 0) {
+			inactiveUser(user);
+			return ResponseEntity.ok("Usuario eliminado");
+		}
+		
+		//If have balance different than 0, inactive User
+		if ( user instanceof Jugador) {
+			if( ((Jugador)user).getBalance() != 0 ) {
+				inactiveUser(user);
+				return ResponseEntity.ok("Usuario eliminado");
+			}
+		} 
+    		
+		Jugador lastJugadorCreated = jugadorRepository.findFirstByOrderByIdDesc();
+		if( user.getId() == lastJugadorCreated.getId()) {
+			String jugadorNumber = user.getUsername().substring(1,user.getUsername().length());
+			jugadorSequenceRepository.setCurrentValue(Integer.parseInt(jugadorNumber)-1);
+			userRepository.delete(user);
+			
+		}
+    	
+    	
         return ResponseEntity.ok("Usuario eliminado");
+    }
+    
+    private void inactiveUser(User user) {
+    	user.setUserState(UserState.INACTIVE);
+    	if (user instanceof Jugador) {
+            List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState((Jugador) user, UserState.ACTIVE);
+            for (Asistente asistente: asistentes) {
+            	asistente.setUserState(UserState.INACTIVE);
+            }
+            asistenteRepository.saveAll(asistentes);
+        }
+    	userRepository.save(user);
     }
 
     @PostMapping("/jugadores/add")
@@ -469,9 +518,8 @@ public class AdminController {
     @PostMapping("/jugador/asistentes/count")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public Integer countJugadorAsistente(@Valid @RequestBody UserIdForm userIdForm) {
-        return asistenteRepository.findAllByJugador(jugadorRepository
-                .getById(userIdForm.getId())).size();
-
+    	Jugador jugador = jugadorRepository.getById(userIdForm.getId());
+        return asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE).size();
     }
 
     @PostMapping("/asistente/add")
@@ -1203,7 +1251,7 @@ public class AdminController {
         detallesResponse.setTitle("Apuestas propias de - " + getUsernameStringFromObjectNode(json));
         detallesResponse.setMoneda(jugador.getMoneda().getMonedaName().toString());
         apuestasDetails.add(detallesResponse);
-        List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
+        List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
         asistentes.forEach(asistente -> {
             Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
             if (apuestaList.size() > 0) {
@@ -1277,7 +1325,7 @@ public class AdminController {
         detallesResponse.setTitle(jugador.getUsername() +" - "+Util.getMonedaSymbolFromMonedaName(jugador.getMoneda().getMonedaName())+" ["+jugador.getName()+"]");
         detallesResponse.setMoneda(jugador.getMoneda().getMonedaName().toString());
         apuestasDetails.add(detallesResponse);
-        List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
+        List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
         asistentes.forEach(asistente -> {
             Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
             if (apuestaList.size() > 0) {
@@ -1305,7 +1353,7 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public List<JugadorResponse> getAllJugador() {
         List<JugadorResponse> jugadorResponses = new ArrayList<>();
-        List<Jugador> jugadores = jugadorRepository.findAllByOrderByIdAsc();
+        List<Jugador> jugadores = jugadorRepository.findAllByUserStateOrderByIdAsc(UserState.ACTIVE);
         Iterable<SorteoDiaria> sorteoDiarias = sorteoDiariaRepository.findAll();
         jugadores.forEach(jugador -> {
             double[] total = {0.0};
@@ -1338,7 +1386,7 @@ public class AdminController {
             jugadorResponse.setBalance(jugador.getBalance());
             jugadorResponse.setUsername(jugador.getUsername());
             jugadorResponse.setName(jugador.getName());
-            List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
+            List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
             if (asistentes.size() > 0) {
                 List<AsistenteResponse> asistenteResponses = new ArrayList<>();
                 asistentes.forEach(asistente -> {
@@ -1358,7 +1406,7 @@ public class AdminController {
     @GetMapping("/jugadores/list")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public JugadoresResponse getAllJugadores() throws Exception {
-        return adminService.getAllJugadores();
+        return adminService.getAllActiveJugadores();
     }
 
 
@@ -1641,7 +1689,7 @@ public class AdminController {
                 total += cantidad;
             }
             if (user instanceof Jugador) {
-                List<Asistente> asistentes = asistenteRepository.findAllByJugador((Jugador) user);
+                List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState((Jugador) user, UserState.ACTIVE);
                 double cantidad = asistentes.stream().map(asistente ->
                         apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente))
                         .filter(apuestaList -> apuestaList.size() > 0)
@@ -1732,7 +1780,7 @@ public class AdminController {
             pairNVList.add(new PairNV(apuesta.getNumero(), apuesta.getCantidad()));
         }
         if (user instanceof Jugador) {
-            List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
+            List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
             asistentes.forEach(asistente -> {
                 Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
                 if (apuestaList.size() > 0) {
