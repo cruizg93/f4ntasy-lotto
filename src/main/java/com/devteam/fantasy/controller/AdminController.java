@@ -424,7 +424,8 @@ public class AdminController {
             jugador.setComisionChicaPedazos(comisionChicaPedazos);
             jugador.setCostoChicaPedazos(costoChicaPedazos);
             jugador.setPremioChicaPedazos(premioChicaPedazos);
-
+            jugador.setUserState(UserState.ACTIVE);
+            
             jugador = jugadorRepository.save(jugador);
             jugadorSequenceRepository.getNextValue();
             historyService.createEvent(HistoryEventType.PLAYER_CREATED,jugador.getId());
@@ -509,6 +510,7 @@ public class AdminController {
         jugador.setComisionChicaPedazos(comisionChicaPedazos);
         jugador.setCostoChicaPedazos(costoChicaPedazos);
         jugador.setPremioChicaPedazos(premioChicaPedazos);
+        jugador.setUserState(UserState.ACTIVE);
         jugadorRepository.save(jugador);
 
         historyService.createEvent(HistoryEventType.PLAYER_EDITED,jugador.getId());
