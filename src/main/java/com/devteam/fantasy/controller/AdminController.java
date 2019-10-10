@@ -538,6 +538,7 @@ public class AdminController {
                 createAsistForm.getUsername(),
                 encoder.encode(createAsistForm.getPassword()), jugador);
         asistente.setRoles(roles2);
+        asistente.setUserState(UserState.ACTIVE);
         asistenteRepository.save(asistente);
         return ResponseEntity.ok().body("Asistente registered successfully!");
     }
@@ -552,6 +553,7 @@ public class AdminController {
             asistente.setPassword(encoder.encode(createAsistForm.getPassword()));
 
         asistente.setName(createAsistForm.getName());
+        asistente.setUserState(UserState.ACTIVE);
         asistenteRepository.save(asistente);
         return ResponseEntity.ok("Update asistente");
     }
