@@ -58,7 +58,7 @@ public class SummaryResponse {
 
 	public double getPerdidasGanas() {
 		if( perdidasGanas == 0) {
-			perdidasGanas = subTotal - (comisiones+bonos);
+			perdidasGanas = subTotal - premios - bonos;
 		}
 		
 		return perdidasGanas;
