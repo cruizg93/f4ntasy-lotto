@@ -328,6 +328,8 @@ public class AdminController {
 			Asistente lastJugadorCreated = asistenteRepository.findFirstByJugadorOrderByIdDesc(jugador);
 			if( user.getId() == lastJugadorCreated.getId()) {
 				userRepository.delete(user);
+			}else {
+				inactiveUser(user);
 			}
 		}
     		
