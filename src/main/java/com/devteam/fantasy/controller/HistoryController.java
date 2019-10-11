@@ -71,7 +71,7 @@ public class HistoryController {
 	}
 	
 	@GetMapping("/weeks/{id}/{historyType}/{moneda}")
-	@PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR') ")
 	public ResponseEntity<Object> getWeekOverview(@PathVariable Long id, @PathVariable String historyType, @PathVariable String moneda) {
 		Object result = null;
 		try {
@@ -100,7 +100,7 @@ public class HistoryController {
 	}
 	
 	@GetMapping("/weeks/{weekId}/jugador/{jugadorId}")
-	@PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
 	public ResponseEntity<SorteosPasados> getWeekOverviewByJugador(@PathVariable Long weekId, @PathVariable Long jugadorId){
 		SorteosPasados result = null;
 		try {

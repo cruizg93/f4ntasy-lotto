@@ -138,7 +138,7 @@ public class HistoryServiceImpl implements HistoryService {
 	}
 
 	@Override
-	@PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
 	public SorteosPasadosDays getSorteosPasadosCasaByWeek(Long weekId, String moneda) throws Exception {
 		SorteosPasadosDays sorteosPasadosJugador	= new SorteosPasadosDays();
 		try {
@@ -287,7 +287,7 @@ public class HistoryServiceImpl implements HistoryService {
 	}
 	
 	@Override
-	@PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+	@PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
 	public SorteosPasadosJugadores getSorteosPasadosJugadoresByWeek(Long weekId, String moneda) throws Exception {
 		SorteosPasadosJugadores result =  new SorteosPasadosJugadores();
 		try {

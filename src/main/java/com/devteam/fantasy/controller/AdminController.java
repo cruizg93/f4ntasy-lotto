@@ -149,7 +149,7 @@ public class AdminController {
     
     
     @GetMapping("/jugadores")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public List<JugadorSingleResponse> findAllJugadores() {
         List<JugadorSingleResponse> list=new ArrayList<>();
         //list.add(new JugadorSingleResponse());
@@ -164,7 +164,7 @@ public class AdminController {
     }
 
     @GetMapping("/jugador/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public JugadorDataResponse getJugadorById(@PathVariable Long id) {
         JugadorDataResponse jugadorDataResponse = new JugadorDataResponse();
         Jugador jugador = jugadorRepository.getById(id);
@@ -566,7 +566,7 @@ public class AdminController {
     }
 
     @GetMapping("/moneda/cambio/current")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public Double getCurrentCambio() {
         return cambioRepository
                 .findFirstByOrderByIdDesc().getCambio();
@@ -627,7 +627,7 @@ public class AdminController {
     }
 
     @GetMapping("/users")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public List<String> getAllUsers() {
     	List<String> userShortResponses = new ArrayList<>();
     	
@@ -637,15 +637,26 @@ public class AdminController {
     		List<User> users = userRepository.getAllAdmin();
             for (User user : users) {
                 userShortResponses.add(Util.getFormatName(user));
+//                userShortResponses.add(user.getUsername());
             }
+    	}else if(userService.isUserSupervisorRole(loggedUser)) {
+    		//Supervisor can only edit itself
+    		userShortResponses.add(Util.getFormatName(loggedUser));
+//    		userShortResponses.add(loggedUser.getUsername());
+    		return userShortResponses;
+    	}else {
+    		userShortResponses.add(Util.getFormatName(loggedUser));
+//    		userShortResponses.add(loggedUser.getUsername());
     	}
 
         List<Jugador> jugadores = jugadorRepository.findAllByUserStateOrderByIdAsc(UserState.ACTIVE);
         for(Jugador jugador: jugadores) {
         	userShortResponses.add(Util.getFormatName(jugador));
+//        	userShortResponses.add(jugador.getUsername());
         	List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
         	for(Asistente asistente: asistentes) {
-        		userShortResponses.add(Util.getFormatName(asistente));	
+        		userShortResponses.add(Util.getFormatName(asistente));
+//        		userShortResponses.add(asistente.getUsername());
         	}
         }
         
@@ -654,7 +665,7 @@ public class AdminController {
 
 
     @PostMapping("/user/password/update")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public ResponseEntity<?> updatePasswword(@Valid @RequestBody LoginForm loginForm) {
         User user = userRepository.findByUsername(loginForm.getUsername())
                 .orElseThrow(() ->
@@ -667,7 +678,7 @@ public class AdminController {
     }
 
     @GetMapping("/asistente/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public AsistenteEditarResponse getAsistenteDetails(@PathVariable Long id) {
         AsistenteEditarResponse asistenteEditarResponse=new AsistenteEditarResponse();
         User user = userRepository.getById(id);
@@ -681,7 +692,7 @@ public class AdminController {
     }
 
     @PostMapping("/historial/balance")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public Double getBalanceBetweenDates(@Valid @RequestBody ObjectNode json) {
         ObjectMapper mapper = new ObjectMapper();
         Date inicio = mapper.convertValue(json.get("inicio"), Date.class);
@@ -692,7 +703,7 @@ public class AdminController {
                 .getAllBetweenTimestamp(tsInicio, tsFin);
         double[] total = {0.0};
         sorteos.forEach(sorteo -> {
-            if (sorteo.getEstado().getEstado().equals(EstadoName.BLOQUEADA)) {
+            if (sorteo.getEstado().getEstado().equals(EstadoName.CERRADA)) {
                 List<Resultado> resultados = resultadoRepository.findAllBySorteo(sorteo);
                 resultados.forEach(resultado -> {
                     total[0] += resultado.getPremio() + resultado.getComision() - resultado.getCantApuesta();
@@ -773,7 +784,7 @@ public class AdminController {
     }
 
     @PostMapping("/historial/week/current/usuario/{id}/detail")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public List<ResultadoResponse> getCurrentWeekApuestasHistorialForUserDetails(@PathVariable Long id,
                                                                                  @Valid @RequestBody ObjectNode json) {
 
@@ -950,7 +961,7 @@ public class AdminController {
     }
 
     @GetMapping("/historial/numeros/ganadores")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public List<NumeroGanadorResponse> getLast30SorteosNumeroGanador() {
         List<NumeroGanadorResponse> ganadorResponseList = new ArrayList<>();
 
@@ -976,7 +987,7 @@ public class AdminController {
     }
 
     @GetMapping("/numeros/ganadores")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public List<ApuestaNumeroGanadorResponse> getApuestasToday() {
         List<ApuestaNumeroGanadorResponse> ganadorResponses = new ArrayList<>();
         Iterable<Sorteo> sorteos = sorteoRepository.findAllByOrderByIdAsc();
@@ -1230,7 +1241,7 @@ public class AdminController {
     //Replaced by SorteoController.getApuestasActivasBySorteoAndJugador [sorteos/activos/{id}/apuestas/{username}]
     @Deprecated
     @PostMapping("/jugador/apuestas/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public ApuestaActivaResponse getApuestasActivas(@Valid @RequestBody ObjectNode json,
                                                     @PathVariable Long id) {
         return getApuestaActivaResponse(json, id, userRepository, sorteoDiariaRepository,
@@ -1238,7 +1249,7 @@ public class AdminController {
     }
 
     @PostMapping("/jugador/apuestas/activa/{id}/detalles")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public List<ApuestaActivaDetallesResponse> getDetallesApuestaActiva(@PathVariable Long id,
                                                                         @Valid @RequestBody ObjectNode json) {
         List<ApuestaActivaDetallesResponse> apuestasDetails = new ArrayList<>();
@@ -1312,7 +1323,7 @@ public class AdminController {
 
 
     @PostMapping("/jugador/apuestas/activas/{id}/detalles")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public List<ApuestaActivaDetallesResponse> getDetallesByApuestaActivaId(@PathVariable Long id,
                                                                         @Valid @RequestBody ObjectNode json) {
         List<ApuestaActivaDetallesResponse> apuestasDetails = new ArrayList<>();
@@ -1376,7 +1387,7 @@ public class AdminController {
     // this.getAllJugadores => [/jugadores/list]
     @Deprecated
     @GetMapping("/jugador/list")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public List<JugadorResponse> getAllJugador() {
         List<JugadorResponse> jugadorResponses = new ArrayList<>();
         List<Jugador> jugadores = jugadorRepository.findAllByUserStateOrderByIdAsc(UserState.ACTIVE);
@@ -1430,14 +1441,14 @@ public class AdminController {
     }
     
     @GetMapping("/jugadores/list")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public JugadoresResponse getAllJugadores() throws Exception {
         return adminService.getAllActiveJugadores();
     }
 
 
     @PostMapping("/jugador/balance/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public BalanceResponse getBalanceByJugadorId(@PathVariable Long id) {
         BalanceResponse balanceResponse = new BalanceResponse();
         List<PairSV> pairSVS = new ArrayList<>();
@@ -1458,7 +1469,7 @@ public class AdminController {
     //Reemplazado por SorteoService.findTodaySorteobyUsername [/activasResumen/judadores/{username}]
     @Deprecated
     @PostMapping("/jugador/apuestas/hoy/list")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public JugadorSorteosResponse findTodaySorteobyUsername(@Valid @RequestBody ObjectNode jsonNodes) {
         JugadorSorteosResponse jugadorSorteosResponse = new JugadorSorteosResponse();
         ObjectMapper mapper = new ObjectMapper();
@@ -1474,7 +1485,7 @@ public class AdminController {
     //Reemplazado por SorteoController.getApuestasActivas [/sorteos/activos/{moneda}
     @Deprecated
     @GetMapping("/apuestas/activas/{moneda}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public List<ApuestasActivasResponse> getApuestasActivas(@PathVariable String moneda) throws Exception {
         List<ApuestasActivasResponse> apuestasActivasResponses = new ArrayList<>();
         List<SorteoDiaria> sorteoDiarias = sorteoService.getActiveSorteosList();
@@ -1562,7 +1573,7 @@ public class AdminController {
     //Reemplazado por SorteoController.getDetalleApuestasBySorteo [/activos/detalles/{id}/{moneda}]
     @Deprecated
     @PostMapping("/apuestas/activas/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public ApuestaActivaResumenResponse getDetallesApuestasActivasById(@PathVariable Long id,
                                                                        @Valid @RequestBody ObjectNode json) {
         ObjectMapper mapper = new ObjectMapper();

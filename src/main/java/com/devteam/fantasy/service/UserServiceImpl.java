@@ -87,4 +87,11 @@ public class UserServiceImpl implements UserService{
 		
 		return user.getRoles().stream().anyMatch(x -> x.equals(master));
 	}
+
+	@Override
+	public boolean isUserSupervisorRole(User user) {
+		Role master = roleRepository.findByName(RoleName.ROLE_SUPERVISOR).get();
+		
+		return user.getRoles().stream().anyMatch(x -> x.equals(master));
+	}
 }

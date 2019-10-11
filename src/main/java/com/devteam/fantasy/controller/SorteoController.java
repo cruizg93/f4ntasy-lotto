@@ -63,13 +63,13 @@ public class SorteoController {
     private UserService userService;
 	
 	@GetMapping("/activos/{moneda}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public List<ApuestasActivasResponse> getApuestasActivas(@PathVariable String moneda) throws Exception {
     	return sorteoService.getSorteosListWithMoneda(moneda);
     }
 	
 	@GetMapping("/activosResumen/judadores/{id}/{currency}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public ApuestaActivaResumenResponse getSorteosActivosResumteByIdAndCurrency(@PathVariable Long id, @PathVariable String currency, @Valid @RequestBody ObjectNode json) {
     	return sorteoService.getActiveSorteoDetail(id, currency);
 	}
@@ -84,7 +84,7 @@ public class SorteoController {
 	}
 	
 	@GetMapping("/activosResumen/judadores/{username}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public JugadorSorteosResponse findTodaySorteobyUsername(@PathVariable String username) throws Exception {
 		User user = userService.getByUsername(username);
 		JugadorSorteosResponse jugadorSorteosResponse = new JugadorSorteosResponse();
@@ -128,7 +128,7 @@ public class SorteoController {
     }
     
     @GetMapping("/activos/detalles/{id}/{moneda}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public ApuestaActivaResumenResponse getDetallesApuestasActivasById(@PathVariable Long id,@PathVariable String moneda) {
     	return sorteoService.getDetalleApuestasBySorteo(id, moneda);
     }
@@ -161,13 +161,13 @@ public class SorteoController {
     }
     
     @GetMapping("/activos/{id}/apuestas/{username}")
-    @PreAuthorize("hasRole('USER') or hasRole('ASIS') or hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('USER') or hasRole('ASIS') or hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public ApuestaActivaResponse getApuestasActivasBySorteoAndJugador(@PathVariable Long id, @PathVariable String username) {
         return sorteoService.getApuestasActivasBySorteoAndJugador(id, username);
     }
     
     @GetMapping("/activos/{id}/apuestas/detalles/{username}")
-    @PreAuthorize("hasRole('USER') or hasRole('ASIS') or hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('USER') or hasRole('ASIS') or hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public List<ApuestaActivaDetallesResponse> getApuestasActivasDetallesBySorteoAndJugador(@PathVariable Long id, @PathVariable String username) {
         return sorteoService.getApuestasActivasDetallesBySorteoAndJugador(id, username);
     }
