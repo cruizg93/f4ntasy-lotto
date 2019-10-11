@@ -3,6 +3,7 @@ package com.devteam.fantasy.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -77,21 +78,21 @@ public class UserServiceImpl implements UserService{
 	@Override
 	public boolean isUserMasterRole(User user) {
 		Role master = roleRepository.findByName(RoleName.ROLE_MASTER).get();
-		
+		Hibernate.initialize(user.getRoles());
 		return user.getRoles().stream().anyMatch(x -> x.equals(master));
 	}
 	
 	@Override
 	public boolean isUserAdminRole(User user) {
 		Role master = roleRepository.findByName(RoleName.ROLE_ADMIN).get();
-		
+		Hibernate.initialize(user.getRoles());
 		return user.getRoles().stream().anyMatch(x -> x.equals(master));
 	}
 
 	@Override
 	public boolean isUserSupervisorRole(User user) {
 		Role master = roleRepository.findByName(RoleName.ROLE_SUPERVISOR).get();
-		
+		Hibernate.initialize(user.getRoles());
 		return user.getRoles().stream().anyMatch(x -> x.equals(master));
 	}
 }
