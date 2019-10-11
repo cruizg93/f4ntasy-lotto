@@ -4,9 +4,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
-import org.hibernate.annotations.NaturalId;
-
-import com.devteam.fantasy.util.ApostadorName;
+import com.devteam.fantasy.util.RoleName;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -49,7 +47,7 @@ public class User {
     @Column( nullable = false)
     private UserState userState;
 
-    private boolean noFirstConnection;
+    private boolean firstConnection = true;
 
     public User() {
     }
@@ -108,14 +106,14 @@ public class User {
         this.apuestas = apuestas;
     }
 
-    public boolean isNoFirstConnection() {
-        return noFirstConnection;
-    }
+	public boolean isFirstConnection() {
+		return firstConnection;
+	}
 
-    public void setNoFirstConnection(boolean noFirstConnection) {
-        this.noFirstConnection = noFirstConnection;
-    }
-    
+	public void setFirstConnection(boolean firstConnection) {
+		this.firstConnection = firstConnection;
+	}
+
 	public UserState getUserState() {
 		return userState;
 	}
@@ -127,7 +125,7 @@ public class User {
 	@Override
 	public String toString() {
 		return "User [id=" + id + ", name=" + name + ", username=" + username + ", password=" + password + ", roles="
-				+ roles  + ", noFirstConnection=" + noFirstConnection + "]";
+				+ roles  + ", noFirstConnection=" + firstConnection + "]";
 	}
 
 	@Override

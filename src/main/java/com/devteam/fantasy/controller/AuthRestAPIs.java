@@ -5,8 +5,11 @@ import com.devteam.fantasy.message.request.LoginForm;
 import com.devteam.fantasy.message.request.SignUpForm;
 import com.devteam.fantasy.message.response.JwtResponse;
 import com.devteam.fantasy.message.response.JwtResponseCustom;
+import com.devteam.fantasy.model.Asistente;
+import com.devteam.fantasy.model.Jugador;
 import com.devteam.fantasy.model.Role;
 import com.devteam.fantasy.util.RoleName;
+import com.devteam.fantasy.util.Util;
 import com.devteam.fantasy.model.User;
 import com.devteam.fantasy.model.UserState;
 import com.devteam.fantasy.repository.RoleRepository;
@@ -72,7 +75,22 @@ public class AuthRestAPIs {
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);
             String jwt = jwtProvider.generateJwtToken(authentication);
-            return ResponseEntity.ok(new JwtResponseCustom(jwt, loginRequest.getUsername()));
+            JwtResponseCustom response = new JwtResponseCustom(jwt, loginRequest.getUsername());
+            response.setUserId(String.valueOf(user.getId()));
+            response.setFirstConnection(user.isFirstConnection());
+            
+            if( user instanceof Jugador || user instanceof Asistente) {
+            	Jugador jugador = Util.getJugadorFromUser(user);
+            	response.setCurrency(jugador.getMoneda().getMonedaName().toString());
+            	response.setCurrencySymbol(Util.getMonedaSymbolFromMonedaName(jugador.getMoneda().getMonedaName()));
+            }
+        	Set<RoleName> roles = new HashSet<>();
+        	for(Role role: user.getRoles()) {
+        		roles.add(role.getName());
+        	}
+        	response.setRoles(roles);
+            
+            return ResponseEntity.ok(response);
         }catch(Exception e) {
         	return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuario o Contraseña incorrectos");
         }

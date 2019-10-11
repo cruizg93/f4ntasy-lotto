@@ -29,7 +29,7 @@ public class JwtProvider {
         return Jwts.builder()
 		                .setSubject((userPrincipal.getUsername()))
 		                .setIssuedAt(new Date())
-		                .setExpiration(new Date((new Date()).getTime() + jwtExpiration*1000))
+		                .setExpiration(new Date((new Date()).getTime() + jwtExpiration))
 		                .signWith(SignatureAlgorithm.HS512, jwtSecret)
 		                .compact();
     }
@@ -41,9 +41,9 @@ public class JwtProvider {
         } catch (SignatureException e) {
             logger.error("Invalid JWT signature -> Message: {} ", e);
         } catch (MalformedJwtException e) {
-            logger.error("Invalid JWT token -> Message: {}", e);
+            logger.error("Invalid JWT token -> Message: {}", e.getMessage());
         } catch (ExpiredJwtException e) {
-            logger.error("Expired JWT token -> Message: {}", e);
+            logger.error("Expired JWT token ->");
         } catch (UnsupportedJwtException e) {
             logger.error("Unsupported JWT token -> Message: {}", e);
         } catch (IllegalArgumentException e) {

@@ -102,6 +102,9 @@ public class PlayerController {
                         new UsernameNotFoundException("User Not Found with -> username : " + loginForm.getUsername())
                 );
         user.setPassword(encoder.encode(loginForm.getPassword()));
+        if(user.isFirstConnection()) {
+        	user.setFirstConnection(false);
+        }
         userRepository.save(user);
         return ResponseEntity.ok(new SimpleResponse("Password update"));
     }

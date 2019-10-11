@@ -42,7 +42,11 @@ public class UtilController {
     public ResponseEntity<?> updatePassword(@Valid @RequestBody LoginForm loginForm){
         User user=userRepository.getByUsername(loginForm.getUsername());
         user.setPassword(encoder.encode(loginForm.getPassword()));
-        user.setNoFirstConnection(true);
+        
+        if(user.isFirstConnection()) {
+        	user.setFirstConnection(false);
+        }
+        
         userRepository.save(user);
         return ResponseEntity.ok("Update user password");
     }
@@ -50,7 +54,7 @@ public class UtilController {
     @PostMapping("/connection/first")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('USER')or hasRole('ASIS')")
     public boolean getFirstConnection(@Valid @RequestBody ObjectNode json){
-        return Util.getUserFromJsonNode(userRepository, json).isNoFirstConnection();
+        return Util.getUserFromJsonNode(userRepository, json).isFirstConnection();
     }
 
     @GetMapping("/task/11")

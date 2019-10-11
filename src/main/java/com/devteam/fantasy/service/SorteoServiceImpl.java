@@ -970,6 +970,7 @@ public class SorteoServiceImpl implements SorteoService {
 
 	}
 
+	@Override
 	public ApuestaActivaResponse getApuestasActivasBySorteoAndJugador(Long sorteoId, String username) {
 
 		ApuestaActivaResponse apuestaActivaResponse = null;
@@ -1017,8 +1018,6 @@ public class SorteoServiceImpl implements SorteoService {
 
 	}
 	
-	
-
 	@Override
 	public List<ApuestaActivaDetallesResponse> getApuestasActivasDetallesBySorteoAndJugador(Long sorteoId, String username) {
 		List<ApuestaActivaDetallesResponse> apuestasDetails = new ArrayList<>();
