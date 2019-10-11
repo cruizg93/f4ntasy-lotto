@@ -400,7 +400,9 @@ public class HistoryServiceImpl implements HistoryService {
 			List<Sorteo> sorteos 						= sorteoRepository.findAllBySorteoTimeBetweenOrderBySorteoTimeWithNumeroGanadorNotNull(week.getMonday(),week.getSunday());
 			List<PairDayBalance> pairDaysBalance 		= new ArrayList<>();
 			
-			boolean requestedByAdmin = userService.isUserAdminRole(userService.getLoggedInUser());
+			User loggedUser = userService.getLoggedInUser();
+			logger.debug("LoggedUser: "+loggedUser);
+			boolean requestedByAdmin = userService.isUserAdminRole(loggedUser);
 			
 			
 			
