@@ -833,7 +833,7 @@ public class HistoryServiceImpl implements HistoryService {
         detallesResponse.setUserId(jugador.getId());
         apuestasDetails.add(detallesResponse);
         
-        List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
+        List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
         asistentes.forEach(asistente -> {
             List<HistoricoApuestas> apuestaList = historicoApuestaRepository.findAllBySorteoAndAsistente(sorteo, asistente);
             if (apuestaList.size() > 0) {

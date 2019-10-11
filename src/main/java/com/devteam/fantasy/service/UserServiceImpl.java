@@ -42,11 +42,8 @@ public class UserServiceImpl implements UserService{
 		
 		if (principal instanceof UserDetails) {
 			UserDetails userDetails = (UserDetails)principal;
-			
-			if(loggedUser == null || !userDetails.getUsername().equalsIgnoreCase(loggedUser.getUsername()) ){
-				loggedUser = Optional.of(userRepository.getByUsername(((UserDetails) principal).getUsername()))
-						.orElseThrow(() -> new UsernameNotFoundException("Error getting the logged in user."));
-			}
+			loggedUser = Optional.of(userRepository.getByUsername(((UserDetails) principal).getUsername()))
+					.orElseThrow(() -> new UsernameNotFoundException("Error getting the logged in user."));
 		}
 		return loggedUser;
 	}
