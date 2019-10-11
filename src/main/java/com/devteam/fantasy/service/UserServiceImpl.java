@@ -62,7 +62,7 @@ public class UserServiceImpl implements UserService{
 	}
 	
 	public List<Asistente> getJugadorAsistentes(Jugador jugador){
-		return asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
+		return asistenteRepository.findAllByJugador(jugador);
 	}
 
 	@Override
