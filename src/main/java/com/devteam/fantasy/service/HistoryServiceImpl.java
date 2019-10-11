@@ -808,10 +808,10 @@ public class HistoryServiceImpl implements HistoryService {
 	}
 
 	@Override
-	public List<ApuestaActivaDetallesResponse> getHistoricoApuestasBySorteoAndJugador(Long sorteoId, String username) {
+	public List<ApuestaActivaDetallesResponse> getHistoricoApuestasBySorteoAndJugador(Long sorteoId, Long userId) {
 
         List<ApuestaActivaDetallesResponse> apuestasDetails = new ArrayList<>();
-        User user = userService.getByUsername(username);
+        User user = userService.getById(userId);
         
         Sorteo sorteo=sorteoRepository.getSorteoById(sorteoId);
         List<HistoricoApuestas> apuestas = historicoApuestaRepository.findAllBySorteoAndUserOrderByNumeroAsc(sorteo,user);

@@ -43,6 +43,6 @@ public interface HistoryService {
 	SorteosPasadosJugadores getSorteosPasadosJugadoresByWeek(Long weekID, String moneda) throws Exception;
 	
 	HistoricoBalance getWeekBalanceByJugador(Jugador jugador);
-	List<ApuestaActivaDetallesResponse> getHistoricoApuestasBySorteoAndJugador(Long sorteoId, String username);
+	List<ApuestaActivaDetallesResponse> getHistoricoApuestasBySorteoAndJugador(Long sorteoId, Long userId);
 	
 }

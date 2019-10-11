@@ -161,9 +161,10 @@ public class HistoryController {
 		return new ResponseEntity<List<HistoricoApuestaDetallesResponse>>(result,HttpStatus.OK);
     }
 	
-	@GetMapping("/sorteos/{id}/apuestas/detalles/{username}")
+	@GetMapping("/sorteos/{id}/apuestas/detalles/{userId}")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS') or hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
-    public List<ApuestaActivaDetallesResponse> getApuestasBySorteoAndJugador(@PathVariable Long id, @PathVariable String username) {
-        return historyService.getHistoricoApuestasBySorteoAndJugador(id, username);
+    public List<ApuestaActivaDetallesResponse> getApuestasBySorteoAndJugador(@PathVariable Long id, @PathVariable Long userId) {
+		
+        return historyService.getHistoricoApuestasBySorteoAndJugador(id, userId);
     }
 }
