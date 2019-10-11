@@ -222,6 +222,7 @@ public class HistoryServiceImpl implements HistoryService {
 					summaryDay.setPremios(premiosDay.doubleValue());
 					summaryDay.setVentas(ventasDay.doubleValue());
 					summaryDay.setSubTotal(subTotalDay.doubleValue());
+					summaryDay.setPerdidasGanas(summaryDay.getSubTotal() -summaryDay.getPremios() - summaryDay.getBonos() );
 					
 					PairDayBalance sorteosPasado = new PairDayBalance();
 					sorteosPasado.setSorteoTime(Util.getDayFromTimestamp(sorteo.getSorteoTime()));
@@ -270,6 +271,7 @@ public class HistoryServiceImpl implements HistoryService {
 			summary.setVentas(ventasWeek.doubleValue());
 			summary.setSubTotal(subTotalWeek.doubleValue());
 			summary.setCurrency(moneda);
+			summary.setPerdidasGanas(summary.getSubTotal() -summary.getPremios() - summary.getBonos() );
 			
 			sorteosPasadosJugador.setSorteosPasados(pairDaysBalance);
 			sorteosPasadosJugador.setSummary(summary);
@@ -389,6 +391,10 @@ public class HistoryServiceImpl implements HistoryService {
 			List<Sorteo> sorteos 						= sorteoRepository.findAllBySorteoTimeBetweenOrderBySorteoTimeWithNumeroGanadorNotNull(week.getMonday(),week.getSunday());
 			List<PairDayBalance> pairDaysBalance 		= new ArrayList<>();
 			
+			boolean requestedByAdmin = userService.isUserAdminRole(userService.getLoggedInUser());
+			
+			
+			
 			BigDecimal comisionWeek 	= BigDecimal.ZERO;
 			BigDecimal premiosWeek 		= BigDecimal.ZERO;
 			BigDecimal ventasWeek 		= BigDecimal.ZERO;
@@ -461,6 +467,11 @@ public class HistoryServiceImpl implements HistoryService {
 					summaryDay.setPremios(premiosDay.doubleValue());
 					summaryDay.setVentas(ventasDay.doubleValue());
 					summaryDay.setSubTotal(subTotalDay.doubleValue());
+					summaryDay.setPerdidasGanas(summaryDay.getSubTotal() -summaryDay.getPremios() - summaryDay.getBonos() );
+					
+					if(requestedByAdmin) {
+						summaryDay.setPerdidasGanas(summaryDay.getPerdidasGanas()* (-1));
+					}
 					
 					PairDayBalance sorteosPasado = new PairDayBalance();
 					sorteosPasado.setSorteoTime(Util.getDayFromTimestamp(sorteo.getSorteoTime()));
@@ -510,6 +521,11 @@ public class HistoryServiceImpl implements HistoryService {
 			summary.setVentas(ventasWeek.doubleValue());
 			summary.setSubTotal(subTotalWeek.doubleValue());
 			summary.setCurrency(jugador.getMoneda().getMonedaName().toString());
+			summary.setPerdidasGanas(summary.getSubTotal() -summary.getPremios() - summary.getBonos() );
+			
+			if( !requestedByAdmin) {
+				summary.setPerdidasGanas(summary.getPerdidasGanas()* (-1));
+			}
 			
 			sorteosPasadosJugador.setSorteosPasados(pairDaysBalance);
 			sorteosPasadosJugador.setSummary(summary);

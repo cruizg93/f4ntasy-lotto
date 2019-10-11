@@ -19,4 +19,6 @@ public interface UserService {
 	public List<Asistente> getJugadorAsistentes(Jugador jugador);
 	
 	public boolean isUserMasterRole(User user);
+
+	public boolean isUserAdminRole(User user);
 }

@@ -56,11 +56,11 @@ public class SummaryResponse {
 		this.bonos = bonos;
 	}
 
+	public void setPerdidasGanas(double perdidasGanas) {
+		this.perdidasGanas = perdidasGanas;
+	}
+
 	public double getPerdidasGanas() {
-		if( perdidasGanas == 0) {
-			perdidasGanas = subTotal - premios - bonos;
-		}
-		
 		return perdidasGanas;
 	}
 

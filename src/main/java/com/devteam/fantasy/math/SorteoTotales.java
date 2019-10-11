@@ -170,6 +170,7 @@ public class SorteoTotales {
 		summary.setVentas(ventas.doubleValue());
 		summary.setSubTotal(ventas.subtract(comisiones).doubleValue());
 		summary.setPremios(premios.doubleValue());
+		summary.setPerdidasGanas(summary.getSubTotal() -summary.getPremios() - summary.getBonos() );
 		return summary;
 	}
 	
