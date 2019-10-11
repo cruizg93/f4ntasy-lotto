@@ -320,7 +320,8 @@ public class AdminController {
 				String jugadorNumber = user.getUsername().substring(1,user.getUsername().length());
 				jugadorSequenceRepository.setCurrentValue(Integer.parseInt(jugadorNumber)-1);
 				userRepository.delete(user);
-				
+			}else {
+				inactiveUser(user);
 			}
 		}else if (user instanceof Asistente) {
 			Jugador jugador = Util.getJugadorFromUser(user);
