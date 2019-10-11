@@ -14,6 +14,7 @@ import java.util.Optional;
 public interface HistoricoBalanceRepository extends JpaRepository<HistoricoBalance, Long> {
     List<HistoricoBalance> findAllBySorteoTime(Timestamp sorteoTime);
     HistoricoBalance findBySorteoTimeAndJugador(Timestamp sorteoTime, Jugador jugador);
+    HistoricoBalance findBySorteoTimeAndJugadorAndBalanceType(Timestamp sorteoTime, Jugador jugador, BalanceType balanceType);
     Optional<HistoricoBalance> findByBalanceTypeAndJugadorAndWeek(BalanceType balanceType, Jugador jugador, Week week);
 	List<HistoricoBalance> findAllByWeekAndJugadorAndBalanceTypeOrderBySorteoTimeAsc(Week week, Jugador jugador,BalanceType daily);
 	HistoricoBalance findByJugadorAndBalanceType(Jugador jugador, BalanceType weekly);

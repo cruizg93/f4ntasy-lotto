@@ -14,5 +14,5 @@ public interface BonoRepository extends JpaRepository<Bono, Long> {
 	
 	List<Bono> findAllByWeek(Week week);
 	List<Bono> findAllByUser(User user);
-	Optional<Bono> findByWeekAndUser(Week week, User user);
+	List<Bono> findAllByWeekAndUser(Week week, User user);
 }

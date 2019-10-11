@@ -318,11 +318,18 @@ public class HistoryServiceImpl implements HistoryService {
 					jugadorWeek.setBalance(balanceTotal.doubleValue());
 				}
 				
-				Optional<Bono> bono = bonoRepository.findByWeekAndUser(week, jugador);
-				if(bono.isPresent()) {
+				List<Bono> bonoList = bonoRepository.findAllByWeekAndUser(week, jugador);
+				if(bonoList != null && bonoList.size()>0) {
 					jugadorWeek.setHaveBono(true);
-					jugadorWeek.setBalance(jugadorWeek.getBalance()+bono.get().getBono());
-					bonos.add(bono.get());
+					BigDecimal bonoJugador = BigDecimal.ZERO;
+					
+					for(Bono bono: bonoList) {
+						bonoJugador = bonoJugador.add(BigDecimal.valueOf(bono.getBono()));
+						bonos.add(bono);
+					}
+					
+					jugadorWeek.setBalance(jugadorWeek.getBalance()+bonoJugador.doubleValue());
+					
 				}
 				
 				jugadorWeek.setId(jugador.getId());
@@ -402,7 +409,7 @@ public class HistoryServiceImpl implements HistoryService {
 			
 			for(int i=0; i<sorteos.size(); i++) {
 				Sorteo sorteo						= sorteos.get(i);
-				HistoricoBalance historicoBalance	= historicoBalanceRepository.findBySorteoTimeAndJugador(sorteo.getSorteoTime(), jugador);
+				HistoricoBalance historicoBalance	= historicoBalanceRepository.findBySorteoTimeAndJugadorAndBalanceType(sorteo.getSorteoTime(), jugador, BalanceType.BY_SORTEO);
 				LocalDateTime sorteoTime			= sorteo.getSorteoTime().toLocalDateTime();
 				prevBalance 						= historicoBalance!=null?prevBalance+historicoBalance.getBalance():prevBalance;
 				
@@ -489,8 +496,14 @@ public class HistoryServiceImpl implements HistoryService {
 			}
 			
 			SummaryResponse summary = new SummaryResponse();
-			Optional<Bono> bonos = bonoRepository.findByWeekAndUser(week, jugador);
-			summary.setBonos(bonos.isPresent()?bonos.get().getBono():0d);
+			List<Bono> bonos = bonoRepository.findAllByWeekAndUser(week, jugador);
+			if( bonos !=null && bonos.size()>0) {
+				BigDecimal bonoTotla = BigDecimal.ZERO;
+				for(Bono bono: bonos) {
+					bonoTotla = bonoTotla.add(BigDecimal.valueOf(bono.getBono()));
+				}
+				summary.setBonos(bonoTotla.doubleValue());
+			}
 			
 			summary.setComisiones(comisionWeek.doubleValue());
 			summary.setPremios(premiosWeek.doubleValue());
