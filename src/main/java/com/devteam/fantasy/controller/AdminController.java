@@ -135,7 +135,7 @@ public class AdminController {
     
     
     @PostMapping("/bono/jugadores/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    @PreAuthorize("hasRole('MASTER')")
     public ResponseEntity<String> submitBono(@PathVariable Long id, @Valid @RequestBody BonoRequest request){
 		try {
 			adminService.submitBono(request, id);
@@ -631,10 +631,14 @@ public class AdminController {
     public List<String> getAllUsers() {
     	List<String> userShortResponses = new ArrayList<>();
     	
-    	List<User> users = userRepository.getAllAdmin();
-        for (User user : users) {
-            userShortResponses.add(Util.getFormatName(user));
-        }
+    	User loggedUser = userService.getLoggedInUser();
+    	
+    	if( userService.isUserMasterRole(loggedUser)) {
+    		List<User> users = userRepository.getAllAdmin();
+            for (User user : users) {
+                userShortResponses.add(Util.getFormatName(user));
+            }
+    	}
 
         List<Jugador> jugadores = jugadorRepository.findAllByUserStateOrderByIdAsc(UserState.ACTIVE);
         for(Jugador jugador: jugadores) {

@@ -16,11 +16,15 @@ import com.devteam.fantasy.model.Role;
 import com.devteam.fantasy.model.User;
 import com.devteam.fantasy.model.UserState;
 import com.devteam.fantasy.repository.AsistenteRepository;
+import com.devteam.fantasy.repository.RoleRepository;
 import com.devteam.fantasy.repository.UserRepository;
+import com.devteam.fantasy.util.RoleName;
 
 @Service
 public class UserServiceImpl implements UserService{
-
+	@Autowired
+	RoleRepository roleRepository;
+	
 	@Autowired
 	UserRepository userRepository;
 	
@@ -68,6 +72,13 @@ public class UserServiceImpl implements UserService{
 		}
 
 		return false;
+	}
+
+	@Override
+	public boolean isUserMasterRole(User user) {
+		Role master = roleRepository.findByName(RoleName.ROLE_MASTER).get();
+		
+		return user.getRoles().stream().anyMatch(x -> x.equals(master));
 	}
 	
 }

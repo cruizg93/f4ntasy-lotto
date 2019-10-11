@@ -17,4 +17,6 @@ public interface UserService {
 	public User getByUsername(String username);
 	
 	public List<Asistente> getJugadorAsistentes(Jugador jugador);
+	
+	public boolean isUserMasterRole(User user);
 }

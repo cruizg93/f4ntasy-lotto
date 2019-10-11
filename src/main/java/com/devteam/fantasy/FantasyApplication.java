@@ -164,8 +164,11 @@ public class FantasyApplication {
         }
 
         if (!userRepository.existsByUsername("C01") && !userRepository.existsByUsername("C02") ) {
-        	createMaster("C01");
-        	createMaster("C02");
+        	createMaster("C01","Master1");
+        	createAdmin("C02","Admin 2");
+        	createAdmin("C03","Admin 3");
+        	createAdmin("C04","Admin 4");
+        	createSupervisor("C05","Supervisor 1");
         }
 
         if (!userRepository.existsByUsername("P001")
@@ -445,13 +448,43 @@ public class FantasyApplication {
         return null;
     }
     
-    private void createMaster(String username) {
-    	User user = new User(username, username, encoder.encode("123456789"));
+    private void createMaster(String username, String name) {
+    	User user = new User(name, username, encoder.encode("123456789"));
         Set<Role> roles = new HashSet<>();
         Role masterRole = roleRepository.findByName(RoleName.ROLE_MASTER)
                 	.orElseThrow(() -> new RuntimeException("Fail! -> Cause: Master Role not find."));
+        Role adminRole = roleRepository.findByName(RoleName.ROLE_ADMIN)
+            	.orElseThrow(() -> new RuntimeException("Fail! -> Cause: Master Role not find."));
+        
+        roles.add(masterRole);
+        roles.add(adminRole);
+        
+        user.setRoles(roles);
+        user.setUserState(UserState.ACTIVE);
+        userRepository.save(user);
+    }
+    
+    private void createAdmin(String username, String name) {
+    	User user = new User(name, username, encoder.encode("123456789"));
+        Set<Role> roles = new HashSet<>();
+        Role masterRole = roleRepository.findByName(RoleName.ROLE_ADMIN)
+                	.orElseThrow(() -> new RuntimeException("Fail! -> Cause: Master Role not find."));
         roles.add(masterRole);
         user.setRoles(roles);
+        user.setUserState(UserState.ACTIVE);
+        userRepository.save(user);
+    }
+    
+    private void createSupervisor(String username, String name) {
+    	User user = new User(name, username, encoder.encode("123456789"));
+        Set<Role> roles = new HashSet<>();
+        Role masterRole = roleRepository.findByName(RoleName.ROLE_SUPERVISOR)
+                	.orElseThrow(() -> new RuntimeException("Fail! -> Cause: Master Role not find."));
+        
+        roles.add(masterRole);
+        
+        user.setRoles(roles);
+        user.setUserState(UserState.ACTIVE);
         userRepository.save(user);
     }
     
@@ -483,6 +516,7 @@ public class FantasyApplication {
         	jugador.setPremioChicaPedazos(valoresChica[2]);
         }
         
+        jugador.setUserState(UserState.ACTIVE);
         return jugadorRepository.save(jugador);
     }
     
@@ -494,6 +528,7 @@ public class FantasyApplication {
         roles.add(role);
         Asistente asistente = new Asistente(name, username, encoder.encode("123456789"));
         asistente.setRoles(roles);
+        asistente.setUserState(UserState.ACTIVE);
         asistenteRepository.save(asistente);
         
         asistente.setJugador(jugadorP);
