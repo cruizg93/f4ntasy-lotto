@@ -14,15 +14,22 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import com.devteam.fantasy.exception.CanNotInsertBonoException;
 import com.devteam.fantasy.math.MathUtil;
 import com.devteam.fantasy.math.SorteoTotales;
+import com.devteam.fantasy.message.response.ApuestaActivaDetallesResponse;
+import com.devteam.fantasy.message.response.ApuestaActivaResponse;
 import com.devteam.fantasy.message.response.HistoricoApuestaDetallesResponse;
 import com.devteam.fantasy.message.response.JugadorBalanceWeek;
 import com.devteam.fantasy.message.response.NumeroGanadorSorteoResponse;
@@ -44,6 +51,7 @@ import com.devteam.fantasy.model.HistoryEvent;
 import com.devteam.fantasy.model.Jugador;
 import com.devteam.fantasy.model.NumeroGanador;
 import com.devteam.fantasy.model.Sorteo;
+import com.devteam.fantasy.model.SorteoDiaria;
 import com.devteam.fantasy.model.SorteoType;
 import com.devteam.fantasy.model.User;
 import com.devteam.fantasy.model.UserState;
@@ -65,6 +73,7 @@ import com.devteam.fantasy.util.MonedaName;
 import com.devteam.fantasy.util.PairNV;
 import com.devteam.fantasy.util.SorteoTypeName;
 import com.devteam.fantasy.util.Util;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import javassist.NotFoundException;
 
@@ -798,6 +807,54 @@ public class HistoryServiceImpl implements HistoryService {
 		return result;
 	}
 
+	@Override
+	public List<ApuestaActivaDetallesResponse> getHistoricoApuestasBySorteoAndJugador(Long sorteoId, String username) {
+
+        List<ApuestaActivaDetallesResponse> apuestasDetails = new ArrayList<>();
+        User user = userService.getByUsername(username);
+        
+        Sorteo sorteo=sorteoRepository.getSorteoById(sorteoId);
+        List<HistoricoApuestas> apuestas = historicoApuestaRepository.findAllBySorteoAndUserOrderByNumeroAsc(sorteo,user);
+        
+        List<PairNV> pairNVList = new ArrayList<>();
+        double total = 0;
+        Jugador jugador= Util.getJugadorFromUser(user);
+        for (HistoricoApuestas apuesta : apuestas) {
+        	total += apuesta.getCantidad();
+            pairNVList.add(new PairNV(apuesta.getNumero(), apuesta.getCantidad()));
+        }
+
+        ApuestaActivaDetallesResponse detallesResponse = new ApuestaActivaDetallesResponse();
+        detallesResponse.setApuestas(pairNVList);
+        detallesResponse.setTotal(total);
+        detallesResponse.setTitle(Util.getFormatName(user));
+        detallesResponse.setUserId(jugador.getId());
+        apuestasDetails.add(detallesResponse);
+        
+        List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
+        asistentes.forEach(asistente -> {
+            List<HistoricoApuestas> apuestaList = historicoApuestaRepository.findAllBySorteoAndAsistente(sorteo, asistente);
+            if (apuestaList.size() > 0) {
+                ApuestaActivaDetallesResponse detallesResponse1 = new ApuestaActivaDetallesResponse();
+                List<PairNV> pairNVList1 = new ArrayList<>();
+                double totalAsistente = 0;
+                for (HistoricoApuestas apuesta : apuestaList) {
+                	totalAsistente += apuesta.getCantidad();
+                	pairNVList1.add(new PairNV(apuesta.getNumero(), apuesta.getCantidad()));
+                }
+
+                Collections.sort(pairNVList1);
+                detallesResponse1.setApuestas(pairNVList1);
+                detallesResponse1.setTotal(totalAsistente);
+                detallesResponse1.setTitle(asistente.getUsername()+" ["+asistente.getName()+"]");
+                detallesResponse1.setUserId(asistente.getId());
+                apuestasDetails.add(detallesResponse1);
+            }
+        });
+        return apuestasDetails;
+
+	}
+	
 }
 
 

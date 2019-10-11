@@ -3,6 +3,8 @@ package com.devteam.fantasy.service;
 import java.util.List;
 
 import com.devteam.fantasy.exception.CanNotInsertBonoException;
+import com.devteam.fantasy.message.response.ApuestaActivaDetallesResponse;
+import com.devteam.fantasy.message.response.ApuestaActivaResponse;
 import com.devteam.fantasy.message.response.HistoricoApuestaDetallesResponse;
 import com.devteam.fantasy.message.response.NumeroGanadorSorteoResponse;
 import com.devteam.fantasy.message.response.SorteosPasadosApuestas;
@@ -41,5 +43,6 @@ public interface HistoryService {
 	SorteosPasadosJugadores getSorteosPasadosJugadoresByWeek(Long weekID, String moneda) throws Exception;
 	
 	HistoricoBalance getWeekBalanceByJugador(Jugador jugador);
+	List<ApuestaActivaDetallesResponse> getHistoricoApuestasBySorteoAndJugador(Long sorteoId, String username);
 	
 }
