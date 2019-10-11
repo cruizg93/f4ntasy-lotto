@@ -515,7 +515,7 @@ public class SorteoServiceImpl implements SorteoService {
 	 * 8.2) Create week model
 	 */
 	@Override
-	@Transactional(rollbackFor = Exception.class)
+	@Transactional(rollbackFor = {Exception.class, CanNotInsertWinningNumberException.class, CanNotInsertHistoricoBalanceException.class} )
 	public void setNumeroGanador(Long id, int numero) throws CanNotInsertWinningNumberException, CanNotInsertHistoricoBalanceException  {
 		try {
 			logger.debug("setNumeroGanador(Long {}, int {}): START", id, numero);
