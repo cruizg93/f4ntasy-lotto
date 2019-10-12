@@ -190,17 +190,17 @@ public class AdminController {
         jugadorDataResponse.setUsername(jugador.getUsername());
         jugadorDataResponse.setName(jugador.getName());
         jugadorDataResponse.setEditable(true);
-        if(!apuestaRepository.findAllByUser(userRepository.getById(id)).isEmpty())
-            jugadorDataResponse.setEditable(false);
-        else {
-            List<Asistente> asistentes=asistenteRepository.findAllByJugadorAndUserState(jugadorRepository.getById(id), UserState.ACTIVE);
-            for (Asistente asistente: asistentes) {
-                if(!apuestaRepository.findAllByUser(userRepository.getById(asistente.getId())).isEmpty()){
-                    jugadorDataResponse.setEditable(false);
-                    break;
-                }
-            }
-        }
+//        if(!apuestaRepository.findAllByUser(userRepository.getById(id)).isEmpty())
+//            jugadorDataResponse.setEditable(false);
+//        else {
+//            List<Asistente> asistentes=asistenteRepository.findAllByJugadorAndUserState(jugadorRepository.getById(id), UserState.ACTIVE);
+//            for (Asistente asistente: asistentes) {
+//                if(!apuestaRepository.findAllByUser(userRepository.getById(asistente.getId())).isEmpty()){
+//                    jugadorDataResponse.setEditable(false);
+//                    break;
+//                }
+//            }
+//        }
         return jugadorDataResponse;
     }
 
