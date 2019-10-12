@@ -108,10 +108,13 @@ public class SorteoTotales {
 			cantidad = cantidad.multiply(BigDecimal.valueOf(apuesta.getCantidad()));
             ventas = ventas.add(cantidad);
 
+            BigDecimal comisionRate = MathUtil.getComisionRate(jugador, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
+			comisionRate = comisionRate.divide(BigDecimal.valueOf(100));
+			BigDecimal comisionApuesta = comisionRate.multiply(cantidad);				
+			
+            comisiones = comisiones.add(comisionApuesta);
+
             BigDecimal currencyExchange = MathUtil.getDollarChangeRate(apuesta, monedaName);
-            BigDecimal comision = BigDecimal.valueOf(apuesta.getComision()).multiply(currencyExchange);
-            comisiones = comisiones.add(comision);
-            
             BigDecimal premio = MathUtil.getPremioFromApuesta(jugador, apuesta,sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
 			premio = premio.multiply(currencyExchange);
         }
@@ -126,8 +129,15 @@ public class SorteoTotales {
     			for(Apuesta apuesta : apuestaList) {
     				cantidades = cantidades.add(BigDecimal.valueOf(apuesta.getCantidad()));
     				BigDecimal multiplier = MathUtil.getCantidadMultiplier(jugador, apuesta,sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName(), this.monedaName);
-    				cantidadAsistentesVentas = multiplier.multiply(BigDecimal.valueOf(apuesta.getCantidad())).add(cantidadAsistentesVentas);
-    				comisionAsistentesVentas = comisionAsistentesVentas.add(BigDecimal.valueOf(apuesta.getComision()));
+    				BigDecimal costoApuesta = multiplier.multiply(BigDecimal.valueOf(apuesta.getCantidad()));
+    				
+    				cantidadAsistentesVentas = cantidadAsistentesVentas.add(multiplier.multiply(BigDecimal.valueOf(apuesta.getCantidad())));
+
+    				BigDecimal comisionRate = MathUtil.getComisionRate(jugador, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
+					comisionRate = comisionRate.divide(BigDecimal.valueOf(100));
+					BigDecimal comision = comisionRate.multiply(costoApuesta);
+					
+    				comisionAsistentesVentas = comisionAsistentesVentas.add(comision);
     			}
             }
             ventas = ventas.add(cantidadAsistentesVentas);
@@ -155,7 +165,7 @@ public class SorteoTotales {
             costo = costo.multiply(currencyExchange);
         	ventas = ventas.add(costo);
             
-        	BigDecimal comision = BigDecimal.valueOf(apuesta.getComision()).multiply(currencyExchange);
+        	BigDecimal comision = BigDecimal.valueOf(apuesta.getComisionMultiplier()).multiply(costo);
             comisiones = comisiones.add(comision);
             
             if(numero.getNumeroGanador() == apuesta.getNumero()) {

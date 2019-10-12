@@ -313,7 +313,7 @@ public class Util {
                     historicoApuestas.setUser(apuesta.getUser());
                     historicoApuestas.setSorteo(sorteo);
                     historicoApuestas.setNumero(apuesta.getNumero());
-                    historicoApuestas.setComision(apuesta.getComision());
+//                    historicoApuestas.setComision(apuesta.getComision());
                     historicoApuestas.setCambio(apuesta.getCambio());
                     historicoApuestas.setDate(apuesta.getDate());
                     Jugador jugador = Util.getJugadorFromApuesta(apuesta);
@@ -601,7 +601,7 @@ public class Util {
 		Apuesta apuestaTemp = new Apuesta();
 		apuestaTemp.setCambio(apuesta.getCambio());
 		apuestaTemp.setCantidad(apuesta.getCantidad());
-		apuestaTemp.setComision(apuesta.getComision());
+//		apuestaTemp.setComision(apuesta.getComision());
 		apuestaTemp.setDate(apuesta.getDate());
 		apuestaTemp.setNumero(apuesta.getNumero());
 		apuestaTemp.setUser(apuesta.getUser());

@@ -29,13 +29,13 @@ public class HistoricoApuestas {
 
     private double cantidad;
 
-    private Double comision;
-
     private Timestamp date;
     
     private double cantidadMultiplier;
     
     private double premioMultiplier;
+    
+    private double comisionMultiplier;
     
     private String moneda;
     
@@ -87,14 +87,6 @@ public class HistoricoApuestas {
         this.cambio = cambio;
     }
 
-    public Double getComision() {
-        return comision;
-    }
-
-    public void setComision(Double comision) {
-        this.comision = comision;
-    }
-
 	public Timestamp getDate() {
 		return date;
 	}
@@ -138,8 +130,16 @@ public class HistoricoApuestas {
 	@Override
 	public String toString() {
 		return "HistoricoApuestas [id=" + id + ", sorteo=" + sorteo + ", user=" + user + ", asistente=" + asistente
-				+ ", cambio=" + cambio + ", numero=" + numero + ", cantidad=" + cantidad + ", comision=" + comision
+				+ ", cambio=" + cambio + ", numero=" + numero + ", cantidad=" + cantidad 
 				+ ", date=" + date + ", cantidadMultiplier=" + cantidadMultiplier + ", premioMultiplier="
 				+ premioMultiplier + ", moneda=" + moneda + "]";
+	}
+
+	public double getComisionMultiplier() {
+		return comisionMultiplier;
+	}
+
+	public void setComisionMultiplier(double comisionMultiplier) {
+		this.comisionMultiplier = comisionMultiplier;
 	}
 }

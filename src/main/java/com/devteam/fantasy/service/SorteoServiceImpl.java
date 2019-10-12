@@ -372,7 +372,13 @@ public class SorteoServiceImpl implements SorteoService {
 
 				cantidad[numero] += BigDecimal.valueOf(apuesta.getCantidad()).multiply(cambio).multiply(costoMilDiaria)
 						.doubleValue();
-				comision[0] += cambio.multiply(BigDecimal.valueOf(apuesta.getComision())).doubleValue();
+				
+				BigDecimal comisionRate = MathUtil.getComisionRate(jugador, sorteo.getSorteoType().getSorteoTypeName());
+				comisionRate = comisionRate.divide(BigDecimal.valueOf(100));
+				BigDecimal comisionApuesta = comisionRate.multiply(BigDecimal.valueOf(cantidad[numero]));				
+				
+				comision[0] += comisionApuesta.doubleValue();
+				
 				riesgo[numero] += premio.doubleValue();
 
 			} else {
@@ -399,7 +405,11 @@ public class SorteoServiceImpl implements SorteoService {
 				cantidad[numero] += BigDecimal.valueOf(apuesta.getCantidad()).multiply(cambio).multiply(costoMilChica)
 						.multiply(costoPedazoChica).doubleValue();
 
-				comision[0] += BigDecimal.valueOf(apuesta.getComision()).multiply(cambio).doubleValue();
+				BigDecimal comisionRate = MathUtil.getComisionRate(jugador, sorteo.getSorteoType().getSorteoTypeName());
+				comisionRate = comisionRate.divide(BigDecimal.valueOf(100));
+				BigDecimal comisionApuesta = comisionRate.multiply(BigDecimal.valueOf(cantidad[numero]));				
+				
+				comision[0] += comisionApuesta.doubleValue();
 				riesgo[numero] += premio.doubleValue();
 			}
 			total[0] += premio.doubleValue();
@@ -697,7 +707,6 @@ public class SorteoServiceImpl implements SorteoService {
 				historicoApuestas.setCantidad(apuesta.getCantidad());
 				historicoApuestas.setSorteo(sorteoDiaria.getSorteo());
 				historicoApuestas.setNumero(apuesta.getNumero());
-				historicoApuestas.setComision(apuesta.getComision());
 				historicoApuestas.setCambio(apuesta.getCambio());
 				historicoApuestas.setDate(apuesta.getDate());
 				historicoApuestas.setMoneda(jugador.getMoneda().getMonedaName().toString());
@@ -705,6 +714,12 @@ public class SorteoServiceImpl implements SorteoService {
 				historicoApuestas.setCantidadMultiplier(cantidadMultiplier);
 				double premioMultiplier = MathUtil.getPremioMultiplier(jugador, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName()).doubleValue();
 				historicoApuestas.setPremioMultiplier(premioMultiplier);
+				
+				BigDecimal comisionRate = MathUtil.getComisionRate(jugador, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
+				comisionRate = comisionRate.divide(BigDecimal.valueOf(100));
+				
+				historicoApuestas.setComisionMultiplier(comisionRate.doubleValue());				
+				
 				historicoApuestaRepository.save(historicoApuestas);
 				apuestaRepository.delete(apuesta);
 			});
@@ -839,14 +854,14 @@ public class SorteoServiceImpl implements SorteoService {
 
 				BigDecimal costoUnidad = MathUtil.getCantidadMultiplier(jugador, apuesta,sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName(), sorteoTotales.getMonedaName());
 				
-				//Cabio for cantidad is already calculated in MathUtil.getCantidadMultiplier(...)
+				//Cambio for cantidad is already calculated in MathUtil.getCantidadMultiplier(...)
 				BigDecimal cantidadTotal = BigDecimal.valueOf(apuesta.getCantidad()).multiply(costoUnidad);
-
+				
+				BigDecimal comisionRate = MathUtil.getComisionRate(jugador, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
+				comisionRate = comisionRate.divide(BigDecimal.valueOf(100));
+				BigDecimal comision = comisionRate.multiply(cantidadTotal);
+				
 				BigDecimal cambio = MathUtil.getDollarChangeRate(apuesta, currency);
-				BigDecimal comisionTotal = apuesta.getComision().doubleValue() == 0
-						? BigDecimal.valueOf(apuesta.getComision())
-						: BigDecimal.valueOf(apuesta.getComision()).multiply(cambio);
-
 				BigDecimal premio = MathUtil.getPremioFromApuesta(jugador, apuesta,sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
 				premio = premio.multiply(cambio);
 						
@@ -871,7 +886,7 @@ public class SorteoServiceImpl implements SorteoService {
 				tupla.setTotalRiesgo(BigDecimal.valueOf(tupla.getTotalRiesgo()).add(riesgo).doubleValue());
 
 				tuplas.put(numero, tupla);
-				totalComision = totalComision.add(comisionTotal);
+				totalComision = totalComision.add(comision);
 				totalValue = totalValue.add(cantidadTotal);
 			}
 
@@ -935,11 +950,6 @@ public class SorteoServiceImpl implements SorteoService {
 
 					BigDecimal costo = MathUtil.getCantidadMultiplier(jugador, apuesta, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName(), jugador.getMoneda().getMonedaName());
 					costo = costo.multiply(BigDecimal.valueOf(apuesta.getCantidad()));
-					
-					BigDecimal comisionRate = MathUtil.getComisionRate(jugador, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
-					comisionRate = comisionRate.divide(BigDecimal.valueOf(100));
-					BigDecimal comision = comisionRate.multiply(costo);
-					apuesta.setComision(comision.doubleValue());
 					
 					apuesta.setDate(Timestamp.valueOf(LocalDateTime.now()));
 					apuestaRepository.save(apuesta);
@@ -1019,11 +1029,11 @@ public class SorteoServiceImpl implements SorteoService {
 	}
 	
 	@Override
-	public List<ApuestaActivaDetallesResponse> getApuestasActivasDetallesBySorteoAndJugador(Long sorteoId, String username) {
+	public List<ApuestaActivaDetallesResponse> getApuestasActivasDetallesBySorteoAndJugador(Long sorteoDiariaId, String username) {
 		List<ApuestaActivaDetallesResponse> apuestasDetails = new ArrayList<>();
         User user = userService.getByUsername(username);
         Jugador jugador = Util.getJugadorFromUser(user);
-        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
+        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoDiariaId);
         Sorteo sorteo= sorteoDiaria.getSorteo();
         List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUserOrderByNumeroAsc(sorteoDiaria, user);
         List<PairNV> pairNVList = new ArrayList<>();

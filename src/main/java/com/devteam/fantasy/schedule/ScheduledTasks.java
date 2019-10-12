@@ -27,18 +27,6 @@ public class ScheduledTasks {
     @Autowired
     private SorteoTypeRepository sorteoTypeRepository;
 
-    @Autowired
-    private ApuestaRepository apuestaRepository;
-
-    @Autowired
-    private HistoricoApuestaRepository historicoApuestaRepository;
-
-    @Autowired
-    private JugadorRepository jugadorRepository;
-
-    @Autowired
-    private StatusRepository statusRepository;
-
     private static final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
 
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
@@ -61,7 +49,7 @@ public class ScheduledTasks {
      *     Year can be empty, have values 1970-2099 or the special characters , - * / .
      *
      * */
-    @Scheduled(cron = "0 1 0 * * ?")
+    /*@Scheduled(cron = "0 1 0 * * ?")
     public void createSorteoDiaria() {
     	log.debug("createSorteoDiaria: START");
 //        Util.deleteSorteosDia(sorteoRepository, sorteoDiariaRepository, apuestaRepository, historicoApuestaRepository);
@@ -69,14 +57,14 @@ public class ScheduledTasks {
 //        Util.insertSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, sorteoTypeRepository, SorteoTypeName.DIARIA, 15);
 //        Util.insertSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, sorteoTypeRepository, SorteoTypeName.DIARIA, 21);
         log.debug("createSorteoDiaria: END");
-    }
+    }*/
 
-    @Scheduled(cron = "0 1 0 * * MON")
-    public void updateJugadorBalance() {
-    	log.debug("updateJugadorBalance: START");
-        Util.updateJugadoBalance(jugadorRepository);
-        log.debug("updateJugadorBalance: END");
-    }
+//    @Scheduled(cron = "0 1 0 * * MON")
+//    public void updateJugadorBalance() {
+//    	log.debug("updateJugadorBalance: START");
+//        Util.updateJugadoBalance(jugadorRepository);
+//        log.debug("updateJugadorBalance: END");
+//    }
 
 //    @Scheduled(cron = "0 1 0 * * MON")
 //    public void updateSorteoStatus() {

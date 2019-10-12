@@ -31,8 +31,6 @@ public class Apuesta {
 
     private Double cantidad;
 
-    private Double comision;
-
     public Apuesta() {
     }
 
@@ -76,14 +74,6 @@ public class Apuesta {
         this.numero = numero;
     }
 
-    public Double getComision() {
-        return comision;
-    }
-
-    public void setComision(Double comision) {
-        this.comision = comision;
-    }
-
     public Cambio getCambio() {
         return cambio;
     }
@@ -102,7 +92,7 @@ public class Apuesta {
 
 	@Override
 	public String toString() {
-		return "Apuesta [id=" + id + ", cantidad=" + cantidad + ", comision=" + comision + ", numero=" + numero
+		return "Apuesta [id=" + id + ", cantidad=" + cantidad + ", numero=" + numero
 				+ ", sorteoDiaria=" + sorteoDiaria + "]";
 	}
 

@@ -244,6 +244,8 @@ public class PlayerController {
         return sorteoResponses;
     }
 
+    //Replaced by SorteoController.getApuestasActivasDetallesBySorteoAndJugador [sorteos/activos/{sorteoDiarioId}/apuestas/detalles/{username}]
+    @Deprecated
     @PostMapping("/apuestas/activa/{id}/detalles")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
     public List<ApuestaActivaDetallesResponse> getDetallesApuestaActiva(@PathVariable Long id,
@@ -493,7 +495,7 @@ public class PlayerController {
                         .orElse(null);
                 if (apuesta_ele != null) {
                     apuesta_ele.setCantidad(entryResponse.getCurrent());
-                    apuesta_ele.setComision(entryResponse.getCurrent() * costoPedazo * comision / 100);
+//                    apuesta_ele.setComision(entryResponse.getCurrent() * costoPedazo * comision / 100);
                     apuesta_ele.setCambio(cambio);
                     apuesta_ele.setDate(Timestamp.valueOf(LocalDateTime.now()));
                     balance -= apuesta_ele.getCantidad();
@@ -504,7 +506,7 @@ public class PlayerController {
                     sorteoDiaria.ifPresent(apuesta::setSorteoDiaria);
                     apuesta.setNumero(Integer.valueOf(entryResponse.getNumero()));
                     apuesta.setCantidad(entryResponse.getCurrent());
-                    apuesta.setComision(entryResponse.getCurrent() * costoPedazo *comision / 100);
+//                    apuesta.setComision(entryResponse.getCurrent() * costoPedazo *comision / 100);
                     apuesta.setCambio(cambio);
                     apuesta.setDate(Timestamp.valueOf(LocalDateTime.now()));
                     Optional<User> users = userRepository.findByUsername(username);
@@ -828,12 +830,12 @@ public class PlayerController {
 
         if (current * costoMil * costoPedazo <= diff) {
             apuesta.setCantidad(current);
-            apuesta.setComision(current * costoPedazo * comision / 100);
+//            apuesta.setComision(current * costoPedazo * comision / 100);
             restriccion.setPuntosCurrent((int) current);
         } else {
             double restrccionValue = (double) restriccion.getPuntos();
             apuesta.setCantidad(restrccionValue);
-            apuesta.setComision(restrccionValue * costoPedazo *comision / 100);
+//            apuesta.setComision(restrccionValue * costoPedazo *comision / 100);
             restriccion.setPuntosCurrent(restriccion.getPuntos());
         }
     }

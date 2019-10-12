@@ -898,7 +898,7 @@ public class AdminController {
                     cantidad[numero] += apuesta.getCantidad() * cambio * costoMilDiaria * costoMilChica * costoPedazoChica;
                     riesgo[numero] += premioData;
                     totalDiaria[0] += apuesta.getCantidad() * cambio * costoMilDiaria * costoMilChica * costoPedazoChica;
-                    comisionDiaria[0] += apuesta.getComision() * cambio;
+//                    comisionDiaria[0] += apuesta.getComision() * cambio;
                 });
             }
 
@@ -1220,7 +1220,7 @@ public class AdminController {
                 historicoApuestas.setUser(apuesta.getUser());
                 historicoApuestas.setSorteo(sorteo);
                 historicoApuestas.setNumero(apuesta.getNumero());
-                historicoApuestas.setComision(apuesta.getComision());
+//                historicoApuestas.setComision(apuesta.getComision());
                 historicoApuestas.setCambio(apuesta.getCambio());
                 historicoApuestas.setDate(apuesta.getDate());
                 Jugador jugador = Util.getJugadorFromApuesta(apuesta);
@@ -1325,7 +1325,8 @@ public class AdminController {
         return apuestasDetails;
     }
 
-
+    //Replaced by SorteoController.getApuestasActivasDetallesBySorteoAndJugador [sorteos/activos/{sorteoDiarioId}/apuestas/detalles/{username}]
+    @Deprecated
     @PostMapping("/jugador/apuestas/activas/{id}/detalles")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
     public List<ApuestaActivaDetallesResponse> getDetallesByApuestaActivaId(@PathVariable Long id,
@@ -1366,7 +1367,7 @@ public class AdminController {
         detallesResponse.setTitle(Util.getFormatName(jugador));
         detallesResponse.setMoneda(jugador.getMoneda().getMonedaName().toString());
         apuestasDetails.add(detallesResponse);
-        List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
+        List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
         asistentes.forEach(asistente -> {
             Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
             if (apuestaList.size() > 0) {
@@ -1415,7 +1416,7 @@ public class AdminController {
                         }
                     }
                     total[0] += cantidad;
-                    comision[0] += apuesta.getComision();
+//                    comision[0] += apuesta.getComision();
                 });
             });
             JugadorResponse jugadorResponse = new JugadorResponse();
@@ -1551,7 +1552,7 @@ public class AdminController {
                         costoPedazoChica = jugador.getCostoChicaPedazos() != 0 ? jugador.getCostoChicaPedazos() : 1 ;
                     }
                     total[0] += apuesta.getCantidad() *  cambio * costoMilChica * costoMilDiaria * costoPedazoChica;
-                    comision[0] += apuesta.getComision() * cambio;
+//                    comision[0] += apuesta.getComision() * cambio;
                 });
             }
 
@@ -1666,7 +1667,7 @@ public class AdminController {
             costoMilDiaria = jugador.getCostoMil() != 0 ? jugador.getCostoMil() : 1 ;
 
             cantidad[numero] += apuesta.getCantidad() * cambio * costoMilDiaria;
-            comision[0] += apuesta.getComision() * cambio;
+//            comision[0] += apuesta.getComision() * cambio;
             riesgo[numero] += premio;
         } else {
             if (jugador.getTipoChica().getChicaName().equals(ChicaName.DIRECTO)) {
@@ -1680,7 +1681,7 @@ public class AdminController {
             costoMilChica = jugador.getCostoChicaMiles() != 0 ? jugador.getCostoChicaMiles() : 1 ;
 
             cantidad[numero] += apuesta.getCantidad() * cambio * costoMilChica * costoPedazoChica;
-            comision[0] += apuesta.getComision() * cambio;
+//            comision[0] += apuesta.getComision() * cambio;
             riesgo[numero] += premio;
         }
         total[0] += premio;
@@ -1821,7 +1822,7 @@ public class AdminController {
             pairNVList.add(new PairNV(apuesta.getNumero(), apuesta.getCantidad()));
         }
         if (user instanceof Jugador) {
-            List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
+            List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
             asistentes.forEach(asistente -> {
                 Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, asistente);
                 if (apuestaList.size() > 0) {

@@ -166,10 +166,10 @@ public class SorteoController {
         return sorteoService.getApuestasActivasBySorteoAndJugador(id, username);
     }
     
-    @GetMapping("/activos/{id}/apuestas/detalles/{username}")
+    @GetMapping("/activos/{sorteoDiarioId}/apuestas/detalles/{username}")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS') or hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
-    public List<ApuestaActivaDetallesResponse> getApuestasActivasDetallesBySorteoAndJugador(@PathVariable Long id, @PathVariable String username) {
-        return sorteoService.getApuestasActivasDetallesBySorteoAndJugador(id, username);
+    public List<ApuestaActivaDetallesResponse> getApuestasActivasDetallesBySorteoAndJugador(@PathVariable Long sorteoDiarioId, @PathVariable String username) {
+        return sorteoService.getApuestasActivasDetallesBySorteoAndJugador(sorteoDiarioId, username);
     }
     
     @DeleteMapping("/activos/{id}/apuestas/{numero}")

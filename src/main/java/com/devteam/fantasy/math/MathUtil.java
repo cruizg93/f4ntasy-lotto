@@ -21,7 +21,7 @@ public class MathUtil {
 	
 	
 	public static BigDecimal getComisionRate(Jugador jugador, SorteoTypeName sorteoType) {
-		BigDecimal comisionRate =BigDecimal.ONE;
+		BigDecimal comisionRate =BigDecimal.ZERO;
 		
 		if(sorteoType.equals(SorteoTypeName.DIARIA)){
 			comisionRate = BigDecimal.valueOf(jugador.getComisionDirecto());
