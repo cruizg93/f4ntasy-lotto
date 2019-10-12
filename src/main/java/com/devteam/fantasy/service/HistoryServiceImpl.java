@@ -814,21 +814,16 @@ public class HistoryServiceImpl implements HistoryService {
 
         List<ApuestaActivaDetallesResponse> apuestasDetails = new ArrayList<>();
         User user = userService.getById(userId);
+        Jugador jugador= Util.getJugadorFromUser(user);
         
         Sorteo sorteo=sorteoRepository.getSorteoById(sorteoId);
-        List<HistoricoApuestas> apuestas = historicoApuestaRepository.findAllBySorteoAndUserOrderByNumeroAsc(sorteo,user);
-        
-        List<PairNV> pairNVList = new ArrayList<>();
-        double total = 0;
-        Jugador jugador= Util.getJugadorFromUser(user);
-        for (HistoricoApuestas apuesta : apuestas) {
-        	total += apuesta.getCantidad();
-            pairNVList.add(new PairNV(apuesta.getNumero(), apuesta.getCantidad()));
-        }
+        List<HistoricoApuestas> apuestas = historicoApuestaRepository.findAllBySorteoAndUserAndAsistenteOrderByNumeroAsc(sorteo,user,null);
+        SummaryResponse jugadorSummary = sorteoTotales.processHitoricoApuestas(apuestas, jugador.getMoneda().getMonedaName().toString());
+        List<PairNV> pairNVList = mergeApuestasIntoPairNVList(apuestas);
 
         ApuestaActivaDetallesResponse detallesResponse = new ApuestaActivaDetallesResponse();
         detallesResponse.setApuestas(pairNVList);
-        detallesResponse.setTotal(total);
+        detallesResponse.setTotal(jugadorSummary.getSubTotal());
         detallesResponse.setTitle(Util.getFormatName(user));
         detallesResponse.setUserId(jugador.getId());
         apuestasDetails.add(detallesResponse);
@@ -836,21 +831,19 @@ public class HistoryServiceImpl implements HistoryService {
         List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
         asistentes.forEach(asistente -> {
             List<HistoricoApuestas> apuestaList = historicoApuestaRepository.findAllBySorteoAndAsistente(sorteo, asistente);
+            
             if (apuestaList.size() > 0) {
-                ApuestaActivaDetallesResponse detallesResponse1 = new ApuestaActivaDetallesResponse();
-                List<PairNV> pairNVList1 = new ArrayList<>();
-                double totalAsistente = 0;
-                for (HistoricoApuestas apuesta : apuestaList) {
-                	totalAsistente += apuesta.getCantidad();
-                	pairNVList1.add(new PairNV(apuesta.getNumero(), apuesta.getCantidad()));
-                }
-
-                Collections.sort(pairNVList1);
-                detallesResponse1.setApuestas(pairNVList1);
-                detallesResponse1.setTotal(totalAsistente);
-                detallesResponse1.setTitle(asistente.getUsername()+" ["+asistente.getName()+"]");
-                detallesResponse1.setUserId(asistente.getId());
-                apuestasDetails.add(detallesResponse1);
+            	
+                ApuestaActivaDetallesResponse detallesResponseAsistente = new ApuestaActivaDetallesResponse();
+                List<PairNV> pairNVListAsistente = mergeApuestasIntoPairNVList(apuestaList);
+                Collections.sort(pairNVListAsistente);
+                
+                SummaryResponse asistenteSummary = sorteoTotales.processHitoricoApuestas(apuestas, jugador.getMoneda().getMonedaName().toString());
+                detallesResponseAsistente.setApuestas(pairNVListAsistente);
+                detallesResponseAsistente.setTotal(asistenteSummary.getSubTotal());
+                detallesResponseAsistente.setTitle(asistente.getUsername()+" ["+asistente.getName()+"]");
+                detallesResponseAsistente.setUserId(asistente.getId());
+                apuestasDetails.add(detallesResponseAsistente);
             }
         });
         return apuestasDetails;
