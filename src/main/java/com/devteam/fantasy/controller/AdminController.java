@@ -190,6 +190,21 @@ public class AdminController {
         jugadorDataResponse.setUsername(jugador.getUsername());
         jugadorDataResponse.setName(jugador.getName());
         jugadorDataResponse.setEditable(true);
+        
+        if(jugador.getTipoApostador().getApostadorName().equals(ApostadorName.MILES)) {
+        	jugadorDataResponse.setDiariaType("dm");
+        }else if(jugador.getTipoApostador().getApostadorName().equals(ApostadorName.DIRECTO)) {
+        	jugadorDataResponse.setDiariaType("dd");
+        }
+        
+        if(jugador.getTipoChica().getChicaName().equals(ChicaName.MILES)) {
+        	jugadorDataResponse.setChicaType("cm");
+        }else if(jugador.getTipoChica().getChicaName().equals(ChicaName.DIRECTO)) {
+        	jugadorDataResponse.setChicaType("cd");
+        }else if(jugador.getTipoChica().getChicaName().equals(ChicaName.PEDAZOS)) {
+        	jugadorDataResponse.setChicaType("cp");
+        }
+        
 //        if(!apuestaRepository.findAllByUser(userRepository.getById(id)).isEmpty())
 //            jugadorDataResponse.setEditable(false);
 //        else {
@@ -629,54 +644,50 @@ public class AdminController {
 
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
-    public List<String> getAllUsers() {
-    	List<String> userShortResponses = new ArrayList<>();
+    public List<PairUserFormatNameID> getAllUsers() {
+    	List<PairUserFormatNameID> responseUsers = new ArrayList<>();
     	
     	User loggedUser = userService.getLoggedInUser();
     	
     	if( userService.isUserMasterRole(loggedUser)) {
     		List<User> users = userRepository.getAllAdmin();
             for (User user : users) {
-                userShortResponses.add(Util.getFormatName(user));
-//                userShortResponses.add(user.getUsername());
+                responseUsers.add(new PairUserFormatNameID(user.getId(), Util.getFormatName(user)));
+//                responseUsers.add(user.getUsername());
             }
     	}else if(userService.isUserSupervisorRole(loggedUser)) {
     		//Supervisor can only edit itself
-    		userShortResponses.add(Util.getFormatName(loggedUser));
-//    		userShortResponses.add(loggedUser.getUsername());
-    		return userShortResponses;
-    	}else {
-    		userShortResponses.add(Util.getFormatName(loggedUser));
-//    		userShortResponses.add(loggedUser.getUsername());
+    		responseUsers.add(new PairUserFormatNameID(loggedUser.getId(), Util.getFormatName(loggedUser)));
+//    		responseUsers.add(loggedUser.getUsername());
+    		return responseUsers;
     	}
+    	
+    	responseUsers.add(new PairUserFormatNameID(loggedUser.getId(), Util.getFormatName(loggedUser)));
 
         List<Jugador> jugadores = jugadorRepository.findAllByUserStateOrderByIdAsc(UserState.ACTIVE);
         for(Jugador jugador: jugadores) {
-        	userShortResponses.add(Util.getFormatName(jugador));
-//        	userShortResponses.add(jugador.getUsername());
+        	responseUsers.add(new PairUserFormatNameID(jugador.getId(), Util.getFormatName(jugador)));
+//        	responseUsers.add(jugador.getUsername());
         	List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
         	for(Asistente asistente: asistentes) {
-        		userShortResponses.add(Util.getFormatName(asistente));
-//        		userShortResponses.add(asistente.getUsername());
+        		responseUsers.add(new PairUserFormatNameID(asistente.getId(), Util.getFormatName(asistente)));
+//        		responseUsers.add(asistente.getUsername());
         	}
         }
         
-        return userShortResponses;
+        return responseUsers;
     }
 
 
     @PostMapping("/user/password/update")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
-    public ResponseEntity<?> updatePasswword(@Valid @RequestBody LoginForm loginForm) {
-        User user = userRepository.findByUsername(loginForm.getUsername())
+    public ResponseEntity<?> updatePasswword(@Valid @RequestBody CambiarContrasenaForm requestForm) {
+        User user = userRepository.findById(requestForm.getId())
                 .orElseThrow(() ->
-                        new UsernameNotFoundException("User Not Found with -> username : "
-                                + loginForm.getUsername())
+                        new UsernameNotFoundException("User Not Found with -> id : "+requestForm.getId())
                 );
-        user.setPassword(encoder.encode(loginForm.getPassword()));
-        if(user.isFirstConnection()) {
-        	user.setFirstConnection(false);
-        }
+        user.setPassword(encoder.encode(requestForm.getPassword()));
+        user.setFirstConnection(true);
         userRepository.save(user);
         return ResponseEntity.ok(new SimpleResponse("Password update"));
     }

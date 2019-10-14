@@ -7,6 +7,7 @@ public class JugadorDataResponse {
     private String username;
     private String name;
     private Moneda moneda;
+    
     private double comisionChicaDirecto;
     private double premioChicaDirecto;
 
@@ -22,6 +23,9 @@ public class JugadorDataResponse {
 
     private double costoMil;
     private double premioMil;
+    
+    private String chicaType;
+    private String diariaType;
 
     private double balance;
     private boolean Editable;
@@ -161,4 +165,20 @@ public class JugadorDataResponse {
     public void setEditable(boolean editable) {
         Editable = editable;
     }
+
+	public String getChicaType() {
+		return chicaType;
+	}
+
+	public void setChicaType(String chicaType) {
+		this.chicaType = chicaType;
+	}
+
+	public String getDiariaType() {
+		return diariaType;
+	}
+
+	public void setDiariaType(String diariaType) {
+		this.diariaType = diariaType;
+	}
 }
