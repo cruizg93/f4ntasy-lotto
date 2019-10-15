@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.devteam.fantasy.message.response.ApuestaActivaDetallesResponse;
 import com.devteam.fantasy.message.response.ApuestaActivaResponse;
+import com.devteam.fantasy.message.response.ApuestaActivaResumenResponse;
 import com.devteam.fantasy.message.response.HistoricoApuestaDetallesResponse;
 import com.devteam.fantasy.message.response.NumeroGanadorSorteoResponse;
 import com.devteam.fantasy.message.response.SorteosPasadosApuestas;
@@ -166,5 +167,11 @@ public class HistoryController {
     public List<ApuestaActivaDetallesResponse> getApuestasBySorteoAndJugador(@PathVariable Long id, @PathVariable Long userId) {
 		
         return historyService.getHistoricoApuestasBySorteoAndJugador(id, userId);
+    }
+	
+	@GetMapping("/sorteos/{id}/apuestas/riesgo/{moneda}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
+    public ApuestaActivaResumenResponse getDetallesRiesgoBySorteoId(@PathVariable Long id,@PathVariable String moneda) {
+    	return historyService.getRiesgoHistoricoBySorteo(id, moneda);
     }
 }

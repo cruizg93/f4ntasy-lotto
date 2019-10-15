@@ -1,6 +1,7 @@
 package com.devteam.fantasy.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
@@ -30,6 +31,7 @@ import com.devteam.fantasy.math.MathUtil;
 import com.devteam.fantasy.math.SorteoTotales;
 import com.devteam.fantasy.message.response.ApuestaActivaDetallesResponse;
 import com.devteam.fantasy.message.response.ApuestaActivaResponse;
+import com.devteam.fantasy.message.response.ApuestaActivaResumenResponse;
 import com.devteam.fantasy.message.response.HistoricoApuestaDetallesResponse;
 import com.devteam.fantasy.message.response.JugadorBalanceWeek;
 import com.devteam.fantasy.message.response.NumeroGanadorSorteoResponse;
@@ -72,6 +74,7 @@ import com.devteam.fantasy.util.HistoryEventType;
 import com.devteam.fantasy.util.MonedaName;
 import com.devteam.fantasy.util.PairNV;
 import com.devteam.fantasy.util.SorteoTypeName;
+import com.devteam.fantasy.util.TuplaRiesgo;
 import com.devteam.fantasy.util.Util;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -83,6 +86,9 @@ public class HistoryServiceImpl implements HistoryService {
 	@Autowired
 	UserService userService;
 
+	@Autowired
+	SorteoService sorteoService;
+	
 	@Autowired
 	HistoryEventRepository historyEventRepository;
 	
@@ -849,23 +855,97 @@ public class HistoryServiceImpl implements HistoryService {
         return apuestasDetails;
 
 	}
+
+	@Override
+	public ApuestaActivaResumenResponse getRiesgoHistoricoBySorteo(Long id, String currencyRequested) {
+		ApuestaActivaResumenResponse result = null;
+		try {
+			logger.debug("getRiesgoHistoricoBySorteo(Long {}, String {}): START", id, currencyRequested);
+			MonedaName currency = Util.getMonedaNameFromString(currencyRequested);
+			Sorteo sorteo = sorteoRepository.getSorteoById(id);
+			List<HistoricoApuestas> apuestas = historicoApuestaRepository.findAllBySorteo(sorteo);
+			SummaryResponse summary = sorteoTotales.processHitoricoApuestas(apuestas, currencyRequested);
+
+			int indexTopRiesgo = -1;
+			double topRiesgo = 0d;
+			BigDecimal totalDolar = BigDecimal.ZERO;
+			BigDecimal totalLempira = BigDecimal.ZERO;
+
+			BigDecimal totalValue = BigDecimal.ZERO;
+			BigDecimal totalComision = BigDecimal.ZERO;
+			Map<Integer, TuplaRiesgo> tuplas = new HashMap<>();
+			for (HistoricoApuestas apuesta : apuestas) {
+				int numero = apuesta.getNumero();
+				Jugador jugador = (Jugador) apuesta.getUser();
+
+				Apuesta fakeApuesta = Util.mapHistsoricoApuestaToApuesta(apuesta);
+				BigDecimal costoUnidad = MathUtil.getCantidadMultiplier(jugador, fakeApuesta,sorteo.getSorteoType().getSorteoTypeName(), Util.getMonedaNameFromString(currencyRequested));
+				
+				//Cambio for cantidad is already calculated in MathUtil.getCantidadMultiplier(...)
+				BigDecimal cantidadTotal = BigDecimal.valueOf(apuesta.getCantidad()).multiply(costoUnidad);
+				BigDecimal comisionRate = MathUtil.getComisionRate(jugador, sorteo.getSorteoType().getSorteoTypeName());
+				comisionRate = comisionRate.divide(BigDecimal.valueOf(100));
+				BigDecimal comision = comisionRate.multiply(cantidadTotal);
+
+				/*Totales by currency */
+				BigDecimal costoUnidadNoCurrencyExchange = MathUtil.getCantidadMultiplier(jugador, fakeApuesta,sorteo.getSorteoType().getSorteoTypeName(),  Util.getMonedaNameFromString(currencyRequested), true);
+				BigDecimal comisionNoCurrencyExchange =  comisionRate.multiply(costoUnidadNoCurrencyExchange);
+				BigDecimal apuestaCosto = BigDecimal.valueOf(apuesta.getCantidad()).multiply(costoUnidadNoCurrencyExchange);
+				//apuestaCosto = apuestaCosto.subtract(comisionNoCurrencyExchange);
+				
+				if( jugador.getMoneda().getMonedaName().equals(MonedaName.LEMPIRA)) {
+					totalLempira = totalLempira.add(apuestaCosto);
+				} else if( jugador.getMoneda().getMonedaName().equals(MonedaName.DOLAR)) {
+					totalDolar = totalDolar.add(apuestaCosto);
+				}
+				/*Totales by currency - END - */
+				
+				BigDecimal cambio = MathUtil.getDollarChangeRate(fakeApuesta, currency);
+				BigDecimal premio = MathUtil.getPremioFromApuesta(jugador, fakeApuesta, sorteo.getSorteoType().getSorteoTypeName());
+				premio = premio.multiply(cambio);
+						
+				TuplaRiesgo tupla = tuplas.get(numero);
+				if (tupla == null) {
+					tupla = new TuplaRiesgo();
+					tupla.setNumero(numero);
+				}
+
+				
+				BigDecimal dineroApostado = BigDecimal.valueOf(tupla.getDineroApostado()).add(cantidadTotal);
+				tupla.setDineroApostado(dineroApostado.doubleValue());
+
+				BigDecimal totalPremio = BigDecimal.valueOf(tupla.getPosiblePremio()).add(premio);
+				tupla.setPosiblePremio(totalPremio.doubleValue());
+				if (topRiesgo < premio.doubleValue()) {
+					topRiesgo = premio.doubleValue();
+					indexTopRiesgo = numero;
+				}
+				logger.debug("topRiesgo: "+topRiesgo);
+				BigDecimal riesgo = premio.divide(BigDecimal.valueOf(summary.getSubTotal()), 2, RoundingMode.HALF_EVEN);
+				tupla.setTotalRiesgo(BigDecimal.valueOf(tupla.getTotalRiesgo()).add(riesgo).doubleValue());
+
+				tuplas.put(numero, tupla);
+				totalComision = totalComision.add(comision);
+				totalValue = totalValue.add(cantidadTotal);
+				
+			}
+
+			TuplaRiesgo tuplaRiesgo = new TuplaRiesgo();
+			if (indexTopRiesgo != -1) {
+				tuplaRiesgo = tuplas.get(indexTopRiesgo);
+			}
+
+			result = new ApuestaActivaResumenResponse(tuplaRiesgo, new ArrayList<TuplaRiesgo>(tuplas.values()),
+					totalComision.doubleValue(), totalValue.doubleValue(), totalLempira.doubleValue(), totalDolar.doubleValue());
+		} catch (Exception e) {
+			logger.error("getRiesgoHistoricoBySorteo(Long {}, String {}): CATCH", id, currencyRequested);
+			logger.error(e.getMessage());
+			throw e;
+		} finally {
+			logger.debug("getRiesgoHistoricoBySorteo(Long id, String monedaType): END");
+		}
+
+		return result;
+	}
 	
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

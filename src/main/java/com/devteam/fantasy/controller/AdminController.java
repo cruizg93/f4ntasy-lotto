@@ -1640,7 +1640,7 @@ public class AdminController {
             tuplaRiesgo.setTotalRiesgo(riesgo[pos]);
         }
 
-        return new ApuestaActivaResumenResponse(tuplaRiesgo, tuplaRiesgos, comision[0], totalValue);
+        return new ApuestaActivaResumenResponse(tuplaRiesgo, tuplaRiesgos, comision[0], totalValue, 0 ,0);
     }
 
     //Replaced by SorteoController.bloquearSorteo [/sorteo/bloquear/{id}]

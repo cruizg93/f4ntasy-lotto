@@ -32,6 +32,10 @@ public class MathUtil {
 	}
 	
 	public static BigDecimal getCantidadMultiplier(Jugador jugador, Apuesta apuesta, SorteoTypeName sorteoType, MonedaName currencyRequested) {
+		return getCantidadMultiplier(jugador, apuesta, sorteoType, currencyRequested, false);
+	}
+	
+	public static BigDecimal getCantidadMultiplier(Jugador jugador, Apuesta apuesta, SorteoTypeName sorteoType, MonedaName currencyRequested, boolean skipCurrencyExchange) {
 		BigDecimal cantidad =BigDecimal.ONE;
 		
 		if(sorteoType.equals(SorteoTypeName.DIARIA)){
@@ -44,9 +48,12 @@ public class MathUtil {
         	cantidad= BigDecimal.valueOf(jugador.getCostoChicaPedazos());
         }
 		
-		BigDecimal cambioRate = getDollarChangeRate(apuesta, currencyRequested);
-		
-		return cantidad.multiply(cambioRate);
+		if( skipCurrencyExchange ) {
+			return cantidad;	
+		}else {
+			BigDecimal cambioRate = getDollarChangeRate(apuesta, currencyRequested);
+			return cantidad.multiply(cambioRate);
+		}
 	}
 	
 	public static BigDecimal getPremioMultiplier(Jugador jugador, SorteoTypeName sorteoType) {

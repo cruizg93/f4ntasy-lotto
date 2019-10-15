@@ -201,7 +201,7 @@ public class SorteoServiceImpl implements SorteoService {
 			double[] riesgo = new double[100];
 			final double[] total = { 0.0 };
 			final double[] comision = { 0.0 };
-
+			
 			apuestaList.forEach(apuesta -> {
 				int numero = apuesta.getNumero();
 				Jugador jugador = Util.getJugadorFromApuesta(apuesta);
@@ -232,7 +232,8 @@ public class SorteoServiceImpl implements SorteoService {
 				tuplaRiesgo.setDineroApostado(cantidad[pos]);
 				tuplaRiesgo.setTotalRiesgo(riesgo[pos]);
 			}
-			result = new ApuestaActivaResumenResponse(tuplaRiesgo, tuplaRiesgos, comision[0], totalValue);
+			
+			result = new ApuestaActivaResumenResponse(tuplaRiesgo, tuplaRiesgos, comision[0], totalValue, 0,0);
 
 		} catch (Exception e) {
 			logger.error("getActiveSorteoDetail(Long {}, String {}): CATCH", id, currency);
@@ -844,6 +845,8 @@ public class SorteoServiceImpl implements SorteoService {
 
 			int indexTopRiesgo = -1;
 			double topRiesgo = 0d;
+			BigDecimal totalDolar = BigDecimal.ZERO;
+			BigDecimal totalLempira = BigDecimal.ZERO;
 
 			BigDecimal totalValue = BigDecimal.ZERO;
 			BigDecimal totalComision = BigDecimal.ZERO;
@@ -856,10 +859,22 @@ public class SorteoServiceImpl implements SorteoService {
 				
 				//Cambio for cantidad is already calculated in MathUtil.getCantidadMultiplier(...)
 				BigDecimal cantidadTotal = BigDecimal.valueOf(apuesta.getCantidad()).multiply(costoUnidad);
-				
 				BigDecimal comisionRate = MathUtil.getComisionRate(jugador, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
 				comisionRate = comisionRate.divide(BigDecimal.valueOf(100));
 				BigDecimal comision = comisionRate.multiply(cantidadTotal);
+
+				/*Totales by currency */
+				BigDecimal costoUnidadNoCurrencyExchange = MathUtil.getCantidadMultiplier(jugador, apuesta,sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName(), sorteoTotales.getMonedaName(), true);
+				BigDecimal comisionNoCurrencyExchange =  comisionRate.multiply(costoUnidadNoCurrencyExchange);
+				BigDecimal apuestaCosto = BigDecimal.valueOf(apuesta.getCantidad()).multiply(costoUnidadNoCurrencyExchange);
+				//apuestaCosto = apuestaCosto.subtract(comisionNoCurrencyExchange);
+				
+				if( jugador.getMoneda().getMonedaName().equals(MonedaName.LEMPIRA)) {
+					totalLempira = totalLempira.add(apuestaCosto);
+				} else if( jugador.getMoneda().getMonedaName().equals(MonedaName.DOLAR)) {
+					totalDolar = totalDolar.add(apuestaCosto);
+				}
+				/*Totales by currency - END - */
 				
 				BigDecimal cambio = MathUtil.getDollarChangeRate(apuesta, currency);
 				BigDecimal premio = MathUtil.getPremioFromApuesta(jugador, apuesta,sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName());
@@ -888,6 +903,7 @@ public class SorteoServiceImpl implements SorteoService {
 				tuplas.put(numero, tupla);
 				totalComision = totalComision.add(comision);
 				totalValue = totalValue.add(cantidadTotal);
+				
 			}
 
 			TuplaRiesgo tuplaRiesgo = new TuplaRiesgo();
@@ -896,7 +912,7 @@ public class SorteoServiceImpl implements SorteoService {
 			}
 
 			result = new ApuestaActivaResumenResponse(tuplaRiesgo, new ArrayList<TuplaRiesgo>(tuplas.values()),
-					totalComision.doubleValue(), totalValue.doubleValue());
+					totalComision.doubleValue(), totalValue.doubleValue(), totalLempira.doubleValue(), totalDolar.doubleValue());
 		} catch (Exception e) {
 			logger.error("getDetalleApuestasBySorteo(Long {}, String {}): CATCH", id, monedaType);
 			logger.error(e.getMessage());
