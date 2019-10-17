@@ -1,19 +1,25 @@
 package com.devteam.fantasy;
 
-import com.devteam.fantasy.math.MathUtil;
-import com.devteam.fantasy.math.SorteoTotales;
-import com.devteam.fantasy.model.*;
-import com.devteam.fantasy.repository.*;
-import com.devteam.fantasy.util.*;
-import org.checkerframework.checker.units.qual.A;
+import org.apache.catalina.Context;
+import org.apache.catalina.connector.Connector;
+import org.apache.tomcat.util.descriptor.web.SecurityCollection;
+import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.boot.web.servlet.server.ServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import com.devteam.fantasy.math.MathUtil;
+import com.devteam.fantasy.math.SorteoTotales;
+import com.devteam.fantasy.repository.*;
+import com.devteam.fantasy.util.*;
+import com.devteam.fantasy.model.*;
 
 import javax.annotation.PostConstruct;
 import java.sql.Timestamp;
@@ -22,7 +28,6 @@ import java.util.*;
 
 import static java.time.DayOfWeek.MONDAY;
 import static java.time.DayOfWeek.SUNDAY;
-import static java.time.temporal.TemporalAdjusters.next;
 import static java.time.temporal.TemporalAdjusters.previousOrSame;
 
 
@@ -187,24 +192,26 @@ public class FantasyApplication {
             TipoChica chicaMiles = tipoChicaRepository.findByChicaName(ChicaName.MILES);
             TipoChica chicaPedazos = tipoChicaRepository.findByChicaName(ChicaName.PEDAZOS);
 
-            Jugador p1 = createJugadorP("Usuario 1","P001",lempiras, apuestaMiles,chicaMiles, new double[] {12,1000}, new double[]{11,1000} );
-            jugadorSequenceRepository.getNextValue();
-            Jugador p2 = createJugadorP("Usuario 2","P002",lempiras, apuestaMiles,chicaDirecta, new double[] {12,1000}, new double[]{20,66} );
-            jugadorSequenceRepository.getNextValue();
-            Jugador p3 = createJugadorP("Usuario 3","P003",lempiras, apuestaMiles,chicaPedazos, new double[] {10,1000}, new double[]{22,0.30,20} );
-            jugadorSequenceRepository.getNextValue();
-            Jugador p4 = createJugadorP("Usuario 4","P004",lempiras, apuestaDirecta,chicaMiles, new double[] {18,66}, new double[]{15,1000} );
-            jugadorSequenceRepository.getNextValue();
-            Jugador p5 = createJugadorP("Usuario 5","P005",lempiras, apuestaDirecta,chicaDirecta, new double[] {20,66}, new double[]{22.5,60} );
-            jugadorSequenceRepository.getNextValue();
-            Jugador p6 = createJugadorP("Usuario 6","P006",lempiras, apuestaDirecta,chicaPedazos, new double[] {21,65}, new double[]{20,0.30,68} );
-            jugadorSequenceRepository.getNextValue();
-            
-            Asistente x1 = createJugadorX("Asistente 1", "P001x1", p1);
-            Asistente x2 = createJugadorX("Asistente 2", "P002x1", p2);
-            Asistente x3 = createJugadorX("Asistente 3", "P003x1", p3);
-            Asistente x4 = createJugadorX("Asistente 4", "P004x1", p4);
-            Asistente x5 = createJugadorX("Asistente 5", "P005x1", p5);
+//            Jugador p1 = createJugadorP("Usuario 1","P001",lempiras, apuestaMiles,chicaMiles, new double[] {12,1000}, new double[]{11,1000} );
+//            jugadorSequenceRepository.getNextValue();
+//            Jugador p2 = createJugadorP("Usuario 2","P002",lempiras, apuestaMiles,chicaDirecta, new double[] {12,1000}, new double[]{20,66} );
+//            jugadorSequenceRepository.getNextValue();
+//            Jugador p3 = createJugadorP("Usuario 3","P003",lempiras, apuestaMiles,chicaPedazos, new double[] {10,1000}, new double[]{22,0.30,20} );
+//            jugadorSequenceRepository.getNextValue();
+//            Jugador p4 = createJugadorP("Usuario 4","P004",lempiras, apuestaDirecta,chicaMiles, new double[] {18,66}, new double[]{15,1000} );
+//            jugadorSequenceRepository.getNextValue();
+//            Jugador p5 = createJugadorP("Usuario 5","P005",lempiras, apuestaDirecta,chicaDirecta, new double[] {20,66}, new double[]{22.5,60} );
+//            jugadorSequenceRepository.getNextValue();
+//            Jugador p6 = createJugadorP("Usuario 6","P006",lempiras, apuestaDirecta,chicaPedazos, new double[] {21,65}, new double[]{20,0.30,68} );
+//            jugadorSequenceRepository.getNextValue();
+//            Jugador p7 = createJugadorP("Usuario 7","P007",dolar, apuestaDirecta,chicaDirecta, new double[] {10,100}, new double[]{10,100} );
+//            jugadorSequenceRepository.getNextValue();
+//            
+//            Asistente x1 = createJugadorX("Asistente 1", "P001x1", p1);
+//            Asistente x2 = createJugadorX("Asistente 2", "P002x1", p2);
+//            Asistente x3 = createJugadorX("Asistente 3", "P003x1", p3);
+//            Asistente x4 = createJugadorX("Asistente 4", "P004x1", p4);
+//            Asistente x5 = createJugadorX("Asistente 5", "P005x1", p5);
        
             Cambio cambio = new Cambio();
             if (cambioRepository.count() == 0) {
@@ -273,6 +280,9 @@ public class FantasyApplication {
              * Jugador 1 
              */
 //            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 0, 25);
+//            insertApuestaDiaria(sorteoDiaria11.getId(), p7, cambio, 0, 25);
+//            insertApuestaDiaria(sorteoDiaria15.getId(), p1, cambio, 0, 25);
+//            insertApuestaDiaria(sorteoDiaria15.getId(), p7, cambio, 0, 25);
 //            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 3, 30);
 //            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 10, 20);
 //            insertApuestaDiaria(sorteoDiaria11.getId(), p1, cambio, 11, 46);
@@ -440,7 +450,7 @@ public class FantasyApplication {
 
             sorteoDiarias.forEach(sorteoDiaria -> {
                 Sorteo sorteo = sorteoRepository.getSorteoById(sorteoDiaria.getId());
-                sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.CERRADA));
+                sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.ABIERTA));
                 sorteoRepository.save(sorteo);
             });
 

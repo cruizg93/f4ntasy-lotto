@@ -35,7 +35,6 @@ public interface HistoryService {
 	
 	List<WeekResponse> getAllWeeks();
 	void validateIfJugadorIsElegibleForBono(Jugador jugador, Week week, Bono bono) throws CanNotInsertBonoException, NotFoundException;
-	SorteosPasadosApuestas getApuestasPasadasBySorteoAndJugador(Long sorteoId, User jugador) throws Exception;
 
 	List<NumeroGanadorSorteoResponse> getNumerosGanadores(String currency) throws Exception;
 	List<HistoricoApuestaDetallesResponse> getHistoricoApuestaDetallesX(Long id) throws Exception;
@@ -46,4 +45,6 @@ public interface HistoryService {
 	HistoricoBalance getWeekBalanceByJugador(Jugador jugador);
 	List<ApuestaActivaDetallesResponse> getHistoricoApuestasBySorteoAndJugador(Long sorteoId, Long userId);
 	ApuestaActivaResumenResponse getRiesgoHistoricoBySorteo(Long id, String monedatype);
+	SorteosPasadosApuestas getApuestasPasadasBySorteoAndJugador(Long sorteoId, String currencyRequested, User user) throws Exception;
+	SorteosPasadosApuestas getApuestasPasadasBySorteoAndJugador(Long sorteoId, User user) throws Exception;
 }
