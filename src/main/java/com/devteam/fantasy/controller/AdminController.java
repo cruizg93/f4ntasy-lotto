@@ -281,7 +281,7 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public Long nextJugadorId() {
     	Long nextId = jugadorSequenceRepository.getCurrentValue();
-        return nextId + 1;
+        return nextId;
     }
 
     @GetMapping("/jugadores/delete/{id}")
