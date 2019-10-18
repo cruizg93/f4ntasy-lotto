@@ -333,7 +333,7 @@ public class AdminController {
 			Jugador lastJugadorCreated = jugadorRepository.findFirstByOrderByIdDesc();
 			if( user.getId() == lastJugadorCreated.getId()) {
 				String jugadorNumber = user.getUsername().substring(1,user.getUsername().length());
-				jugadorSequenceRepository.setCurrentValue(Integer.parseInt(jugadorNumber)-1);
+				jugadorSequenceRepository.setCurrentValue(Integer.parseInt(jugadorNumber));
 				userRepository.delete(user);
 			}else {
 				inactiveUser(user);
