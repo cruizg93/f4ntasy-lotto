@@ -174,6 +174,7 @@ public class FantasyApplication {
         	createAdmin("C03","Admin 3");
         	createAdmin("C04","Admin 4");
         	createSupervisor("C05","Supervisor 1");
+        	jugadorSequenceRepository.getNextValue();
         }
 
         if (!userRepository.existsByUsername("P001")
@@ -448,9 +449,16 @@ public class FantasyApplication {
             List<SorteoDiaria> sorteoDiarias = sorteoDiariaRepository
                     .findAllBySorteoTimeLessThan(new Timestamp(System.currentTimeMillis()));
 
+            LocalDateTime now = LocalDateTime.now();
             sorteoDiarias.forEach(sorteoDiaria -> {
                 Sorteo sorteo = sorteoRepository.getSorteoById(sorteoDiaria.getId());
-                sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.ABIERTA));
+                LocalDateTime sorteoTime = sorteo.getSorteoTime().toLocalDateTime();
+                if(now.getHour() > sorteoTime.getHour() ) {
+                	sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.CERRADA));
+                }else {
+                	sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.ABIERTA));
+                }
+                
                 sorteoRepository.save(sorteo);
             });
 
