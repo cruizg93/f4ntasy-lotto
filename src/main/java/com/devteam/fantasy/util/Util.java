@@ -20,6 +20,7 @@ import com.devteam.fantasy.repository.SorteoRepository;
 import com.devteam.fantasy.repository.SorteoTypeRepository;
 import com.devteam.fantasy.repository.StatusRepository;
 import com.devteam.fantasy.repository.UserRepository;
+import com.devteam.fantasy.schedule.ScheduledTasks;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -40,6 +41,9 @@ import java.util.Set;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static java.time.DayOfWeek.MONDAY;
 import static java.time.DayOfWeek.SUNDAY;
 import static java.time.temporal.TemporalAdjusters.next;
@@ -50,6 +54,7 @@ import java.math.BigDecimal;
 
 public class Util {
 
+	private static final Logger log = LoggerFactory.getLogger(Util.class);
     private static TimeDate time = TimeDate.getInstance();
     private static LocalDate ld = LocalDate.now(time.getZ());
     private static String[] months = {"Enero", "Febrero", "Marzo", "Abril",
@@ -200,29 +205,76 @@ public class Util {
     public static void updateSorteo(EstadoRepository estadoRepository,
                                     SorteoRepository sorteoRepository,
                                     SorteoDiariaRepository sorteoDiariaRepository,
-                                    int hour) {
-        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoActivoBySorteoTime(new Timestamp(
+                                    int hour) throws Exception {
+    	
+    	log.debug("DIARIA: hour["+hour+"] Intento 1");
+    	log.info("DIARIA: hour["+hour+"] Intento 1");
+    	Timestamp ticosHour = new Timestamp(
                 ZonedDateTime.of(ld.getYear(), ld.getMonthValue(), ld.getDayOfMonth(), hour, 0, 0, 0,
                         ZoneId.of("America/Tegucigalpa")
                 ).toInstant().toEpochMilli()
-        ));
+        );
+    	log.debug("TicosHour: ["+ticosHour.toString()+"]");
+    	log.info("TicosHour: ["+ticosHour.toString()+"]");
+        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoActivoBySorteoTime(ticosHour);
         if (sorteoDiaria != null) {
             Sorteo sorteo = sorteoRepository.getSorteoById(sorteoDiaria.getId());
             sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.CERRADA));
             sorteoRepository.save(sorteo);
+        }else {
+        	log.debug("DIARIA: hour["+hour+"] Intento 2");
+        	log.info("DIARIA: hour["+hour+"] Intento 2");
+        	LocalDateTime sorteoTime = LocalDateTime.now();
+        	sorteoTime = sorteoTime.withHour(hour);
+        	sorteoTime = sorteoTime.withMinute(0);
+        	sorteoTime =sorteoTime.withSecond(0);
+        	sorteoTime = sorteoTime.withNano(0);
+        	
+        	log.debug("sorteoTime to find: "+sorteoTime.toString());
+        	log.info("sorteoTime to find: "+sorteoTime.toString());
+        	SorteoDiaria sorteoDiariaAux = sorteoDiariaRepository.getSorteoActivoBySorteoTime(Timestamp.valueOf(sorteoTime));
+        	log.debug("Encontro sorteo ? :"+sorteoDiaria!=null?"Yes":"No");
+        	if (sorteoDiariaAux != null) {
+                Sorteo sorteo = sorteoRepository.getSorteoById(sorteoDiariaAux.getId());
+                sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.CERRADA));
+                sorteoRepository.save(sorteo);
+        	}else {
+        		throw new Exception("No se pudo cerrar el sorteo de las ["+hour+"]. sorteoTime=["+sorteoTime.toString()+"]");
+        	}
         }
     }
 
     public static void updateChicaSorteo(EstadoRepository estadoRepository,
                                          SorteoRepository sorteoRepository,
                                          SorteoTypeRepository sorteoTypeRepository
-    ) {
-
+    ) throws Exception {
+    	log.debug("CHICA: Intento 1");
+    	log.info("CHICA: Intento 1");
         Sorteo sorteo = sorteoRepository.getSorteoBySorteoTypeEquals(sorteoTypeRepository
                 .getBySorteoTypeName(SorteoTypeName.CHICA));
         if (sorteo != null) {
             sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.CERRADA));
             sorteoRepository.save(sorteo);
+        }else {
+        	log.debug("CHICA: Intento 2");
+        	log.info("CHICA: Intento 2");
+        	LocalDateTime sorteoTime = LocalDateTime.now();
+        	sorteoTime= sorteoTime.with(DayOfWeek.SUNDAY);
+        	sorteoTime= sorteoTime.withHour(12);
+        	sorteoTime= sorteoTime.withMinute(0);
+        	sorteoTime= sorteoTime.withSecond(0);
+        	sorteoTime= sorteoTime.withNano(0);
+        	log.debug("sorteoTime to find: "+sorteoTime.toString());
+        	log.info("sorteoTime to find: "+sorteoTime.toString());
+        	
+        	Sorteo sorteoAux = sorteoRepository.getSorteoBySorteoTime(Timestamp.valueOf(sorteoTime));
+        	log.debug("Encontro sorteo ? :"+sorteoAux!=null?"Yes":"No");
+        	if (sorteoAux != null) {
+        		sorteoAux.setEstado(estadoRepository.getEstadoByEstado(EstadoName.CERRADA));
+                sorteoRepository.save(sorteoAux);
+        	}else {
+        		throw new Exception("No se pudo cerrar el sorteo de las [12]. sorteoTime=["+sorteoTime.toString()+"]");
+        	}
         }
     }
 

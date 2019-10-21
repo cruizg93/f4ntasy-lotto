@@ -78,14 +78,24 @@ public class ScheduledTasks {
     @Scheduled(cron = "0 55 10 * * ?")
     public void updateSorteoDiaria11() {
     	log.debug("updateSorteoDiaria11: START");
-        Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 11);
+    	log.info("updateSorteoDiaria11: [CLOSE 11am]");
+        try {
+			Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 11);
+		} catch (Exception e) {
+			log.error("ERROR CLOSE[11am]:",e);
+		}
         log.debug("updateSorteoDiaria11: END");
     }
 
     @Scheduled(cron = "0 55 14 * * ?")
     public void updateSorteoDiaria15() {
     	log.debug("updateSorteoDiaria15: START");
-        Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 15);
+    	log.info("updateSorteoDiaria15: [CLOSE 15pm]");
+        try {
+			Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 15);
+        } catch (Exception e) {
+			log.error("ERROR CLOSE[15pm]:",e);
+		}
         log.debug("updateSorteoDiaria15: END");
 
     }
@@ -93,15 +103,25 @@ public class ScheduledTasks {
     @Scheduled(cron = "0 55 20 * * ?")
     public void updateSorteoDiaria21() {
     	log.debug("updateSorteoDiaria21: START");
-        Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 21);
+    	log.info("updateSorteoDiaria21: [CLOSE 21pm]");
+        try {
+			Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 21);
+        } catch (Exception e) {
+			log.error("ERROR CLOSE[21pm]:",e);
+		}
         log.debug("updateSorteoDiaria21: END");
 
     }
 
-    @Scheduled(cron = "0 55 23 ? * SUN")
+    @Scheduled(cron = "0 55 11 ? * SUN")
     public void updateSorteoChiquitica() {
     	log.debug("updateSorteoChiquitica: START");
-        Util.updateChicaSorteo(estadoRepository, sorteoRepository, sorteoTypeRepository);
+    	log.info("updateSorteoChica: [CLOSE 12pm]");
+        try {
+			Util.updateChicaSorteo(estadoRepository, sorteoRepository, sorteoTypeRepository);
+		} catch (Exception e) {
+			log.error("ERROR CLOSE[12pm]:",e);
+		}
         log.debug("updateSorteoChiquitica: END");
     }
 
