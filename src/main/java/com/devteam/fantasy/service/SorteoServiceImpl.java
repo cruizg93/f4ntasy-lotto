@@ -1002,7 +1002,7 @@ public class SorteoServiceImpl implements SorteoService {
 
 	@Override
 	public ApuestaActivaResponse getApuestasActivasBySorteoAndJugador(Long sorteoId, String username) throws Exception {
-
+		boolean xApuestas = false;
 		ApuestaActivaResponse apuestaActivaResponse = null;
 		try {
 			logger.debug("getApuestasActivasBySorteoAndJugador(Long {}, String {}): START", sorteoId, username);
@@ -1017,13 +1017,17 @@ public class SorteoServiceImpl implements SorteoService {
 
 			if (user instanceof Jugador) {
 				List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
-				asistentes.forEach(asistente -> {
+				for(Asistente asistente: asistentes) {
 					List<Apuesta> asistenteApuestasList = apuestaRepository
 							.findAllBySorteoDiariaAndUserOrderByNumeroAsc(sorteoDiaria, asistente);
 					if (!asistenteApuestasList.isEmpty()) {
+						
+						if(!xApuestas)
+							xApuestas = true;
+						
 						mergeApuestasIntoPairNVList(pairNVList, asistenteApuestasList);
 					}
-				});
+				}
 			}
 
 			Collections.sort(pairNVList);
@@ -1036,6 +1040,7 @@ public class SorteoServiceImpl implements SorteoService {
 			apuestaActivaResponse.setComision(sorteoTotales.getComisiones());
 			apuestaActivaResponse.setRiesgo(sorteoTotales.getTotal());
 			apuestaActivaResponse.setType(sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString());
+			apuestaActivaResponse.setxApuestas(xApuestas);
 
 		} catch (Exception e) {
 			logger.error("getApuestasActivasBySorteoAndJugador(Long {}, String {}): CATCH", sorteoId, username);

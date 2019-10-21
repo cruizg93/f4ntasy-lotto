@@ -6,6 +6,8 @@ import java.util.List;
 
 public class ApuestaActivaResponse {
 
+	private boolean xApuestas;
+	
     private String title;
     
     private String hour;
@@ -85,6 +87,12 @@ public class ApuestaActivaResponse {
 	public void setDay(String day) {
 		this.day = day;
 	}
-    
-    
+
+	public boolean isxApuestas() {
+		return xApuestas;
+	}
+
+	public void setxApuestas(boolean xApuestas) {
+		this.xApuestas = xApuestas;
+	}
 }
