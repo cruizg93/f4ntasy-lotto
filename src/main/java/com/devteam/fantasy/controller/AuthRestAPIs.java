@@ -78,6 +78,7 @@ public class AuthRestAPIs {
             JwtResponseCustom response = new JwtResponseCustom(jwt, loginRequest.getUsername());
             response.setUserId(String.valueOf(user.getId()));
             response.setFirstConnection(user.isFirstConnection());
+            response.setName(user.getName());
             
             if( user instanceof Jugador || user instanceof Asistente) {
             	Jugador jugador = Util.getJugadorFromUser(user);

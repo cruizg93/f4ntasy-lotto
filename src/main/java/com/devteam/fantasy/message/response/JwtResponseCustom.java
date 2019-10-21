@@ -9,6 +9,7 @@ public class JwtResponseCustom {
     private String type = "Bearer";
     private String userId;
     private String username;
+    private String name;
     private Set<RoleName> roles;
     private String currency;
     private String currencySymbol;
@@ -23,7 +24,15 @@ public class JwtResponseCustom {
         this.username = username;
     }
 
-    public String getAccessToken() {
+    public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getAccessToken() {
         return token;
     }
 
