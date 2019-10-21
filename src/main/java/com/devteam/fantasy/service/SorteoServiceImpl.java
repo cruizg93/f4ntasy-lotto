@@ -188,12 +188,12 @@ public class SorteoServiceImpl implements SorteoService {
 		return sorteos;
 	}
 
-	public ApuestaActivaResumenResponse getActiveSorteoDetail(Long id, String currency) {
+	public ApuestaActivaResumenResponse getActiveSorteoDetail(Long id, String currency) throws Exception {
 		ApuestaActivaResumenResponse result = null;
 		try {
 			logger.debug("getActiveSorteoDetail(Long {}, String {}): START", id, currency);
 			List<TuplaRiesgo> tuplaRiesgos = new ArrayList<>();
-			SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
+			SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id).orElseThrow(() -> new NotFoundException("Sorteo Diario no existe"));;
 			Sorteo sorteo = sorteoDiaria.getSorteo();
 			Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
 
@@ -527,13 +527,13 @@ public class SorteoServiceImpl implements SorteoService {
 	 */
 	@Override
 	@Transactional(rollbackFor = {Exception.class, CanNotInsertWinningNumberException.class, CanNotInsertHistoricoBalanceException.class} )
-	public void setNumeroGanador(Long id, int numero) throws CanNotInsertWinningNumberException, CanNotInsertHistoricoBalanceException  {
+	public void setNumeroGanador(Long id, int numero) throws CanNotInsertWinningNumberException, CanNotInsertHistoricoBalanceException, NotFoundException  {
 		try {
 			logger.debug("setNumeroGanador(Long {}, int {}): START", id, numero);
 			logger.info("setNumeroGanador(Long {}, int {}): START", id, numero);
 			User loggedUser = userService.getLoggedInUser();
 			Cambio currentCambio = cambioRepository.findFirstByOrderByIdDesc();
-			SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
+			SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id).orElseThrow(() -> new NotFoundException("Sorteo Diario no existe"));;
 			Sorteo sorteo = sorteoDiaria.getSorteo();
 			
 			logger.debug("validateWinningNumberPreCondition()");
@@ -613,6 +613,10 @@ public class SorteoServiceImpl implements SorteoService {
 			logger.error("setNumeroGanador(Long {}, int {}): CATCH", id, numero);
 			logger.error(cnihbe.getMessage(), cnihbe);
 			throw cnihbe;
+		} catch (NotFoundException nfe) {
+			logger.error("setNumeroGanador(Long {}, int {}): CATCH", id, numero);
+			logger.error(nfe.getMessage(), nfe);
+			throw nfe;
 		} finally {
 			logger.debug("setNumeroGanador(Long id, int numero): END");
 			logger.info("setNumeroGanador(Long id, int numero): END");
@@ -835,12 +839,12 @@ public class SorteoServiceImpl implements SorteoService {
 	}
 
 	@Override
-	public ApuestaActivaResumenResponse getDetalleApuestasBySorteo(Long id, String monedaType) {
+	public ApuestaActivaResumenResponse getDetalleApuestasBySorteo(Long id, String monedaType) throws Exception {
 		ApuestaActivaResumenResponse result = null;
 		try {
 			logger.debug("getDetalleApuestasBySorteo(Long {}, String {}): START", id, monedaType);
 			MonedaName currency = Util.getMonedaNameFromString(monedaType);
-			SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
+			SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id).orElseThrow(() -> new NotFoundException("Sorteo Diaria no existe"));
 			sorteoTotales.processSorteo(null, sorteoDiaria, currency , true);
 
 			int indexTopRiesgo = -1;
@@ -929,7 +933,7 @@ public class SorteoServiceImpl implements SorteoService {
 	@Transactional(rollbackFor = { CanNotInsertApuestaException.class, SorteoEstadoNotValidException.class,
 			Exception.class })
 	public void submitApuestas(String username, Long sorteoId, List<NumeroPlayerEntryResponse> apuestasEntry)
-			throws CanNotInsertApuestaException, SorteoEstadoNotValidException {
+			throws NotFoundException, SorteoEstadoNotValidException, CanNotInsertApuestaException {
 
 		try {
 			logger.debug("submitApuestas(String {}, Long {}, List<NumeroPlayerEntryResponse> {}): START", username,
@@ -937,7 +941,7 @@ public class SorteoServiceImpl implements SorteoService {
 			User user = userRepository.getByUsername(username);
 			Jugador jugador = Util.getJugadorFromUser(user);
 			Cambio cambio = cambioRepository.findFirstByOrderByIdDesc();
-			SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
+			SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId).orElseThrow(() -> new NotFoundException("Sorteo Diaria no existe"));
 
 			if (!sorteoDiaria.getSorteo().getEstado().getEstado().equals(EstadoName.ABIERTA)) {
 				throw new SorteoEstadoNotValidException("El sorteo debe de estar abierto para poder comprar apuestas");
@@ -984,7 +988,7 @@ public class SorteoServiceImpl implements SorteoService {
 			}
 			historyService.createEvent(HistoryEventType.BET_SUBMITTED, sorteoDiaria.getSorteo().getId(), historyApuestasList.keySet().toString(), historyApuestasList.values().toString());
 			
-		} catch (CanNotInsertApuestaException ex) {
+		} catch (CanNotInsertApuestaException | NotFoundException ex) {
 			logger.error("submitApuestas(String {}, Long {}, List<NumeroPlayerEntryResponse> {}): CATCH", username,
 					sorteoId, apuestasEntry);
 			logger.error(ex.getMessage(), ex);
@@ -997,14 +1001,14 @@ public class SorteoServiceImpl implements SorteoService {
 	}
 
 	@Override
-	public ApuestaActivaResponse getApuestasActivasBySorteoAndJugador(Long sorteoId, String username) {
+	public ApuestaActivaResponse getApuestasActivasBySorteoAndJugador(Long sorteoId, String username) throws Exception {
 
 		ApuestaActivaResponse apuestaActivaResponse = null;
 		try {
 			logger.debug("getApuestasActivasBySorteoAndJugador(Long {}, String {}): START", sorteoId, username);
 			User user = userRepository.getByUsername(username);
 			Jugador jugador = Util.getJugadorFromUser(user);
-			SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
+			SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId).orElseThrow(() -> new NotFoundException("Sorteo Diario no existe"));
 			List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUserOrderByNumeroAsc(sorteoDiaria, user);
 
 			sorteoTotales.processSorteo(user, sorteoDiaria);
@@ -1045,11 +1049,11 @@ public class SorteoServiceImpl implements SorteoService {
 	}
 	
 	@Override
-	public List<ApuestaActivaDetallesResponse> getApuestasActivasDetallesBySorteoAndJugador(Long sorteoDiariaId, String username) {
+	public List<ApuestaActivaDetallesResponse> getApuestasActivasDetallesBySorteoAndJugador(Long sorteoDiariaId, String username) throws NotFoundException {
 		List<ApuestaActivaDetallesResponse> apuestasDetails = new ArrayList<>();
         User user = userService.getByUsername(username);
         Jugador jugador = Util.getJugadorFromUser(user);
-        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoDiariaId);
+        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoDiariaId).orElseThrow(() -> new NotFoundException("Sorteo Diaria no existe"));
         Sorteo sorteo= sorteoDiaria.getSorteo();
         List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUserOrderByNumeroAsc(sorteoDiaria, user);
         List<PairNV> pairNVList = new ArrayList<>();
@@ -1109,7 +1113,7 @@ public class SorteoServiceImpl implements SorteoService {
 		SorteoDiaria sorteoDiaria = null;
 		try {
 			logger.debug("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long {}, Integer {}, User {}): START",sorteoId, numero, user.getUsername());
-			sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
+			sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId).orElseThrow(() -> new NotFoundException("Sorteo Diaria no existe"));
 
 			if (!sorteoDiaria.getSorteo().getEstado().getEstado().equals(EstadoName.ABIERTA)
 					&& !sorteoDiaria.getSorteo().getEstado().getEstado().equals(EstadoName.BLOQUEADA)) {
@@ -1151,7 +1155,7 @@ public class SorteoServiceImpl implements SorteoService {
 		SorteoDiaria sorteoDiaria = null;
 		try {
 			logger.debug("deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long {}, Integer {}, User {}): START",sorteoId, numero, user.getUsername());
-			sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
+			sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId).orElseThrow(() -> new NotFoundException("Sorteo Diaria no existe"));;
 
 			if (!sorteoDiaria.getSorteo().getEstado().getEstado().equals(EstadoName.ABIERTA)
 					&& !sorteoDiaria.getSorteo().getEstado().getEstado().equals(EstadoName.BLOQUEADA)) {
@@ -1170,8 +1174,7 @@ public class SorteoServiceImpl implements SorteoService {
 				throw new SorteoEstadoNotValidException(e.getMessage());
 			} else {
 				throw new CanNotRemoveApuestaException(
-						sorteoDiaria != null ? sorteoDiaria.getSorteo().getSorteoTime().toString()
-								: "Sorteo Id" + sorteoId,
+						sorteoDiaria != null ? sorteoDiaria.getSorteo().getSorteoTime().toString(): "Sorteo Id" + sorteoId,
 						numero.toString(), e.getMessage());
 			}
 		} finally {
@@ -1186,23 +1189,22 @@ public class SorteoServiceImpl implements SorteoService {
 	}
 
 	@Override
-	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException {
+	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException, NotFoundException {
 		User user = userService.getLoggedInUser();
 		deleteAllApuestasOnSorteoDiarioByUser(sorteoId, user);
-		
 	}
 	
 	
 	@Override
-	@Transactional(rollbackFor = {SorteoEstadoNotValidException.class , CanNotRemoveApuestaException.class})
+	@Transactional(rollbackFor = {SorteoEstadoNotValidException.class , CanNotRemoveApuestaException.class, NotFoundException.class})
 	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, User user)
-			throws CanNotRemoveApuestaException, SorteoEstadoNotValidException {
+			throws CanNotRemoveApuestaException, SorteoEstadoNotValidException, NotFoundException {
 		SorteoDiaria sorteoDiaria = null;
 		List<Integer> numeros = new ArrayList<>();
 		
 		try {
 			logger.debug("deleteAllApuestasOnSorteoDiarioByUser(Long {}, User {}): START", sorteoId, user.getUsername());
-			sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId);
+			sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteoId).orElseThrow(() -> new NotFoundException("Sorteo Diaria no existe"));;
 
 			if (sorteoDiaria.getSorteo().getEstado().getEstado().equals(EstadoName.CERRADA)) {
 				throw new SorteoEstadoNotValidException("No se puede eliminar apuestas de un sorteo cerrado");
@@ -1234,7 +1236,11 @@ public class SorteoServiceImpl implements SorteoService {
 		} catch (SorteoEstadoNotValidException e) {
 			logger.error("deleteAllApuestasOnSorteoDiarioByUser(Long {}, User {}): CATCH", sorteoId, user.getUsername());
 			logger.error(e.getMessage(), e);
-			throw new SorteoEstadoNotValidException(e.getMessage());
+			throw e;
+		} catch (NotFoundException nfe) {
+			logger.error("deleteAllApuestasOnSorteoDiarioByUser(Long {}, User {}): CATCH", sorteoId, user.getUsername());
+			logger.error(nfe.getMessage(), nfe);
+			throw nfe;
 		}finally {
 			logger.debug("deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, String username): END");
 		}

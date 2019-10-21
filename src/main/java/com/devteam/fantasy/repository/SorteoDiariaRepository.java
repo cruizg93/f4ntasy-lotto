@@ -15,7 +15,7 @@ public interface SorteoDiariaRepository extends CrudRepository<SorteoDiaria, Lon
     boolean existsSorteoActivoBySorteoTime(Timestamp timestamp);
     boolean existsSorteoDiariaBySorteo(Sorteo sorteo);
     Optional<SorteoDiaria> findById(Long id);
-    SorteoDiaria getSorteoDiariaById(Long id);
+    Optional<SorteoDiaria> getSorteoDiariaById(Long id);
     List<SorteoDiaria> findAllBySorteoTimeLessThan(Timestamp timestamp);
     List<SorteoDiaria> findAllBySorteoEstadoEstadoNot(EstadoName estadoName);
 	List<SorteoDiaria> findAllByOrderById();

@@ -19,6 +19,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import javassist.NotFoundException;
+
 import org.apache.catalina.mapper.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -249,10 +251,10 @@ public class PlayerController {
     @PostMapping("/apuestas/activa/{id}/detalles")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
     public List<ApuestaActivaDetallesResponse> getDetallesApuestaActiva(@PathVariable Long id,
-                                                                        @Valid @RequestBody ObjectNode json) {
+                                                                        @Valid @RequestBody ObjectNode json) throws NotFoundException {
         List<ApuestaActivaDetallesResponse> apuestasDetails = new ArrayList<>();
         User user = getUserFromJsonNode(json);
-        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
+        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id).orElseThrow(() -> new NotFoundException("Sorteo diario no existe"));
         Sorteo sorteo=sorteoRepository.getSorteoById(id);
         List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUserOrderByNumeroAsc(sorteoDiaria, user);
         List<PairNV> pairNVList = new ArrayList<>();
@@ -334,11 +336,11 @@ public class PlayerController {
     @PostMapping("/apuestas/{id}/numeros")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
     public ApuestaNumeroPlayerEntryResponse getListNumberById(@PathVariable Long id,
-                                                             @Valid @RequestBody ObjectNode json) {
+                                                             @Valid @RequestBody ObjectNode json) throws NotFoundException {
         ObjectMapper mapper = new ObjectMapper();
         String username = mapper.convertValue(json.get("username"), String.class);
         User user = userRepository.getByUsername(username);
-        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
+        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id).orElseThrow(() -> new NotFoundException("Sorteo diario no existe"));
         ApuestaNumeroPlayerEntryResponse playerEntryResponse=new ApuestaNumeroPlayerEntryResponse();
         Set<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
         List<NumeroPlayerEntryResponse> topes = new ArrayList<>();
@@ -378,11 +380,11 @@ public class PlayerController {
     @PostMapping("/apuestas/{id}/numeros/list")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
     public ApuestaNumeroPlayerEntryResponse getListNumberByApuestaId(@PathVariable Long id,
-                                                              @Valid @RequestBody ObjectNode json) {
+                                                              @Valid @RequestBody ObjectNode json) throws NotFoundException {
         ObjectMapper mapper = new ObjectMapper();
         String username = mapper.convertValue(json.get("username"), String.class);
         User user = userRepository.getByUsername(username);
-        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
+        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id).orElseThrow(() -> new NotFoundException("Sorteo diario no existe"));
         ApuestaNumeroPlayerEntryResponse playerEntryResponse=new ApuestaNumeroPlayerEntryResponse();
 
         List<NumeroPlayerEntryResponse> topes = new ArrayList<>();
@@ -412,7 +414,7 @@ public class PlayerController {
     @Deprecated
     @PostMapping("/apuestas/{id}/numeros/update")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
-    public ResponseEntity<?> updateNumerosApuestas(@Valid @RequestBody ObjectNode json, @PathVariable Long id) {
+    public ResponseEntity<?> updateNumerosApuestas(@Valid @RequestBody ObjectNode json, @PathVariable Long id) throws NotFoundException {
         JsonNode listElements = json.get("data");
         ObjectMapper mapper = new ObjectMapper();
         String username = mapper.convertValue(json.get("username"), String.class);
@@ -429,7 +431,7 @@ public class PlayerController {
         double balance = 0.0;
 
         for (NumeroPlayerEntryResponse entryResponse : result) {
-            SorteoDiaria sorteoDiaria1 = sorteoDiariaRepository.getSorteoDiariaById(id);
+            SorteoDiaria sorteoDiaria1 = sorteoDiariaRepository.getSorteoDiariaById(id).orElseThrow(() -> new NotFoundException("Sorteo diario no existe"));
             double costoMil = 1;
             double comision = 0.0;
             double costoPedazo = 0.0;
@@ -523,7 +525,7 @@ public class PlayerController {
     @PostMapping("/apuestas/activas/{id}")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
     public ApuestaActivaResponse getApuestasActivas(@Valid @RequestBody ObjectNode json,
-                                                    @PathVariable Long id) {
+                                                    @PathVariable Long id) throws NotFoundException {
         return getApuestaActivaResponsePlayer(json, id, userRepository,
                 sorteoDiariaRepository,
                 apuestaRepository,
@@ -534,7 +536,7 @@ public class PlayerController {
     @PostMapping("/apuestas/activas/{id}/update")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
     public ResponseEntity<?> updateApuestasActivas(@PathVariable Long id,
-                                                   @Valid @RequestBody ObjectNode json) {
+                                                   @Valid @RequestBody ObjectNode json) throws NotFoundException {
         JsonNode listElements = json.get("data");
         ObjectMapper mapper = new ObjectMapper();
         Cambio cambio = cambioRepository.findFirstByOrderByIdDesc();
@@ -556,7 +558,7 @@ public class PlayerController {
         double costoMilChica = 1 ;
         double costoPedazoChica = 1 ;
 
-        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
+        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id).orElseThrow(() -> new NotFoundException("Sorteo diario no existe"));
         Sorteo sorteo = sorteoRepository.getSorteoById(id);
         if(sorteo.getSorteoType().getSorteoTypeName().equals(SorteoTypeName.DIARIA)){
             costoMilDiaria = jugador.getCostoMil() != 0 ? jugador.getCostoMil() : 1 ;
@@ -586,13 +588,14 @@ public class PlayerController {
     @PostMapping("/sorteos/activos/{id}/delete/number")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
     public ResponseEntity<?> deleteApuestaNumberByApuestaId(@PathVariable Long id,
-                                                            @Valid @RequestBody ObjectNode json){
+                                                            @Valid @RequestBody ObjectNode json) throws NotFoundException{
 
         ObjectMapper mapper = new ObjectMapper();
         Integer numero = mapper.convertValue(json.get("numero"), Integer.class);
         Long userId=mapper.convertValue(json.get("userId"), Long.class);
        
-        Apuesta apuesta= apuestaRepository.getApuestaByNumeroAndSorteoDiariaAndUser(numero, sorteoDiariaRepository.getSorteoDiariaById(id), userRepository.getById(userId));
+        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id).orElseThrow(() -> new NotFoundException("Sorteo diario no existe"));
+        Apuesta apuesta= apuestaRepository.getApuestaByNumeroAndSorteoDiariaAndUser(numero,sorteoDiaria , userRepository.getById(userId));
         apuestaRepository.delete(apuesta);
         return ResponseEntity.ok("Numero eliminado");
     }
@@ -611,18 +614,23 @@ public class PlayerController {
 
         sorteos.forEach(sorteo -> {
             if (user instanceof Asistente) {
-                SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteo.getId());
-                if (sorteoDiaria != null) {
-                    Set<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
-                    apuestas.forEach(apuesta -> {
-                        total[0] += apuesta.getCantidad();
-                    });
-                } else {
-                    List<HistoricoApuestas> apuestasList = historicoApuestaRepository.findAllBySorteoAndUser(sorteo, user);
-                    apuestasList.forEach(historicoApuestas -> {
-                        total[0] += historicoApuestas.getCantidad();
-                    });
-                }
+                SorteoDiaria sorteoDiaria = null;
+				try {
+					sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(sorteo.getId()).orElseThrow(() -> new NotFoundException("Sorteo diraro no existe"));
+	                if (sorteoDiaria != null) {
+	                    Set<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
+	                    apuestas.forEach(apuesta -> {
+	                        total[0] += apuesta.getCantidad();
+	                    });
+	                } else {
+	                    List<HistoricoApuestas> apuestasList = historicoApuestaRepository.findAllBySorteoAndUser(sorteo, user);
+	                    apuestasList.forEach(historicoApuestas -> {
+	                        total[0] += historicoApuestas.getCantidad();
+	                    });
+	                }
+				} catch (NotFoundException e) {
+					e.printStackTrace();
+				}
             } else if (user instanceof Jugador) {
                 Resultado resultado = resultadoRepository.getBySorteoAndUser(sorteo, user);
                 total[0] += resultado.getCantApuesta();
@@ -645,13 +653,13 @@ public class PlayerController {
     @PostMapping("/historial/apuesta/{id}")
     @PreAuthorize("hasRole('USER')or hasRole('ASIS')")
     public List<PairNV> getUserHitorialByApuesta(@PathVariable Long id,
-                                                 @Valid @RequestBody ObjectNode json) {
+                                                 @Valid @RequestBody ObjectNode json) throws NotFoundException {
         User user = getUserFromJsonNode(json);
         List<PairNV> responses = new ArrayList<>();
         Sorteo sorteo = sorteoRepository.getSorteoById(id);
         double[] apuestas = new double[100];
 
-        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
+        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id).orElseThrow(() -> new NotFoundException("Sorteo Diario no existe"));
         Jugador jugador = null;
         if(user instanceof Jugador){
             jugador = (Jugador) user;
@@ -713,11 +721,11 @@ public class PlayerController {
     @PostMapping("/historial/apuesta/{id}/detalles")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS')")
     public List<ApuestaActivaDetallesResponse> getDetallesApuestaHistorial(@PathVariable Long id,
-                                                                           @Valid @RequestBody ObjectNode json) {
+                                                                           @Valid @RequestBody ObjectNode json) throws NotFoundException {
         List<ApuestaActivaDetallesResponse> apuestasDetails = new ArrayList<>();
         User user = getUserFromJsonNode(json);
         Sorteo sorteo = sorteoRepository.getSorteoById(id);
-        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
+        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id).orElseThrow(() -> new NotFoundException("Sorteo Diario no existe"));
         Jugador jugador = null;
         if(user instanceof Jugador){
             jugador = (Jugador) user;
@@ -882,11 +890,11 @@ public class PlayerController {
             SorteoDiariaRepository sorteoDiariaRepository,
             ApuestaRepository apuestaRepository,
             AsistenteRepository asistenteRepository,
-            SorteoRepository sorteoRepository) {
+            SorteoRepository sorteoRepository) throws NotFoundException {
         ObjectMapper mapper = new ObjectMapper();
         String username = mapper.convertValue(json.get("username"), String.class);
         User user = userRepository.getByUsername(username);
-        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id);
+        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoDiariaById(id).orElseThrow(() -> new NotFoundException("Sorteo Diario no existe"));
         Sorteo sorteo=sorteoRepository.getSorteoById(id);
         List<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUserOrderByNumeroAsc(sorteoDiaria, user);
         Jugador jugador = null;

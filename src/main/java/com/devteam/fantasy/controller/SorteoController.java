@@ -70,7 +70,7 @@ public class SorteoController {
 	
 	@GetMapping("/activosResumen/judadores/{id}/{currency}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
-    public ApuestaActivaResumenResponse getSorteosActivosResumteByIdAndCurrency(@PathVariable Long id, @PathVariable String currency, @Valid @RequestBody ObjectNode json) {
+    public ApuestaActivaResumenResponse getSorteosActivosResumteByIdAndCurrency(@PathVariable Long id, @PathVariable String currency, @Valid @RequestBody ObjectNode json) throws Exception {
     	return sorteoService.getActiveSorteoDetail(id, currency);
 	}
 	
@@ -129,7 +129,7 @@ public class SorteoController {
     
     @GetMapping("/activos/detalles/{id}/{moneda}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
-    public ApuestaActivaResumenResponse getDetallesApuestasActivasById(@PathVariable Long id,@PathVariable String moneda) {
+    public ApuestaActivaResumenResponse getDetallesApuestasActivasById(@PathVariable Long id,@PathVariable String moneda) throws Exception {
     	return sorteoService.getDetalleApuestasBySorteo(id, moneda);
     }
     
@@ -153,7 +153,7 @@ public class SorteoController {
 
     	} catch (CanNotInsertApuestaException e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-		} catch (SorteoEstadoNotValidException e) {
+		} catch (SorteoEstadoNotValidException | NotFoundException e) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
 		}
          
@@ -162,13 +162,13 @@ public class SorteoController {
     
     @GetMapping("/activos/{id}/apuestas/{username}")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS') or hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
-    public ApuestaActivaResponse getApuestasActivasBySorteoAndJugador(@PathVariable Long id, @PathVariable String username) {
+    public ApuestaActivaResponse getApuestasActivasBySorteoAndJugador(@PathVariable Long id, @PathVariable String username) throws Exception {
         return sorteoService.getApuestasActivasBySorteoAndJugador(id, username);
     }
     
     @GetMapping("/activos/{sorteoDiarioId}/apuestas/detalles/{username}")
     @PreAuthorize("hasRole('USER') or hasRole('ASIS') or hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
-    public List<ApuestaActivaDetallesResponse> getApuestasActivasDetallesBySorteoAndJugador(@PathVariable Long sorteoDiarioId, @PathVariable String username) {
+    public List<ApuestaActivaDetallesResponse> getApuestasActivasDetallesBySorteoAndJugador(@PathVariable Long sorteoDiarioId, @PathVariable String username) throws NotFoundException {
         return sorteoService.getApuestasActivasDetallesBySorteoAndJugador(sorteoDiarioId, username);
     }
     
@@ -192,7 +192,7 @@ public class SorteoController {
 			sorteoService.deleteAllApuestasOnSorteoDiarioByUser(id);
 		} catch (CanNotRemoveApuestaException e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-		}catch (SorteoEstadoNotValidException e) {
+		}catch (SorteoEstadoNotValidException | NotFoundException e) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
 		}
     	
@@ -221,7 +221,7 @@ public class SorteoController {
 			sorteoService.deleteAllApuestasOnSorteoDiarioByUser(id,user);
 		} catch (CanNotRemoveApuestaException e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-		}catch (SorteoEstadoNotValidException e) {
+		}catch (SorteoEstadoNotValidException | NotFoundException e) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
 		}
     	
@@ -251,7 +251,7 @@ public class SorteoController {
         Integer numero = mapper.convertValue(jsonNodes.get("numero"), Integer.class);
         try {
 			sorteoService.setNumeroGanador(id, numero);
-		} catch (CanNotInsertWinningNumberException cniwne) {
+		} catch (CanNotInsertWinningNumberException | NotFoundException cniwne) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(cniwne.getMessage());
 		} catch (CanNotInsertHistoricoBalanceException cnihbe) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(cnihbe.getMessage());

@@ -33,23 +33,23 @@ public interface SorteoService {
 	public JugadorSorteosResponse getJugadorList() throws Exception;
 	public List<SorteoResponse> getSorteosResponses(List<SorteoDiaria> sorteos, User user);
 	
-	public void setNumeroGanador(Long id, int numeroGanador) throws CanNotInsertWinningNumberException, CanNotInsertHistoricoBalanceException;
+	public void setNumeroGanador(Long id, int numeroGanador) throws CanNotInsertWinningNumberException, CanNotInsertHistoricoBalanceException, NotFoundException;
 	public List<ApuestasActivasResponse> getSorteosListWithMoneda(String currency) throws Exception;
-	public ApuestaActivaResumenResponse getActiveSorteoDetail(Long id, String currency); 
+	public ApuestaActivaResumenResponse getActiveSorteoDetail(Long id, String currency) throws Exception; 
 	public Sorteo bloquearApuesta(Long id) throws InvalidSorteoStateException;
 	public Sorteo desBloquearApuesta(Long id) throws InvalidSorteoStateException;
 	
 	public Sorteo forceCloseStatus(Long id);
-	public ApuestaActivaResumenResponse getDetalleApuestasBySorteo(Long id, String monedatype);
-	public void submitApuestas(String username, Long sorteoId, List<NumeroPlayerEntryResponse> apuestasEntry) throws CanNotInsertApuestaException, SorteoEstadoNotValidException;
-	public ApuestaActivaResponse getApuestasActivasBySorteoAndJugador(Long sorteoId, String username);
-	public List<ApuestaActivaDetallesResponse> getApuestasActivasDetallesBySorteoAndJugador(Long sorteoId, String username);
+	public ApuestaActivaResumenResponse getDetalleApuestasBySorteo(Long id, String monedatype) throws Exception;
+	public void submitApuestas(String username, Long sorteoId, List<NumeroPlayerEntryResponse> apuestasEntry) throws CanNotInsertApuestaException, SorteoEstadoNotValidException, NotFoundException;
+	public ApuestaActivaResponse getApuestasActivasBySorteoAndJugador(Long sorteoId, String username) throws Exception;
+	public List<ApuestaActivaDetallesResponse> getApuestasActivasDetallesBySorteoAndJugador(Long sorteoId, String username) throws NotFoundException;
 	
 	
 	public void deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, User user) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
 	public void deleteAllApuestasOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
-	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, User user) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
-	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
+	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId, User user) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException, NotFoundException;
+	public void deleteAllApuestasOnSorteoDiarioByUser(Long sorteoId) throws CanNotRemoveApuestaException, SorteoEstadoNotValidException, NotFoundException;
 	
 	
 	public void cerrarSemana(SorteoDiaria sorteoDiaria, Week week) throws CanNotInsertHistoricoBalanceException;
