@@ -75,7 +75,7 @@ public class ScheduledTasks {
 //        Util.insertSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, sorteoTypeRepository, SorteoTypeName.CHICA, 1);
 //    }
 
-    @Scheduled(cron = "0 55 10 * * ?")
+    @Scheduled(cron = "0 59 10 * * ?")
     public void updateSorteoDiaria11() {
     	log.debug("updateSorteoDiaria11: START");
     	log.info("updateSorteoDiaria11: [CLOSE 11am]");
@@ -87,7 +87,7 @@ public class ScheduledTasks {
         log.debug("updateSorteoDiaria11: END");
     }
 
-    @Scheduled(cron = "0 55 14 * * ?")
+    @Scheduled(cron = "0 59 14 * * ?")
     public void updateSorteoDiaria15() {
     	log.debug("updateSorteoDiaria15: START");
     	log.info("updateSorteoDiaria15: [CLOSE 15pm]");
@@ -100,7 +100,7 @@ public class ScheduledTasks {
 
     }
 
-    @Scheduled(cron = "0 55 20 * * ?")
+    @Scheduled(cron = "0 59 20 * * ?")
     public void updateSorteoDiaria21() {
     	log.debug("updateSorteoDiaria21: START");
     	log.info("updateSorteoDiaria21: [CLOSE 21pm]");
@@ -113,7 +113,7 @@ public class ScheduledTasks {
 
     }
 
-    @Scheduled(cron = "0 55 11 ? * SUN")
+    @Scheduled(cron = "0 59 11 ? * SUN")
     public void updateSorteoChiquitica() {
     	log.debug("updateSorteoChiquitica: START");
     	log.info("updateSorteoChica: [CLOSE 12pm]");
