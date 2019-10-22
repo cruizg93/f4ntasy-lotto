@@ -570,19 +570,19 @@ public class HistoryServiceImpl implements HistoryService {
 			
 			String monday = "";
 			String sunday = "";
-//			if( week.getMonday().compareTo(currentDate) >= 0 ) {
-//				monday = "Hoy";
-//			}else {
+			if( week.getMonday().compareTo(currentDate) >= 0 ) {
+				monday = "Hoy";
+			}else {
 				monday = Util.getShortDayFromTimestamp(week.getMonday());
-//			}
-//			
-//			if(week.getMonday().compareTo(currentDate) == 0) {
-//				sunday = "";
-//			}else if(week.getSunday().compareTo(currentDate) > 0) {
-//				sunday = "Presente";
-//			}else {
+			}
+			
+			if(week.getMonday().compareTo(currentDate) == 0) {
+				sunday = "";
+			}else if(week.getSunday().compareTo(currentDate) > 0) {
+				sunday = "Presente";
+			}else {
 				sunday = Util.getShortDayFromTimestamp(week.getSunday());
-//			}
+			}
 			
 			WeekResponse w = new WeekResponse();
 			w.setId(week.getId());
