@@ -1,5 +1,6 @@
 package com.devteam.fantasy.controller;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -7,6 +8,7 @@ import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -61,6 +63,9 @@ public class SorteoController {
     
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    Environment env;
 	
 	@GetMapping("/activos/{moneda}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
@@ -100,6 +105,13 @@ public class SorteoController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ResponseEntity<?> bloquearApuesta(@PathVariable Long id, @Valid @RequestBody ObjectNode json) {
 		try {
+			String[] activeProfiles = env.getActiveProfiles();
+			if ( activeProfiles != null && activeProfiles.length>0) {
+				if( !Arrays.asList(activeProfiles).contains("prod")) {
+					sorteoService.forceCloseStatus(id);
+			        return ResponseEntity.ok("Sorteo closed");
+				}
+			}
 			sorteoService.bloquearApuesta(id);
 		} catch (InvalidSorteoStateException e) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
