@@ -167,24 +167,6 @@ public class Util {
 
     }
     
-    private static void newSorteo(EstadoRepository estadoRepository, SorteoRepository sorteoRepository,
-			SorteoDiariaRepository sorteoDiariaRepository, SorteoTypeRepository sorteoTypeRepository,
-			SorteoTypeName sorteoTypeName, int hour) {
-
-    	Timestamp horaSorteoNuevo= new Timestamp(
-                ZonedDateTime.of(ld.getYear(), ld.getMonthValue(), ld.getDayOfMonth(), hour, 0, 0, 0,
-                        ZoneId.of("America/Tegucigalpa")
-                ).toInstant().toEpochMilli()
-        );
-    	
-    	newSorteo(estadoRepository,
-                sorteoRepository,
-                sorteoDiariaRepository,
-                sorteoTypeRepository,
-                sorteoTypeName,
-                horaSorteoNuevo);
-	}
-
     public static void deleteSorteo(EstadoRepository estadoRepository,
                                     SorteoRepository sorteoRepository,
                                     SorteoDiariaRepository sorteoDiariaRepository,
@@ -244,65 +226,12 @@ public class Util {
         }
     }
 
-    public static void updateChicaSorteo(EstadoRepository estadoRepository,
-                                         SorteoRepository sorteoRepository,
-                                         SorteoTypeRepository sorteoTypeRepository
-    ) throws Exception {
-    	log.debug("CHICA: Intento 1");
-    	log.info("CHICA: Intento 1");
-        Sorteo sorteo = sorteoRepository.getSorteoBySorteoTypeEquals(sorteoTypeRepository
-                .getBySorteoTypeName(SorteoTypeName.CHICA));
-        if (sorteo != null) {
-            sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.CERRADA));
-            sorteoRepository.save(sorteo);
-        }else {
-        	log.debug("CHICA: Intento 2");
-        	log.info("CHICA: Intento 2");
-        	LocalDateTime sorteoTime = LocalDateTime.now();
-        	sorteoTime= sorteoTime.with(DayOfWeek.SUNDAY);
-        	sorteoTime= sorteoTime.withHour(12);
-        	sorteoTime= sorteoTime.withMinute(0);
-        	sorteoTime= sorteoTime.withSecond(0);
-        	sorteoTime= sorteoTime.withNano(0);
-        	log.debug("sorteoTime to find: "+sorteoTime.toString());
-        	log.info("sorteoTime to find: "+sorteoTime.toString());
-        	
-        	Sorteo sorteoAux = sorteoRepository.getSorteoBySorteoTime(Timestamp.valueOf(sorteoTime));
-        	log.debug("Encontro sorteo ? :"+sorteoAux!=null?"Yes":"No");
-        	if (sorteoAux != null) {
-        		sorteoAux.setEstado(estadoRepository.getEstadoByEstado(EstadoName.CERRADA));
-                sorteoRepository.save(sorteoAux);
-        	}else {
-        		throw new Exception("No se pudo cerrar el sorteo de las [12]. sorteoTime=["+sorteoTime.toString()+"]");
-        	}
-        }
-    }
-
-    public static void deleteAllDiariaSorteo(SorteoDiariaRepository sorteoDiariaRepository) {
-        deleteSpecificDiariaSorteo(sorteoDiariaRepository, 11);
-        deleteSpecificDiariaSorteo(sorteoDiariaRepository, 15);
-        deleteSpecificDiariaSorteo(sorteoDiariaRepository, 21);
-    }
-
     public static User getUserFromJsonNode(UserRepository userRepository, ObjectNode json) {
         ObjectMapper mapper = new ObjectMapper();
         String username = mapper.convertValue(json.get("username"), String.class);
         return userRepository.getByUsername(username);
     }
 
-    private static void deleteSpecificDiariaSorteo(
-            SorteoDiariaRepository sorteoDiariaRepository,
-            int hour) {
-        SorteoDiaria sorteoDiaria = sorteoDiariaRepository.getSorteoActivoBySorteoTime(new Timestamp(
-                ZonedDateTime.of(ld.getYear(), ld.getMonthValue(), ld.getDayOfMonth(), hour, 0, 0, 0,
-                        ZoneId.of("America/Tegucigalpa")
-                ).toInstant().toEpochMilli()
-        ));
-        if (sorteoDiaria != null) {
-            sorteoDiariaRepository.delete(sorteoDiaria);
-        }
-    }
-    
     private static void deleteSpecificDiariaSorteo(SorteoDiariaRepository sorteoDiariaRepository, SorteoDiaria sorteoDiaria) {
         if (sorteoDiaria != null) {
             sorteoDiariaRepository.delete(sorteoDiaria);
@@ -347,42 +276,6 @@ public class Util {
             deleteChicaSorteo(sorteoDiariaRepository);
             newSorteo(estadoRepository,sorteoRepository,sorteoDiariaRepository,sorteoTypeRepository,SorteoTypeName.CHICA, sorteoDiaria.getSorteoTime());
         }
-    }
-
-	public static void deleteSorteosDia(SorteoRepository sorteoRepository,
-                                        SorteoDiariaRepository sorteoDiariaRepository,
-                                        ApuestaRepository apuestaRepository,
-                                        HistoricoApuestaRepository historicoApuestaRepository
-    ) {
-        Iterable<SorteoDiaria> sorteoDiariaList = sorteoDiariaRepository.findAll();
-        sorteoDiariaList.forEach(sorteoDiaria -> {
-            Sorteo sorteo = sorteoRepository.getSorteoById(sorteoDiaria.getId());
-            if (sorteo.getEstado().getEstado().equals(EstadoName.BLOQUEADA)) {
-                Set<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
-                apuestaList.forEach(apuesta -> {
-                    HistoricoApuestas historicoApuestas = new HistoricoApuestas();
-                    historicoApuestas.setCantidad(apuesta.getCantidad());
-                    historicoApuestas.setUser(apuesta.getUser());
-                    historicoApuestas.setSorteo(sorteo);
-                    historicoApuestas.setNumero(apuesta.getNumero());
-//                    historicoApuestas.setComision(apuesta.getComision());
-                    historicoApuestas.setCambio(apuesta.getCambio());
-                    historicoApuestas.setDate(apuesta.getDate());
-                    Jugador jugador = Util.getJugadorFromApuesta(apuesta);
-                    historicoApuestas.setMoneda(jugador.getMoneda().getMonedaName().toString());
-                    double cantidadMultiplier = MathUtil.getCantidadMultiplier(jugador, apuesta, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName(), jugador.getMoneda().getMonedaName()).doubleValue();
-    				historicoApuestas.setCantidadMultiplier(cantidadMultiplier);
-    				double premioMultiplier = MathUtil.getPremioMultiplier(jugador, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName()).doubleValue();
-    				historicoApuestas.setPremioMultiplier(premioMultiplier);
-                    historicoApuestaRepository.save(historicoApuestas);
-                    apuestaRepository.delete(apuesta);
-                });
-                sorteoDiariaRepository.delete(sorteoDiaria);
-            }
-
-        });
-
-
     }
 
     public static Timestamp getTodayTimeStamp() {
