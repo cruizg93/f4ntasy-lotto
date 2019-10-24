@@ -187,6 +187,7 @@ public class AdminServiceImpl implements AdminService{
 	@Override
 	public void submitBono(BonoRequest request, Long jugadorId) throws CanNotInsertBonoException, NotFoundException {
 		try {
+			logger.info("submitBono(BonoRequest [weekid:{}], Long {}): START", request.getWeekId(), jugadorId);
 			logger.debug("submitBono(BonoRequest [weekid:{}], Long {}): START", request.getWeekId(), jugadorId);
 			Jugador jugador = jugadorRepository.findById(jugadorId).orElseThrow(() -> new NotFoundException("Jugador not found"));
 			Week week = weekRepository.findById(request.getWeekId()).orElseThrow(() -> new NotFoundException("Week not found"));
@@ -202,6 +203,8 @@ public class AdminServiceImpl implements AdminService{
 			bono.setUser(jugador);
 			bono.setCreatedBy(createdBy);
 			
+			logger.info("submitBono By user: "+createdBy.getUsername());
+			
 			historyService.validateIfJugadorIsElegibleForBono(jugador, week, bono);
 			bonoRepository.save(bono);
 			historyService.createEvent(HistoryEventType.BONO_CREATED, jugador.getId());
@@ -209,6 +212,7 @@ public class AdminServiceImpl implements AdminService{
 			logger.error("submitBono(BonoRequest [weekid:{}], Long {}): CATCH", request.getWeekId(), jugadorId);
 			throw e;
 		}finally {
+			logger.info("submitBono(BonoRequest request, Long jugadorId): END");
 			logger.debug("submitBono(BonoRequest request, Long jugadorId): END");
 		}
 	}

@@ -71,11 +71,6 @@ public class NumeroPlayerEntryResponse {
 
     @Override
     public String toString() {
-        return "NumeroPlayerEntryResponse{" +
-                "numero='" + numero + '\'' +
-                ", tope=" + tope +
-                ", max=" + max +
-                ", current=" + current +
-                '}';
+        return "NumeroPlayerEntryResponse{numero='" + numero + ", current=" + current +'}';
     }
 }
