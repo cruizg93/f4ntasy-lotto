@@ -118,7 +118,7 @@ public class ScheduledTasks {
     	log.debug("updateSorteoChiquitica: START");
     	log.info("updateSorteoChica: [CLOSE 12pm]");
         try {
-			Util.updateChicaSorteo(estadoRepository, sorteoRepository, sorteoTypeRepository);
+        	Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 12);
 		} catch (Exception e) {
 			log.error("ERROR CLOSE[12pm]:",e);
 		}
