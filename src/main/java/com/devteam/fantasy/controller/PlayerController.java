@@ -218,31 +218,37 @@ public class PlayerController {
         String moneda="LEMPIRA";
         Iterable<SorteoDiaria> sorteosDB = sorteoDiariaRepository.findAll();
         
-        List<SorteoDiaria> sorteos = new ArrayList<SorteoDiaria>();
-        sorteosDB.forEach(sorteos::add);
-        sorteos.sort((sorteo1, sorteo2) -> sorteo1.getSorteoTime().compareTo(sorteo2.getSorteoTime()));
         
-        for (SorteoDiaria sorteoDiaria : sorteos) {
-            Set<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiariaAndUser(sorteoDiaria, user);
-            for (Apuesta apuesta :
-                    apuestas) {
-                total += apuesta.getCantidad();
-            }
+//        List<SorteoDiaria> sorteos = new ArrayList<SorteoDiaria>();
+//        sorteosDB.forEach(sorteos::add);
+//        sorteos.sort((sorteo1, sorteo2) -> sorteo1.getSorteoTime().compareTo(sorteo2.getSorteoTime()));
+        
+        try {
+        	List<SorteoDiaria> sorteos = sorteoService.getActiveSorteosList(user);
+            
+            for (SorteoDiaria sorteoDiaria : sorteos) {
+                Set<Apuesta> apuestas = sorteoDiaria.getApuestas();
+                for (Apuesta apuesta :
+                        apuestas) {
+                    total += apuesta.getCantidad();
+                }
 
-            Optional<Sorteo> sorteo = sorteoRepository.findById(sorteoDiaria.getId());
-            String estado = "ABIERTA";
-            if (sorteo.isPresent()) {
-                estado = sorteo.get().getEstado().getEstado().toString();
-            }
-            moneda= asistente.getJugador().getMoneda().getMonedaName().toString();
+                Sorteo sorteo = sorteoDiaria.getSorteo();
+                String estado = "ABIERTA";
+                
+                estado = sorteo.getEstado().getEstado().toString();
+                moneda= asistente.getJugador().getMoneda().getMonedaName().toString();
 
-            sorteoResponses.add(new SorteoResponse(sorteoDiaria.getId(),
-                    Util.formatTimestamp2String(sorteoDiaria.getSorteoTime()),
-                    Util.getDayFromTimestamp(sorteoDiaria.getSorteoTime()),
-                    Util.getHourFromTimestamp(sorteoDiaria.getSorteoTime()),
-                    total, 0.0, 0.0, estado, moneda, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName().toString()));
-            total = 0;
-        }
+                sorteoResponses.add(new SorteoResponse(sorteoDiaria.getId(),
+                        Util.formatTimestamp2String(sorteoDiaria.getSorteoTime()),
+                        Util.getDayFromTimestamp(sorteoDiaria.getSorteoTime()),
+                        Util.getHourFromTimestamp(sorteoDiaria.getSorteoTime()),
+                        total, 0.0, 0.0, estado, moneda, sorteo.getSorteoType().getSorteoTypeName().toString()));
+                total = 0;
+            }
+		} catch (Exception e) {
+			return null;
+		}
         return sorteoResponses;
     }
 
