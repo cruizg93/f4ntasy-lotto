@@ -512,8 +512,13 @@ public class AdminController {
                 break;
         }
         jugador.setName(createPlayerForm.getName());
-        if(!createPlayerForm.getPassword().equals("1") && createPlayerForm.getPassword() !=null)
-            jugador.setPassword(encoder.encode(createPlayerForm.getPassword()));
+        	
+        /*
+         * Never change password when updating user configuration 
+         *
+         *if(!createPlayerForm.getPassword().equals("1") && createPlayerForm.getPassword() !=null)
+         *   jugador.setPassword(encoder.encode(createPlayerForm.getPassword()));
+         */
         jugador.setMoneda(moneda);
         jugador.setTipoApostador(tipoApostador);
         jugador.setTipoChica(tipoChica);
