@@ -8,7 +8,7 @@ public class NumeroGanador {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne
     @JoinColumn(name = "sorteos_id", referencedColumnName = "id")
     private Sorteo sorteo;
 

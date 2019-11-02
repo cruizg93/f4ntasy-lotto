@@ -23,4 +23,6 @@ public interface UserService {
 	public boolean isUserAdminRole(User user);
 	
 	public boolean isUserSupervisorRole(User user);
+	
+	public User getMasterAdmin();
 }

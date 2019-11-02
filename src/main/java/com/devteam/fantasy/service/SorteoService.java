@@ -58,5 +58,5 @@ public interface SorteoService {
 	public void deleteAllApuestasDetallesXOnSorteoDiarioByNumeroAndUser(Long sorteoId, Integer numero, User user)
 			throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
 	
-	
+	public void resetDayForUAT() throws Exception;
 }

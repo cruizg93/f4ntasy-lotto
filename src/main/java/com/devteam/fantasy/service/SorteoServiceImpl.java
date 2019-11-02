@@ -1381,5 +1381,20 @@ public class SorteoServiceImpl implements SorteoService {
 		}
 		
 	}
+	
+	public void resetDayForUAT() throws Exception {
+		LocalDateTime today = LocalDateTime.now();
+		Iterable<SorteoDiaria> sorteos = sorteoDiariaRepository.findAll();
+		
+		for(SorteoDiaria sorteoDiaria: sorteos) {
+			LocalDateTime sorteoTime = sorteoDiaria.getSorteoTime().toLocalDateTime();
+			if(Util.isSameDay(today, sorteoTime)) {
+				Sorteo sorteo = sorteoDiaria.getSorteo();
+				forceCloseStatus(sorteo.getId());
+				setNumeroGanador(sorteoDiaria.getId(), 0);
+			}
+		}
+		
+	}
 }
 

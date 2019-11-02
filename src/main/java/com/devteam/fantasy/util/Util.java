@@ -573,4 +573,16 @@ public class Util {
 		
 	}
 	
+	public static boolean isSameDay(LocalDateTime date1, LocalDateTime date2) {
+		boolean isSameDay = false;
+		
+		if(date1.getYear()==date2.getYear()
+				&& date1.getMonthValue() == date2.getMonthValue()
+				&& date1.getDayOfMonth() == date2.getDayOfMonth()) {
+			
+			isSameDay = true;
+		}
+		return isSameDay;
+	}
+
 }

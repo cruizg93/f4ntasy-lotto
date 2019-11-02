@@ -138,6 +138,10 @@ public class HistoryServiceImpl implements HistoryService {
 	@Override
 	public HistoryEvent createEvent(HistoryEventType eventType, Long keyValue,String oldValue, String newValue) {
 		User user = userService.getLoggedInUser();
+		if(user == null) {
+			user = userService.getMasterAdmin();
+		}
+		
 		HistoryEvent event = new HistoryEvent(eventType, user);
 		event.setOldValue(oldValue);
 		event.setNewValue(newValue);

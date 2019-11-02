@@ -1,7 +1,6 @@
 package com.devteam.fantasy.repository;
 
 
-import com.devteam.fantasy.model.Jugador;
 import com.devteam.fantasy.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -25,5 +24,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     User getByUsername(String username);
 
     User getById(Long id);
+
+	User findFirstBy();
 
 }

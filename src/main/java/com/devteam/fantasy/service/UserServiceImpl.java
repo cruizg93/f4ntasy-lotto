@@ -38,12 +38,14 @@ public class UserServiceImpl implements UserService{
 	private User loggedUser;
 	
 	public User getLoggedInUser(){
+		if ( SecurityContextHolder.getContext().getAuthentication() == null ) {
+			return null;
+		}
 		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		
 		if (principal instanceof UserDetails) {
 			UserDetails userDetails = (UserDetails)principal;
-			loggedUser = Optional.of(userRepository.getByUsername(((UserDetails) principal).getUsername()))
-					.orElseThrow(() -> new UsernameNotFoundException("Error getting the logged in user."));
+			loggedUser = Optional.of(userRepository.getByUsername(userDetails.getUsername())).orElseThrow(() -> new UsernameNotFoundException("Error getting the logged in user."));
 		}
 		return loggedUser;
 	}
@@ -91,5 +93,10 @@ public class UserServiceImpl implements UserService{
 		Role master = roleRepository.findByName(RoleName.ROLE_SUPERVISOR).get();
 		Hibernate.initialize(user.getRoles());
 		return user.getRoles().stream().anyMatch(x -> x.equals(master));
+	}
+	
+	public User getMasterAdmin() {
+		User user = userRepository.findFirstBy();
+		return user;
 	}
 }

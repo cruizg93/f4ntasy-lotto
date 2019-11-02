@@ -2,13 +2,14 @@ package com.devteam.fantasy.schedule;
 
 
 import com.devteam.fantasy.repository.*;
-import com.devteam.fantasy.util.SorteoTypeName;
+import com.devteam.fantasy.service.SorteoService;
 import com.devteam.fantasy.util.Util;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.text.SimpleDateFormat;
+import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,62 +26,27 @@ public class ScheduledTasks {
     private EstadoRepository estadoRepository;
 
     @Autowired
-    private SorteoTypeRepository sorteoTypeRepository;
+    Environment env;
+    
+    @Autowired 
+    private SorteoService sorteoService;
 
     private static final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
 
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
-
-//    @Scheduled(fixedRate = 5000)
-//    public void reportCurrentTime() {
-//        log.info("The time is now {}", dateFormat.format(new Date()));
-//    }
-
-    //@Scheduled(cron = "[Seconds] [Minutes] [Hours] [Day of month] [Month] [Day of week] [Year]")
-    /*
-     * Below is a breakdown of the components that build a cron expression.
-     *
-     *     Seconds can have values 0-59 or the special characters , - * / .
-     *     Minutes can have values 0-59 or the special characters , - * / .
-     *     Hours can have values 0-59 or the special characters , - * / .
-     *     Day of month can have values 1-31 or the special characters , - * ? / L W C .
-     *     Month can have values 1-12, JAN-DEC or the special characters , - * / .
-     *     Day of week can have values 1-7, SUN-SAT or the special characters , - * ? / L C # .
-     *     Year can be empty, have values 1970-2099 or the special characters , - * / .
-     *
-     * */
-    /*@Scheduled(cron = "0 1 0 * * ?")
-    public void createSorteoDiaria() {
-    	log.debug("createSorteoDiaria: START");
-//        Util.deleteSorteosDia(sorteoRepository, sorteoDiariaRepository, apuestaRepository, historicoApuestaRepository);
-//        Util.insertSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, sorteoTypeRepository, SorteoTypeName.DIARIA, 11);
-//        Util.insertSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, sorteoTypeRepository, SorteoTypeName.DIARIA, 15);
-//        Util.insertSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, sorteoTypeRepository, SorteoTypeName.DIARIA, 21);
-        log.debug("createSorteoDiaria: END");
-    }*/
-
-//    @Scheduled(cron = "0 1 0 * * MON")
-//    public void updateJugadorBalance() {
-//    	log.debug("updateJugadorBalance: START");
-//        Util.updateJugadoBalance(jugadorRepository);
-//        log.debug("updateJugadorBalance: END");
-//    }
-
-//    @Scheduled(cron = "0 1 0 * * MON")
-//    public void updateSorteoStatus() {
-//        Util.updateSorteoStatus(sorteoRepository, statusRepository, sorteoDiariaRepository);
-//    }
-//    @Scheduled(cron = "0 5 0 ? * MON")
-//    public void createSorteoChiquitica() {
-//        Util.insertSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, sorteoTypeRepository, SorteoTypeName.CHICA, 1);
-//    }
 
     @Scheduled(cron = "0 59 10 * * ?")
     public void updateSorteoDiaria11() {
     	log.debug("updateSorteoDiaria11: START");
     	log.info("updateSorteoDiaria11: [CLOSE 11am]");
         try {
-			Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 11);
+        	String[] activeProfiles = env.getActiveProfiles();
+    		if ( activeProfiles != null && activeProfiles.length>0) {
+    			if( Arrays.asList(activeProfiles).contains("prod")) {
+    				
+    				Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 11);
+    				
+    			}
+    		}
 		} catch (Exception e) {
 			log.error("ERROR CLOSE[11am]:",e);
 		}
@@ -92,7 +58,14 @@ public class ScheduledTasks {
     	log.debug("updateSorteoDiaria15: START");
     	log.info("updateSorteoDiaria15: [CLOSE 15pm]");
         try {
-			Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 15);
+        	String[] activeProfiles = env.getActiveProfiles();
+    		if ( activeProfiles != null && activeProfiles.length>0) {
+    			if( Arrays.asList(activeProfiles).contains("prod")) {
+    				
+    				Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 15);
+    				
+    			}
+    		}
         } catch (Exception e) {
 			log.error("ERROR CLOSE[15pm]:",e);
 		}
@@ -105,7 +78,14 @@ public class ScheduledTasks {
     	log.debug("updateSorteoDiaria21: START");
     	log.info("updateSorteoDiaria21: [CLOSE 21pm]");
         try {
-			Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 21);
+        	String[] activeProfiles = env.getActiveProfiles();
+    		if ( activeProfiles != null && activeProfiles.length>0) {
+    			if( Arrays.asList(activeProfiles).contains("prod")) {
+    				
+    				Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 21);
+    				
+    			}
+    		}
         } catch (Exception e) {
 			log.error("ERROR CLOSE[21pm]:",e);
 		}
@@ -118,11 +98,37 @@ public class ScheduledTasks {
     	log.debug("updateSorteoChiquitica: START");
     	log.info("updateSorteoChica: [CLOSE 12pm]");
         try {
-        	Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 12);
+        	String[] activeProfiles = env.getActiveProfiles();
+    		if ( activeProfiles != null && activeProfiles.length>0) {
+    			if( Arrays.asList(activeProfiles).contains("prod")) {
+    				
+    				Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 12);
+    				
+    			}
+    		}
 		} catch (Exception e) {
 			log.error("ERROR CLOSE[12pm]:",e);
 		}
         log.debug("updateSorteoChiquitica: END");
+    }
+    
+    @Scheduled(cron = "0 50 22 * * ?")
+    public void updateSorteosMidnight() {
+    	log.debug("updateSorteosMidnight: START");
+    	log.info("updateSorteosMidnight: [CLOSE 11am, 12pm, 3pm, 9pm]");
+    	
+    	String[] activeProfiles = env.getActiveProfiles();
+		if ( activeProfiles != null && activeProfiles.length>0) {
+			if( !Arrays.asList(activeProfiles).contains("prod")) {
+				try {
+		        	sorteoService.resetDayForUAT();
+				} catch (Exception e) {
+					log.error("ERROR [CLOSE 11am, 12pm, 3pm, 9pm]:",e);
+				}
+			}
+		}
+		
+		log.debug("updateSorteosMidnight: END");
     }
 
 }
