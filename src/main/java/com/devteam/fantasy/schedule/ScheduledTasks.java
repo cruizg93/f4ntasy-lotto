@@ -112,7 +112,7 @@ public class ScheduledTasks {
         log.debug("updateSorteoChiquitica: END");
     }
     
-    @Scheduled(cron = "0 50 22 * * ?")
+    @Scheduled(cron = "0 5 0 * * ?")
     public void updateSorteosMidnight() {
     	log.debug("updateSorteosMidnight: START");
     	log.info("updateSorteosMidnight: [CLOSE 11am, 12pm, 3pm, 9pm]");
