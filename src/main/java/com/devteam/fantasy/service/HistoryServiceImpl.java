@@ -722,6 +722,7 @@ public class HistoryServiceImpl implements HistoryService {
 					PairJP pair = new PairJP();
 					pair.setName(jugadorPremio.getKey().getName());
 					pair.setUsername(jugadorPremio.getKey().getUsername());
+					pair.setCurrency(Util.getMonedaSymbolFromMonedaName(jugadorPremio.getKey().getMoneda().getMonedaName()));
 					
 					pair.setPremio(jugadorPremio.getValue().doubleValue());
 					

@@ -6,6 +6,8 @@ public class PairJP {
 	
 	private String name;
 	
+	private String currency;
+	
 	private double premio;
 
 	public String getUsername() {
@@ -31,17 +33,25 @@ public class PairJP {
 	public void setPremio(double premio) {
 		this.premio = premio;
 	}
+	
+	public String getCurrency() {
+		return currency;
+	}
+
+	public void setCurrency(String currency) {
+		this.currency = currency;
+	}
 
 	@Override
 	public String toString() {
-		return "PairJP [username=" + username + ", name=" + name + ", premio=" + premio + "]";
+		return "PairJP [username=" + username + ", name=" + name + ", currency=" + currency + ", premio=" + premio
+				+ "]";
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		long temp;
 		temp = Double.doubleToLongBits(premio);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
@@ -58,11 +68,6 @@ public class PairJP {
 		if (getClass() != obj.getClass())
 			return false;
 		PairJP other = (PairJP) obj;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
 		if (Double.doubleToLongBits(premio) != Double.doubleToLongBits(other.premio))
 			return false;
 		if (username == null) {
@@ -72,4 +77,6 @@ public class PairJP {
 			return false;
 		return true;
 	}
+
+	
 }
