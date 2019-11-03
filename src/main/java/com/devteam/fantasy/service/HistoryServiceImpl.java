@@ -699,7 +699,7 @@ public class HistoryServiceImpl implements HistoryService {
 		List<NumeroGanadorSorteoResponse> numerosGanadoresResponse = new ArrayList<NumeroGanadorSorteoResponse>();
 		try {
 			logger.debug("List<NumeroGanadorSorteoResponse> getNumerosGanadores(): START");
-			List<NumeroGanador> numerosGanadores = numeroGanadorRepository.findAllByOrderBySorteoSorteoTimeDesc();
+			List<NumeroGanador> numerosGanadores = numeroGanadorRepository.findTop90ByOrderBySorteoSorteoTimeDesc();
 			
 			for(NumeroGanador numero: numerosGanadores) {
 				Map<Jugador,BigDecimal> jugadoresPremio 	= new HashMap<>();
