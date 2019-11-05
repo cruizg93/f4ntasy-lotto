@@ -1020,7 +1020,7 @@ public class SorteoServiceImpl implements SorteoService {
 			mergeApuestasIntoPairNVList(pairNVList, apuestas);
 
 			if (user instanceof Jugador) {
-				List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
+				List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
 				for(Asistente asistente: asistentes) {
 					List<Apuesta> asistenteApuestasList = apuestaRepository
 							.findAllBySorteoDiariaAndUserOrderByNumeroAsc(sorteoDiaria, asistente);
@@ -1077,7 +1077,7 @@ public class SorteoServiceImpl implements SorteoService {
         detallesResponse.setUserId(jugador.getId());
         apuestasDetails.add(detallesResponse);
         
-        List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
+        List<Asistente> asistentes = asistenteRepository.findAllByJugador(jugador);
         asistentes.forEach(asistente -> {
             List<Apuesta> apuestaList = apuestaRepository.findAllBySorteoDiariaAndUserOrderByNumeroAsc(sorteoDiaria, asistente);
             if (apuestaList.size() > 0) {
