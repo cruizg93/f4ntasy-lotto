@@ -655,28 +655,30 @@ public class AdminController {
     	User loggedUser = userService.getLoggedInUser();
     	
     	if( userService.isUserMasterRole(loggedUser)) {
+    		if( loggedUser.getUsername().equalsIgnoreCase("C00")) {
+        		responseUsers.add(new PairUserFormatNameID(loggedUser.getId(), Util.getFormatName(loggedUser)));
+        	}
     		List<User> users = userRepository.getAllAdmin();
             for (User user : users) {
-                responseUsers.add(new PairUserFormatNameID(user.getId(), Util.getFormatName(user)));
-//                responseUsers.add(user.getUsername());
+            	if ( !user.getUsername().equalsIgnoreCase("C00") ) {
+            		responseUsers.add(new PairUserFormatNameID(user.getId(), Util.getFormatName(user)));
+            	}
             }
     	}else if(userService.isUserSupervisorRole(loggedUser)) {
     		//Supervisor can only edit itself
     		responseUsers.add(new PairUserFormatNameID(loggedUser.getId(), Util.getFormatName(loggedUser)));
-//    		responseUsers.add(loggedUser.getUsername());
     		return responseUsers;
+    	}else {
+    		responseUsers.add(new PairUserFormatNameID(loggedUser.getId(), Util.getFormatName(loggedUser)));
     	}
-    	
-    	responseUsers.add(new PairUserFormatNameID(loggedUser.getId(), Util.getFormatName(loggedUser)));
 
         List<Jugador> jugadores = jugadorRepository.findAllByUserStateOrderByIdAsc(UserState.ACTIVE);
+        
         for(Jugador jugador: jugadores) {
         	responseUsers.add(new PairUserFormatNameID(jugador.getId(), Util.getFormatName(jugador)));
-//        	responseUsers.add(jugador.getUsername());
         	List<Asistente> asistentes = asistenteRepository.findAllByJugadorAndUserState(jugador, UserState.ACTIVE);
         	for(Asistente asistente: asistentes) {
         		responseUsers.add(new PairUserFormatNameID(asistente.getId(), Util.getFormatName(asistente)));
-//        		responseUsers.add(asistente.getUsername());
         	}
         }
         

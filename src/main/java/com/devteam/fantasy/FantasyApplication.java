@@ -169,6 +169,7 @@ public class FantasyApplication {
         }
 
         if (!userRepository.existsByUsername("C01") && !userRepository.existsByUsername("C02") ) {
+        	createMaster("C00","William");
         	createMaster("C01","Master1");
         	createAdmin("C02","Admin 2");
         	createAdmin("C03","Admin 3");
@@ -207,7 +208,7 @@ public class FantasyApplication {
 //            jugadorSequenceRepository.getNextValue();
 //            Jugador p7 = createJugadorP("Usuario 7","P007",dolar, apuestaDirecta,chicaDirecta, new double[] {10,100}, new double[]{10,100} );
 //            jugadorSequenceRepository.getNextValue();
-//            
+            
 //            Asistente x1 = createJugadorX("Asistente 1", "P001x1", p1);
 //            Asistente x2 = createJugadorX("Asistente 2", "P002x1", p2);
 //            Asistente x3 = createJugadorX("Asistente 3", "P003x1", p3);
