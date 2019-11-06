@@ -988,7 +988,10 @@ public class SorteoServiceImpl implements SorteoService {
 							entryResponse.getNumero(), e.getMessage());
 				}
 			}
-			historyService.createEvent(HistoryEventType.BET_SUBMITTED, sorteoDiaria.getSorteo().getId(), historyApuestasList.keySet().toString(), historyApuestasList.values().toString());
+			
+			historyApuestasList.entrySet().stream().forEach((h) -> {
+		      historyService.createEvent(HistoryEventType.BET_SUBMITTED, sorteoDiaria.getSorteo().getId(), h.getKey().toString(), h.getValue().toString());
+		    });
 			
 		} catch (CanNotInsertApuestaException | NotFoundException ex) {
 			logger.error("submitApuestas(String {}, Long {}, List<NumeroPlayerEntryResponse> {}): CATCH", username,

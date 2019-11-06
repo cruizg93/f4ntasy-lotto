@@ -143,6 +143,7 @@ public class HistoryServiceImpl implements HistoryService {
 		}
 		
 		HistoryEvent event = new HistoryEvent(eventType, user);
+		event.setCreatedDate(Timestamp.valueOf(LocalDateTime.now()));
 		event.setOldValue(oldValue);
 		event.setNewValue(newValue);
 		event.setKeyValue(keyValue);
