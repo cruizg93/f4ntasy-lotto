@@ -117,6 +117,9 @@ public class AdminController {
     HistoryService historyService;
     
     @Autowired
+    HistoryEventRepository historyEventRepository;
+    
+    @Autowired
     JugadorSequenceRepository jugadorSequenceRepository;
     
     @PostMapping("/validateAdminPassword")
@@ -321,6 +324,13 @@ public class AdminController {
 		if (historicoApuestas != null && historicoApuestas.size() > 0) {
 			inactiveUser(user);
 			return ResponseEntity.ok("Usuario eliminado");
+		}
+		
+		//In case the user submit a bet, but deleted before the sorteo was closed,
+		//Remove and delete all the history events.
+		List<HistoryEvent> historyEvents = historyEventRepository.findAllByUserOrderByCreatedDate(user);
+		if (historyEvents != null && !historyEvents.isEmpty()) {
+			historyEventRepository.deleteAll(historyEvents);
 		}
 		
 		//If have balance different than 0, inactive User
