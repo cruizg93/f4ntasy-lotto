@@ -129,9 +129,8 @@ public class HistoricoApuestas {
 
 	@Override
 	public String toString() {
-		return "HistoricoApuestas [id=" + id + ", sorteo=" + sorteo + ", user=" + user + ", asistente=" + asistente
-				+ ", cambio=" + cambio + ", numero=" + numero + ", cantidad=" + cantidad 
-				+ ", date=" + date + ", cantidadMultiplier=" + cantidadMultiplier + ", premioMultiplier="
+		return "HistoricoApuestas [id=" + id + ", sorteo=" + sorteo.getSorteoTime() + ", numero=" + numero + ", cantidad=" + cantidad + ", user=" + user + ", asistente=" + asistente
+				+ ", cambio=" + cambio + ", date=" + date + ", cantidadMultiplier=" + cantidadMultiplier + ", premioMultiplier="
 				+ premioMultiplier + ", moneda=" + moneda + "]";
 	}
 

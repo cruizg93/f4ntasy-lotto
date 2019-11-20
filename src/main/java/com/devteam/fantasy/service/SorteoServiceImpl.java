@@ -550,18 +550,18 @@ public class SorteoServiceImpl implements SorteoService {
 			logger.debug("numeroGanadorRepository.save({})", numeroGanador);
 			
 			Set<Apuesta> apuestas = apuestaRepository.findAllBySorteoDiaria(sorteoDiaria);
-			// Long [jugadorId], Integer [unidadesApostadas]
-			Map<Long, Integer> map = new HashMap<>();
+			// Long [jugadorId], Double [unidadesApostadas]
+			Map<Long, Double> map = new HashMap<>();
 			
 			//Ids for logging a few lines below
 			List<Long> jugadorIds = new ArrayList<>();
 			
 			for (Apuesta apuesta : apuestas) {
 				Jugador jugador = Util.getJugadorFromApuesta(apuesta);
-				Integer cantidadActual = Optional.ofNullable(map.get(jugador.getId())).orElse(0);
+				Double cantidadActual = Optional.ofNullable(map.get(jugador.getId())).orElse(0d);
 				
 				if(apuesta.getNumero() == numero) {
-					cantidadActual += apuesta.getCantidad().intValue();
+					cantidadActual += apuesta.getCantidad();
 				}
 				
 				if (!map.containsKey(jugador.getId()) ) jugadorIds.add(jugador.getId());
@@ -574,11 +574,11 @@ public class SorteoServiceImpl implements SorteoService {
 			 * then the premio will be added or substract of the total of bets made for the sorteo
 			 * the result will be added or substract from the jugador current balance.
 			 */
-			Set<Entry<Long, Integer>> jugadores = map.entrySet();
-			Iterator<Entry<Long, Integer>> jugadoresIterator = jugadores.iterator();
+			Set<Entry<Long, Double>> jugadores = map.entrySet();
+			Iterator<Entry<Long, Double>> jugadoresIterator = jugadores.iterator();
 			
 			while(jugadoresIterator.hasNext()) {
-				Map.Entry<Long, Integer> jugadorApuestasGanadas = (Map.Entry<Long, Integer>)jugadoresIterator.next();
+				Map.Entry<Long, Double> jugadorApuestasGanadas = (Map.Entry<Long, Double>)jugadoresIterator.next();
 				Jugador jugador = jugadorRepository.findById(jugadorApuestasGanadas.getKey()).get();
 				BigDecimal premioMultiplier = MathUtil.getPremioMultiplier(jugador,sorteo.getSorteoType().getSorteoTypeName());
 				BigDecimal premio = BigDecimal.valueOf(jugadorApuestasGanadas.getValue()).multiply(premioMultiplier);
@@ -967,7 +967,10 @@ public class SorteoServiceImpl implements SorteoService {
 
 						apuesta.setCantidad(Double.valueOf(0d));
 					}
-					apuesta.setCantidad(apuesta.getCantidad() + entryResponse.getCurrent());
+					BigDecimal currentCantidad = BigDecimal.valueOf(apuesta.getCantidad());
+					BigDecimal cantidadToBeAdded = BigDecimal.valueOf(entryResponse.getCurrent());
+					BigDecimal newCantidad = currentCantidad.add(cantidadToBeAdded);
+					apuesta.setCantidad(newCantidad.doubleValue());
 					apuesta.setCambio(cambio);
 
 					BigDecimal costo = MathUtil.getCantidadMultiplier(jugador, apuesta, sorteoDiaria.getSorteo().getSorteoType().getSorteoTypeName(), jugador.getMoneda().getMonedaName());
