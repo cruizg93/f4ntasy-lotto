@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.devteam</groupId>
     <artifactId>fantasy</artifactId>
-    <version>0.1.0.4</version>
+    <version>0.1.0.5</version>
     <packaging>jar</packaging>
     <name>fantasy</name>
     <description>Fantasy project</description>

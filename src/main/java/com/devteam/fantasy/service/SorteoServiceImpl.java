@@ -1321,27 +1321,14 @@ public class SorteoServiceImpl implements SorteoService {
 				List<HistoricoBalance> historicoBalances 	= historicoBalanceRepository.findAllByWeekAndJugadorAndBalanceTypeOrderBySorteoTimeAsc(week,jugador, BalanceType.BY_SORTEO);
 				Optional<HistoricoBalance> historicoBalanceWeekly = historicoBalanceRepository.findByBalanceTypeAndJugadorAndWeek(BalanceType.WEEKLY, jugador, week);
 				
-				BigDecimal balanceAnterior 	= BigDecimal.ZERO;
+				BigDecimal totalBalance 	= BigDecimal.ZERO;
 				BigDecimal sorteoBalance 	= BigDecimal.valueOf(summary.getPremios()).subtract(BigDecimal.valueOf(summary.getSubTotal()));
-				boolean passedSorteo 		= false;
 				
 				for(HistoricoBalance hb: historicoBalances) {
-					
 					if(hb.getSorteoTime().compareTo(sorteo.getSorteoTime()) == 0 ) {
-						passedSorteo = true;
-						BigDecimal newBalance = balanceAnterior.add(sorteoBalance);
-						hb.setBalance(newBalance.doubleValue());
-						balanceAnterior = newBalance;
-					}else {
-						if ( !passedSorteo) {
-							balanceAnterior = BigDecimal.valueOf(hb.getBalance());
-						}else{
-							BigDecimal newBalance = balanceAnterior.add(BigDecimal.valueOf(hb.getBalance()));
-							hb.setBalance(newBalance.doubleValue());
-							balanceAnterior = newBalance;
-							
-						}
+						hb.setBalance(sorteoBalance.doubleValue());
 					}
+					totalBalance = totalBalance.add(sorteoBalance);
 				}
 				logger.debug("Updating sorteos balances...");
 				logger.info("Updating sorteos balances...");
@@ -1350,16 +1337,16 @@ public class SorteoServiceImpl implements SorteoService {
 				if(historicoBalanceWeekly.isPresent()) {
 					logger.debug("Updating weekly balances...");
 					logger.info("Updating weekly balances...");
-					historicoBalanceWeekly.get().setBalance(balanceAnterior.doubleValue());
+					historicoBalanceWeekly.get().setBalance(totalBalance.doubleValue());
 					historicoBalanceRepository.save(historicoBalanceWeekly.get());
 				}
-				jugador.setBalance(balanceAnterior.doubleValue());
+				jugador.setBalance(totalBalance.doubleValue());
 			}
 			logger.debug("Updating balance jugadores...");
 			logger.info("Updating balance jugadores...");
 			jugadorRepository.saveAll(jugadores);
 			
-			historyService.createEvent(HistoryEventType.WINNING_NUMBER_CHANGED, sorteo.getId());
+			historyService.createEvent(HistoryEventType.WINNING_NUMBER_CHANGED, sorteo.getId(), String.valueOf(currentNumeroGanador.getNumeroGanador()), String.valueOf(newWinningNumber));
 
 		} catch (NotFoundException | CanNotChangeWinningNumberException e) {
 			logger.info("changeWinningNumber(int newWinningNumber, Long sorteoId): CATCH", newWinningNumber, sorteoId);
