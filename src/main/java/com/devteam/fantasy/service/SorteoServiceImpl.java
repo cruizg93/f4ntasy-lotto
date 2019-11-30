@@ -1328,7 +1328,7 @@ public class SorteoServiceImpl implements SorteoService {
 					if(hb.getSorteoTime().compareTo(sorteo.getSorteoTime()) == 0 ) {
 						hb.setBalance(sorteoBalance.doubleValue());
 					}
-					totalBalance = totalBalance.add(sorteoBalance);
+					totalBalance = totalBalance.add(BigDecimal.valueOf(hb.getBalance()));
 				}
 				logger.debug("Updating sorteos balances...");
 				logger.info("Updating sorteos balances...");
