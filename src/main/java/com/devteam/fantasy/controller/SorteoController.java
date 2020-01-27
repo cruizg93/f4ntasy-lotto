@@ -41,6 +41,7 @@ import com.devteam.fantasy.model.User;
 import com.devteam.fantasy.service.AdminService;
 import com.devteam.fantasy.service.SorteoService;
 import com.devteam.fantasy.service.UserService;
+import com.devteam.fantasy.util.ProfileIdentifier;
 import com.devteam.fantasy.util.Util;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -65,7 +66,7 @@ public class SorteoController {
     private UserService userService;
     
     @Autowired
-    Environment env;
+    ProfileIdentifier profileIdentifier;
 	
 	@GetMapping("/activos/{moneda}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER') or hasRole('SUPERVISOR')")
@@ -105,12 +106,9 @@ public class SorteoController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ResponseEntity<?> bloquearApuesta(@PathVariable Long id, @Valid @RequestBody ObjectNode json) {
 		try {
-			String[] activeProfiles = env.getActiveProfiles();
-			if ( activeProfiles != null && activeProfiles.length>0) {
-				if( !Arrays.asList(activeProfiles).contains("prod")) {
-					sorteoService.forceCloseStatus(id);
-			        return ResponseEntity.ok("Sorteo closed");
-				}
+			if( !profileIdentifier.isProfileUATActive()) {
+				sorteoService.forceCloseStatus(id);
+		        return ResponseEntity.ok("Sorteo closed");
 			}
 			sorteoService.bloquearApuesta(id);
 		} catch (InvalidSorteoStateException e) {
@@ -131,11 +129,21 @@ public class SorteoController {
         return ResponseEntity.ok("Sorteo unlocked");
     }
     
-    @Profile({"uat","dev"})
     @PutMapping("/forceCloseStatus/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
     public ResponseEntity<?> cerrarApuesta(@PathVariable Long id, @Valid @RequestBody ObjectNode json) {
 		sorteoService.forceCloseStatus(id);
+        return ResponseEntity.ok("Sorteo closed");
+    }
+    
+    @PutMapping("/forceOpenStatus/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MASTER')")
+    public ResponseEntity<?> abrirApuesta(@PathVariable Long id, @Valid @RequestBody ObjectNode json) {
+		try {
+			sorteoService.forceOpenStatus(id);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+		}
         return ResponseEntity.ok("Sorteo closed");
     }
     

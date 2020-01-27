@@ -827,13 +827,35 @@ public class SorteoServiceImpl implements SorteoService {
 			logger.debug("forceCloseStatus(Long {}): START", id);
 			sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.CERRADA));
 			sorteoRepository.save(sorteo);
-			historyService.createEvent(HistoryEventType.SORTEO_LOCKED);
+			historyService.createEvent(HistoryEventType.SORTEO_CLOSED, id);
 		} catch (Exception e) {
 			logger.error("forceCloseStatus(Long {}): CATCH", id);
 			logger.error(e.getMessage());
 			throw e;
 		} finally {
 			logger.debug("forceCloseStatus(Long id): END");
+		}
+		return sorteo;
+	}
+	
+	@Override
+	public Sorteo forceOpenStatus(Long id) throws Exception {
+		Sorteo sorteo = sorteoRepository.getSorteoById(id);
+		try {
+			logger.debug("forceOpenStatus(Long {}): START", id);
+			if (sorteo.getEstado().getEstado().equals(EstadoName.CERRADA)){
+				sorteo.setEstado(estadoRepository.getEstadoByEstado(EstadoName.ABIERTA));
+				sorteoRepository.save(sorteo);
+				historyService.createEvent(HistoryEventType.SORTEO_REOPEN, id);
+			}else {
+				throw new InvalidSorteoStateException(sorteo);
+			}
+		} catch (Exception e) {
+			logger.error("forceOpenStatus(Long {}): CATCH", id);
+			logger.error(e.getMessage());
+			throw e;
+		} finally {
+			logger.debug("forceOpenStatus(Long id): END");
 		}
 		return sorteo;
 	}

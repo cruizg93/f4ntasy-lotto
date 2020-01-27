@@ -39,6 +39,7 @@ public interface SorteoService {
 	public Sorteo bloquearApuesta(Long id) throws InvalidSorteoStateException;
 	public Sorteo desBloquearApuesta(Long id) throws InvalidSorteoStateException;
 	
+	public Sorteo forceOpenStatus(Long id) throws Exception;
 	public Sorteo forceCloseStatus(Long id);
 	public ApuestaActivaResumenResponse getDetalleApuestasBySorteo(Long id, String monedatype) throws Exception;
 	public void submitApuestas(String username, Long sorteoId, List<NumeroPlayerEntryResponse> apuestasEntry) throws CanNotInsertApuestaException, SorteoEstadoNotValidException, NotFoundException;
@@ -59,4 +60,5 @@ public interface SorteoService {
 			throws CanNotRemoveApuestaException, SorteoEstadoNotValidException;
 	
 	public void resetDayForUAT() throws Exception;
+	
 }

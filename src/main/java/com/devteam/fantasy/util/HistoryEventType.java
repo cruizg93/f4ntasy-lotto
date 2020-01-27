@@ -11,6 +11,8 @@ public enum HistoryEventType {
     PLAYER_PASSWORD_CHANGED("Constrasena Cambiada"),
     SORTEO_LOCKED("Sorteo Bloqueado"),
     SORTEO_UNLOCKED("Sorteo Desbloqueado"),
+    SORTEO_CLOSED("Sorteo Cerrado"),
+    SORTEO_REOPEN("Sorteo Re-Abierto"),
     WEEK_CLOSED("Semana Cerrada"),
     WINNING_NUMBER("Numero Ganador"),
     WINNING_NUMBER_CHANGED("Cambio de Numero Ganador"),

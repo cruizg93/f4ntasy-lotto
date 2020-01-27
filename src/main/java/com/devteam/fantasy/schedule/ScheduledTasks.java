@@ -3,6 +3,7 @@ package com.devteam.fantasy.schedule;
 
 import com.devteam.fantasy.repository.*;
 import com.devteam.fantasy.service.SorteoService;
+import com.devteam.fantasy.util.ProfileIdentifier;
 import com.devteam.fantasy.util.Util;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -26,7 +27,7 @@ public class ScheduledTasks {
     private EstadoRepository estadoRepository;
 
     @Autowired
-    Environment env;
+    ProfileIdentifier profileIdentifier;  
     
     @Autowired 
     private SorteoService sorteoService;
@@ -39,13 +40,8 @@ public class ScheduledTasks {
     	log.debug("updateSorteoDiaria11: START");
     	log.info("updateSorteoDiaria11: [CLOSE 11am]");
         try {
-        	String[] activeProfiles = env.getActiveProfiles();
-    		if ( activeProfiles != null && activeProfiles.length>0) {
-    			if( Arrays.asList(activeProfiles).contains("prod")) {
-    				
-    				Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 11);
-    				
-    			}
+        	if ( profileIdentifier.isProfileProdActive()) {
+				Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 11);
     		}
 		} catch (Exception e) {
 			log.error("ERROR CLOSE[11am]:",e);
@@ -58,13 +54,8 @@ public class ScheduledTasks {
     	log.debug("updateSorteoDiaria15: START");
     	log.info("updateSorteoDiaria15: [CLOSE 15pm]");
         try {
-        	String[] activeProfiles = env.getActiveProfiles();
-    		if ( activeProfiles != null && activeProfiles.length>0) {
-    			if( Arrays.asList(activeProfiles).contains("prod")) {
-    				
-    				Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 15);
-    				
-    			}
+        	if ( profileIdentifier.isProfileProdActive()) { 
+        		Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 15);
     		}
         } catch (Exception e) {
 			log.error("ERROR CLOSE[15pm]:",e);
@@ -78,13 +69,8 @@ public class ScheduledTasks {
     	log.debug("updateSorteoDiaria21: START");
     	log.info("updateSorteoDiaria21: [CLOSE 21pm]");
         try {
-        	String[] activeProfiles = env.getActiveProfiles();
-    		if ( activeProfiles != null && activeProfiles.length>0) {
-    			if( Arrays.asList(activeProfiles).contains("prod")) {
-    				
-    				Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 21);
-    				
-    			}
+        	if ( profileIdentifier.isProfileProdActive()) {
+        		Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 21);
     		}
         } catch (Exception e) {
 			log.error("ERROR CLOSE[21pm]:",e);
@@ -98,13 +84,8 @@ public class ScheduledTasks {
     	log.debug("updateSorteoChiquitica: START");
     	log.info("updateSorteoChica: [CLOSE 12pm]");
         try {
-        	String[] activeProfiles = env.getActiveProfiles();
-    		if ( activeProfiles != null && activeProfiles.length>0) {
-    			if( Arrays.asList(activeProfiles).contains("prod")) {
-    				
-    				Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 12);
-    				
-    			}
+        	if ( profileIdentifier.isProfileProdActive()) {
+				Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 12);
     		}
 		} catch (Exception e) {
 			log.error("ERROR CLOSE[12pm]:",e);
@@ -116,15 +97,12 @@ public class ScheduledTasks {
     public void updateSorteosMidnight() {
     	log.debug("updateSorteosMidnight: START");
     	log.info("updateSorteosMidnight: [CLOSE 11am, 12pm, 3pm, 9pm]");
-    	
-    	String[] activeProfiles = env.getActiveProfiles();
-		if ( activeProfiles != null && activeProfiles.length>0) {
-			if( !Arrays.asList(activeProfiles).contains("prod")) {
-				try {
-		        	sorteoService.resetDayForUAT();
-				} catch (Exception e) {
-					log.error("ERROR [CLOSE 11am, 12pm, 3pm, 9pm]:",e);
-				}
+
+    	if ( !profileIdentifier.isProfileProdActive()) {
+			try {
+	        	sorteoService.resetDayForUAT();
+			} catch (Exception e) {
+				log.error("ERROR [CLOSE 11am, 12pm, 3pm, 9pm]:",e);
 			}
 		}
 		
