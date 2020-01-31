@@ -16,7 +16,7 @@ public class ProfileIdentifier {
 		
 		String[] activeProfiles = env.getActiveProfiles();
 		if ( activeProfiles != null && activeProfiles.length>0) {
-			if( !Arrays.asList(activeProfiles).contains("prod")) {
+			if( Arrays.asList(activeProfiles).contains("prod")) {
 				return true;
 			}
 		}
@@ -27,7 +27,7 @@ public class ProfileIdentifier {
 		
 		String[] activeProfiles = env.getActiveProfiles();
 		if ( activeProfiles != null && activeProfiles.length>0) {
-			if( !Arrays.asList(activeProfiles).contains("uat")) {
+			if( Arrays.asList(activeProfiles).contains("uat")) {
 				return true;
 			}
 		}
@@ -38,7 +38,7 @@ public class ProfileIdentifier {
 		
 		String[] activeProfiles = env.getActiveProfiles();
 		if ( activeProfiles != null && activeProfiles.length>0) {
-			if( !Arrays.asList(activeProfiles).contains("dev")) {
+			if( Arrays.asList(activeProfiles).contains("dev")) {
 				return true;
 			}
 		}
