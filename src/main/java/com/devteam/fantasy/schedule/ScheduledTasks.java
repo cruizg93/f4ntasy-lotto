@@ -64,10 +64,11 @@ public class ScheduledTasks {
 
     }
 
-    @Scheduled(cron = "0 59 20 * * ?")
+    // cambio a las 8pm debido a la pandemia del COVID
+    @Scheduled(cron = "0 59 19 * * ?")
     public void updateSorteoDiaria21() {
     	log.debug("updateSorteoDiaria21: START");
-    	log.info("updateSorteoDiaria21: [CLOSE 21pm]");
+    	log.info("updateSorteoDiaria21: [CLOSE 20pm]");
         try {
         	if ( profileIdentifier.isProfileProdActive()) {
         		Util.updateSorteo(estadoRepository, sorteoRepository, sorteoDiariaRepository, 21);
